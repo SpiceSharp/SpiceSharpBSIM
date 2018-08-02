@@ -652,43 +652,40 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        {
 	            xnrm = 0;
 	            xrev = 1;
-	            cdreq = -(_mbp.Type) * (cdrain + gds * vds - gm * vgd - gmbs * vbd);
+	            cdreq = -_mbp.Type * (cdrain + gds * vds - gm * vgd - gmbs * vbd);
 	        }
 
-	        GateNodePtr.Value -= ceqqg;
-	        BulkNodePtr.Value -= (ceqbs + ceqbd + ceqqb);
-	        DrainNodePrimePtr.Value += (ceqbd - cdreq - ceqqd);
-	        SourceNodePrimePtr.Value += (cdreq + ceqbs + ceqqg + ceqqb + ceqqd);
+	        var m = _bp.Multiplier;
+	        GateNodePtr.Value -= m * ceqqg;
+	        BulkNodePtr.Value -= m * (ceqbs + ceqbd + ceqqb);
+	        DrainNodePrimePtr.Value += m * (ceqbd - cdreq - ceqqd);
+	        SourceNodePrimePtr.Value += m * (cdreq + ceqbs + ceqqg + ceqqb + ceqqd);
 
 	        /*
              *  load y matrix
              */
-
-	        DdPtr.Value += (_temp.DrainConductance);
-	        GgPtr.Value += (gcggb);
-	        SsPtr.Value += (_temp.SourceConductance);
-	        BbPtr.Value += (gbd + gbs - gcbgb - gcbdb - gcbsb);
-	        DPdpPtr.Value +=
-	            (_temp.DrainConductance + gds + gbd + xrev * (gm + gmbs) + gcddb);
-	        SPspPtr.Value +=
-	            (_temp.SourceConductance + gds + gbs + xnrm * (gm + gmbs) + gcssb);
-	        DdpPtr.Value += (-_temp.DrainConductance);
-	        GbPtr.Value += (-gcggb - gcgdb - gcgsb);
-	        GdpPtr.Value += (gcgdb);
-	        GspPtr.Value += (gcgsb);
-	        SspPtr.Value += (-_temp.SourceConductance);
-	        BgPtr.Value += (gcbgb);
-	        BdpPtr.Value += (-gbd + gcbdb);
-	        BspPtr.Value += (-gbs + gcbsb);
-	        DPdPtr.Value += (-_temp.DrainConductance);
-	        DPgPtr.Value += ((xnrm - xrev) * gm + gcdgb);
-	        DPbPtr.Value += (-gbd + (xnrm - xrev) * gmbs - gcdgb - gcddb - gcdsb);
-	        DPspPtr.Value += (-gds - xnrm * (gm + gmbs) + gcdsb);
-	        SPgPtr.Value += (-(xnrm - xrev) * gm + gcsgb);
-	        SPsPtr.Value += (-_temp.SourceConductance);
-	        SPbPtr.Value += (-gbs - (xnrm - xrev) * gmbs - gcsgb - gcsdb - gcssb);
-	        SPdpPtr.Value += (-gds - xrev * (gm + gmbs) + gcsdb);
-
+	        DdPtr.Value += m * (_temp.DrainConductance);
+	        GgPtr.Value += m * (gcggb);
+	        SsPtr.Value += m * (_temp.SourceConductance);
+	        BbPtr.Value += m * (gbd + gbs - gcbgb - gcbdb - gcbsb);
+	        DPdpPtr.Value += m * (_temp.DrainConductance + gds + gbd + xrev * (gm + gmbs) + gcddb);
+	        SPspPtr.Value += m * (_temp.SourceConductance + gds + gbs + xnrm * (gm + gmbs) + gcssb);
+	        DdpPtr.Value += m * (-_temp.DrainConductance);
+	        GbPtr.Value += m * (-gcggb - gcgdb - gcgsb);
+	        GdpPtr.Value += m * (gcgdb);
+	        GspPtr.Value += m * (gcgsb);
+	        SspPtr.Value += m * (-_temp.SourceConductance);
+	        BgPtr.Value += m * (gcbgb);
+	        BdpPtr.Value += m * (-gbd + gcbdb);
+	        BspPtr.Value += m * (-gbs + gcbsb);
+	        DPdPtr.Value += m * (-_temp.DrainConductance);
+	        DPgPtr.Value += m * ((xnrm - xrev) * gm + gcdgb);
+	        DPbPtr.Value += m * (-gbd + (xnrm - xrev) * gmbs - gcdgb - gcddb - gcdsb);
+	        DPspPtr.Value += m * (-gds - xnrm * (gm + gmbs) + gcdsb);
+	        SPgPtr.Value += m * (-(xnrm - xrev) * gm + gcsgb);
+	        SPsPtr.Value += m * (-_temp.SourceConductance);
+	        SPbPtr.Value += m * (-gbs - (xnrm - xrev) * gmbs - gcsgb - gcsdb - gcssb);
+	        SPdpPtr.Value += m * (-gds - xrev * (gm + gmbs) + gcsdb);
 
 	        line1000: ;
 	    }

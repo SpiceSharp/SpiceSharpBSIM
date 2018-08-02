@@ -185,29 +185,29 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             var xcbdb = (cbdb - capbd) * omega;
             var xcbsb = (cbsb - capbs) * omega;
 
-            
-            GgPtr.Value += new Complex(0.0, xcggb);
-            GbPtr.Value += new Complex(0.0, -xcggb - xcgdb - xcgsb);
-            GdpPtr.Value += new Complex(0.0, xcgdb);
-            GspPtr.Value += new Complex(0.0, xcgsb);
-            BgPtr.Value += new Complex(0.0, xcbgb);
-            DdPtr.Value += gdpr;
-            SsPtr.Value += gspr;
-            BbPtr.Value += new Complex(gbd + gbs, -xcbgb - xcbdb - xcbsb);
-            DPdpPtr.Value += new Complex(gdpr + gds + gbd + xrev * (gm + gmbs), xcddb);
-            SPspPtr.Value += new Complex(gspr + gds + gbs + xnrm * (gm + gmbs), xcssb);
-            DdpPtr.Value -= gdpr;
-            SspPtr.Value -= gspr;
-            BdpPtr.Value += new Complex(-gbd, xcbdb);
-            BspPtr.Value += new Complex(-gbs, xcbsb);
-            DPdPtr.Value -= gdpr;
-            DPgPtr.Value += new Complex((xnrm - xrev) * gm, xcdgb);
-            DPbPtr.Value += new Complex(-gbd + (xnrm - xrev) * gmbs, -xcdgb - xcddb - xcdsb);
-            DPspPtr.Value += new Complex(-gds - xnrm * (gm + gmbs), xcdsb);
-            SPgPtr.Value += new Complex(-(xnrm - xrev) * gm, xcsgb);
-            SPsPtr.Value -= gspr;
-            SPbPtr.Value += new Complex(-gbs - (xnrm - xrev) * gmbs, -xcsgb - xcsdb - xcssb);
-            SPdpPtr.Value += new Complex(-gds - xrev * (gm + gmbs), xcsdb);
+            var m = _bp.Multiplier;
+            GgPtr.Value += new Complex(0.0, m * xcggb);
+            GbPtr.Value += new Complex(0.0, m * (-xcggb - xcgdb - xcgsb));
+            GdpPtr.Value += new Complex(0.0, m * xcgdb);
+            GspPtr.Value += new Complex(0.0, m *xcgsb);
+            BgPtr.Value += new Complex(0.0, m * xcbgb);
+            DdPtr.Value += m * gdpr;
+            SsPtr.Value += m * gspr;
+            BbPtr.Value += new Complex(m * (gbd + gbs), m * (-xcbgb - xcbdb - xcbsb));
+            DPdpPtr.Value += new Complex(m * (gdpr + gds + gbd + xrev * (gm + gmbs)), m * xcddb);
+            SPspPtr.Value += new Complex(m * (gspr + gds + gbs + xnrm * (gm + gmbs)), m * xcssb);
+            DdpPtr.Value -= m * gdpr;
+            SspPtr.Value -= m * gspr;
+            BdpPtr.Value += new Complex(m * -gbd, m * xcbdb);
+            BspPtr.Value += new Complex(m * -gbs, m * xcbsb);
+            DPdPtr.Value -= m * gdpr;
+            DPgPtr.Value += new Complex(m * (xnrm - xrev) * gm, m * xcdgb);
+            DPbPtr.Value += new Complex(m * (-gbd + (xnrm - xrev) * gmbs), m * (-xcdgb - xcddb - xcdsb));
+            DPspPtr.Value += new Complex(m * (-gds - xnrm * (gm + gmbs)), m * xcdsb);
+            SPgPtr.Value += new Complex(m * (-(xnrm - xrev) * gm), m * xcsgb);
+            SPsPtr.Value -= m * gspr;
+            SPbPtr.Value += new Complex(m * (-gbs - (xnrm - xrev) * gmbs), m * (-xcsgb - xcsdb - xcssb));
+            SPdpPtr.Value += new Complex(m * (-gds - xrev * (gm + gmbs)), m * xcsdb);
         }
     }
 }

@@ -14,6 +14,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         /// <summary>
         /// Necessary behaviors and parameters
         /// </summary>
+        private BaseParameters _bp;
         private LoadBehavior _load;
         private TemperatureBehavior _temp;
 
@@ -60,6 +61,9 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
+
+            // Get parameter sets
+            _bp = provider.GetParameterSet<BaseParameters>("entity");
 
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>("entity");
@@ -201,39 +205,40 @@ namespace SpiceSharp.Components.BSIM2Behaviors
             xcbdb = (cbdb - capbd) * omega;
             xcbsb = (cbsb - capbs) * omega;
 
-            GgPtr.Value += new Complex(0.0, xcggb);
-            BbPtr.Value += new Complex(0.0, -xcbgb - xcbdb - xcbsb);
-            DPdpPtr.Value += new Complex(0.0, xcddb);
-            SPspPtr.Value += new Complex(0.0, xcssb);
-            GbPtr.Value += new Complex(0.0, -xcggb - xcgdb - xcgsb);
-            GdpPtr.Value += new Complex(0.0, xcgdb);
-            GspPtr.Value += new Complex(0.0, xcgsb);
-            BgPtr.Value += new Complex(0.0, xcbgb);
-            BdpPtr.Value += new Complex(0.0, xcbdb);
-            BspPtr.Value += new Complex(0.0, xcbsb);
-            DPgPtr.Value += new Complex(0.0, xcdgb);
-            DPbPtr.Value += new Complex(0.0, -xcdgb - xcddb - xcdsb);
-            DPspPtr.Value += new Complex(0.0, xcdsb);
-            SPgPtr.Value += new Complex(0.0, xcsgb);
-            SPbPtr.Value += new Complex(0.0, -xcsgb - xcsdb - xcssb);
-            SPdpPtr.Value += new Complex(0.0, xcsdb);
-            DdPtr.Value += gdpr;
-            SsPtr.Value += gspr;
-            BbPtr.Value += gbd + gbs;
-            DPdpPtr.Value += gdpr + gds + gbd + xrev * (gm + gmbs);
-            SPspPtr.Value += gspr + gds + gbs + xnrm * (gm + gmbs);
-            DdpPtr.Value -= gdpr;
-            SspPtr.Value -= gspr;
-            BdpPtr.Value -= gbd;
-            BspPtr.Value -= gbs;
-            DPdPtr.Value -= gdpr;
-            DPgPtr.Value += (xnrm - xrev) * gm;
-            DPbPtr.Value += -gbd + (xnrm - xrev) * gmbs;
-            DPspPtr.Value += -gds - xnrm * (gm + gmbs);
-            SPgPtr.Value += -(xnrm - xrev) * gm;
-            SPsPtr.Value -= gspr;
-            SPbPtr.Value += -gbs - (xnrm - xrev) * gmbs;
-            SPdpPtr.Value += -gds - xrev * (gm + gmbs);
+            var m = _bp.Multiplier;
+            GgPtr.Value += new Complex(0.0, m * xcggb);
+            BbPtr.Value += new Complex(0.0, m * (-xcbgb - xcbdb - xcbsb));
+            DPdpPtr.Value += new Complex(0.0, m * xcddb);
+            SPspPtr.Value += new Complex(0.0, m * xcssb);
+            GbPtr.Value += new Complex(0.0, m * (-xcggb - xcgdb - xcgsb));
+            GdpPtr.Value += new Complex(0.0, m * xcgdb);
+            GspPtr.Value += new Complex(0.0, m * xcgsb);
+            BgPtr.Value += new Complex(0.0, m * xcbgb);
+            BdpPtr.Value += new Complex(0.0, m * xcbdb);
+            BspPtr.Value += new Complex(0.0, m * xcbsb);
+            DPgPtr.Value += new Complex(0.0, m * xcdgb);
+            DPbPtr.Value += new Complex(0.0, m * (-xcdgb - xcddb - xcdsb));
+            DPspPtr.Value += new Complex(0.0, m * xcdsb);
+            SPgPtr.Value += new Complex(0.0, m * xcsgb);
+            SPbPtr.Value += new Complex(0.0, m * (-xcsgb - xcsdb - xcssb));
+            SPdpPtr.Value += new Complex(0.0, m * xcsdb);
+            DdPtr.Value += m * gdpr;
+            SsPtr.Value += m * gspr;
+            BbPtr.Value += m * (gbd + gbs);
+            DPdpPtr.Value += m * (gdpr + gds + gbd + xrev * (gm + gmbs));
+            SPspPtr.Value += m * (gspr + gds + gbs + xnrm * (gm + gmbs));
+            DdpPtr.Value -= m * gdpr;
+            SspPtr.Value -= m * gspr;
+            BdpPtr.Value -= m * gbd;
+            BspPtr.Value -= m * gbs;
+            DPdPtr.Value -= m * gdpr;
+            DPgPtr.Value += m * ((xnrm - xrev) * gm);
+            DPbPtr.Value += m * (-gbd + (xnrm - xrev) * gmbs);
+            DPspPtr.Value += m * (-gds - xnrm * (gm + gmbs));
+            SPgPtr.Value += m * (-(xnrm - xrev) * gm);
+            SPsPtr.Value -= m * gspr;
+            SPbPtr.Value += m * (-gbs - (xnrm - xrev) * gmbs);
+            SPdpPtr.Value += m * (-gds - xrev * (gm + gmbs));
         }
     }
 }

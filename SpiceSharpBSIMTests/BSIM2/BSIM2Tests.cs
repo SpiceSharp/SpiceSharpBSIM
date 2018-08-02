@@ -39,6 +39,7 @@ namespace SpiceSharpTest.Models
                 new VoltageSource("V1", "g", "0", 0.0),
                 new VoltageSource("V2", "d", "0", 0.0),
                 Create("M1", "d", "g", "0", "0", 10e-6, 1e-6, "mod", "vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0"));
+            ckt.Objects["M1"].SetParameter("m", 3.0);
 
             // Create simulation
             var dc = new DC("dc", new[]
@@ -93,6 +94,8 @@ namespace SpiceSharpTest.Models
                     -1.745120187407013e+02, -1.758686711993065e+02, -1.770986148521515e+02, -1.782662379686020e+02
                 }
             };
+            for (var i = 0; i < references[0].Length; i++)
+                references[0][i] *= 3.0;
 
             // Run simulation
             AnalyzeDC(dc, ckt, exports, references);

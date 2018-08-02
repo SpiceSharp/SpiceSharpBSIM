@@ -39,6 +39,7 @@ namespace SpiceSharpTest.Models
                 new VoltageSource("V1", "g", "0", 0.0),
                 new VoltageSource("V2", "d", "0", 0.0),
                 Create("M1", "d", "g", "0", "0", 100e-6, 100e-6, "mod", "temp=25 muz=600 vdd=5 vfb=-0.3 phi=0.6 k1=0.5 u0=670 x2e=-0.07 mus=1082 n0=0.5 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0"));
+            ckt.Objects["M1"].SetParameter("m", 2.0);
 
             // Create simulation
             var dc = new DC("dc", new[]
@@ -48,7 +49,7 @@ namespace SpiceSharpTest.Models
             });
 
             // Create exports
-            Export<double>[] exports = {new RealPropertyExport(dc, "V2", "i")};
+            Export<double>[] exports = { new RealPropertyExport(dc, "V2", "i") };
 
             // Create references
             double[][] references =
@@ -93,6 +94,8 @@ namespace SpiceSharpTest.Models
                     -1.166787845477011e-01, -1.182962303626534e-01, -1.197156215880946e-01, -1.209369582240246e-01
                 }
             };
+            for (var i = 0; i < references[0].Length; i++)
+                references[0][i] *= 2.0; // Multiplier effect
 
             // Run simulation
             AnalyzeDC(dc, ckt, exports, references);
@@ -220,8 +223,7 @@ namespace SpiceSharpTest.Models
         public void When_BSIM1SmallSignal_Expect_Reference()
         {
             // Build the circuit
-            var ckt = new Circuit();
-            ckt.Objects.Add(
+            var ckt = new Circuit(
                 new VoltageSource("Vsupply", "vdd", "0", 3.3),
                 new VoltageSource("V1", "in", "0", 0.0),
                 new Resistor("R1", "vdd", "out", 10.0e3),

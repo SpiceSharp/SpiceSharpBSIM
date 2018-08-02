@@ -30,6 +30,8 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		public GivenParameter<double> DrainSquares { get; } = new GivenParameter<double>(1);
 		[ParameterName("off"), ParameterInfo("Device is initially off")]
 		public bool Off { get; set; }
+	    [ParameterName("m"), ParameterInfo("Multiplier")]
+	    public double Multiplier { get; set; } = 1.0;
 		[ParameterName("vbs"), ParameterInfo("Initial B-S voltage")]
 		public GivenParameter<double> IcVBS { get; } = new GivenParameter<double>();
 		[ParameterName("vds"), ParameterInfo("Initial D-S voltage")]

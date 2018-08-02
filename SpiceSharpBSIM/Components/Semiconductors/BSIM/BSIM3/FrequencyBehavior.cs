@@ -496,64 +496,57 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             xcbdb = (cbdb - capbd) * omega;
             xcbsb = (cbsb - capbs) * omega;
 
-            GgPtr.Value += new Complex(0.0, xcggb);
-            BbPtr.Value -= new Complex(0.0, xcbgb + xcbdb + xcbsb);
-            DPdpPtr.Value += new Complex(0.0, xcddb + gdsi + RevSumi);
-            SPspPtr.Value += new Complex(0.0, xcssb + gdsi + FwdSumi);
-            GbPtr.Value -= new Complex(0.0, xcggb + xcgdb + xcgsb);
-            GdpPtr.Value += new Complex(0.0, xcgdb);
-            GspPtr.Value += new Complex(0.0, xcgsb);
-            BgPtr.Value += new Complex(0.0, xcbgb);
-            BdpPtr.Value += new Complex(0.0, xcbdb);
-            BspPtr.Value += new Complex(0.0, xcbsb);
-            DPgPtr.Value += new Complex(0.0, xcdgb + Gmi);
-            DPbPtr.Value -= new Complex(0.0, xcdgb + xcddb + xcdsb + Gmbsi);
-            DPspPtr.Value += new Complex(0.0, xcdsb - gdsi - FwdSumi);
-            SPgPtr.Value += new Complex(0.0, xcsgb - Gmi);
-            SPbPtr.Value -= new Complex(0.0, xcsgb + xcsdb + xcssb - Gmbsi);
-            SPdpPtr.Value += new Complex(0.0, xcsdb - gdsi - RevSumi);
+            var m = _bp.Multiplier;
+            GgPtr.Value += new Complex(0.0, m * (xcggb));
+            BbPtr.Value -= new Complex(0.0, m * (xcbgb + xcbdb + xcbsb));
+            DPdpPtr.Value += new Complex(0.0, m * (xcddb + gdsi + RevSumi));
+            SPspPtr.Value += new Complex(0.0, m * (xcssb + gdsi + FwdSumi));
+            GbPtr.Value -= new Complex(0.0, m * (xcggb + xcgdb + xcgsb));
+            GdpPtr.Value += new Complex(0.0, m * (xcgdb));
+            GspPtr.Value += new Complex(0.0, m * (xcgsb));
+            BgPtr.Value += new Complex(0.0, m * (xcbgb));
+            BdpPtr.Value += new Complex(0.0, m * (xcbdb));
+            BspPtr.Value += new Complex(0.0, m * (xcbsb));
+            DPgPtr.Value += new Complex(0.0, m * (xcdgb + Gmi));
+            DPbPtr.Value -= new Complex(0.0, m * (xcdgb + xcddb + xcdsb + Gmbsi));
+            DPspPtr.Value += new Complex(0.0, m * (xcdsb - gdsi - FwdSumi));
+            SPgPtr.Value += new Complex(0.0, m * (xcsgb - Gmi));
+            SPbPtr.Value -= new Complex(0.0, m * (xcsgb + xcsdb + xcssb - Gmbsi));
+            SPdpPtr.Value += new Complex(0.0, m * (xcsdb - gdsi - RevSumi));
 
-            DdPtr.Value += gdpr;
-            SsPtr.Value += gspr;
-            BbPtr.Value += gbd + gbs - _load.Gbbs;
-            DPdpPtr.Value += gdpr + gds + gbd + RevSum + xcddbi
-                              + dxpart * xgtd + T1 * ddxpart_dVd + gbdpdp;
-            SPspPtr.Value += gspr + gds + gbs + FwdSum + xcssbi
-                              + sxpart * xgts + T1 * dsxpart_dVs + gbspsp;
+            DdPtr.Value += m * (gdpr);
+            SsPtr.Value += m * (gspr);
+            BbPtr.Value += m * (gbd + gbs - _load.Gbbs);
+            DPdpPtr.Value += m * (gdpr + gds + gbd + RevSum + xcddbi + dxpart * xgtd + T1 * ddxpart_dVd + gbdpdp);
+            SPspPtr.Value += m * (gspr + gds + gbs + FwdSum + xcssbi + sxpart * xgts + T1 * dsxpart_dVs + gbspsp);
 
-            DdpPtr.Value -= gdpr;
-            SspPtr.Value -= gspr;
+            DdpPtr.Value -= m * (gdpr);
+            SspPtr.Value -= m * (gspr);
 
-            BgPtr.Value -= _load.Gbgs;
-            BdpPtr.Value -= gbd - gbbdp;
-            BspPtr.Value -= gbs - gbbsp;
+            BgPtr.Value -= m * (_load.Gbgs);
+            BdpPtr.Value -= m * (gbd - gbbdp);
+            BspPtr.Value -= m * (gbs - gbbsp);
 
-            DPdPtr.Value -= gdpr;
-            DPgPtr.Value += Gm + dxpart * xgtg + T1 * ddxpart_dVg
-                             + gbdpg + xcdgbi;
-            DPbPtr.Value -= gbd - Gmbs - dxpart * xgtb
-                             - T1 * ddxpart_dVb - gbdpb - xcdbbi;
-            DPspPtr.Value -= gds + FwdSum - dxpart * xgts
-                                           - T1 * ddxpart_dVs - gbdpsp - xcdsbi;
+            DPdPtr.Value -= m * (gdpr);
+            DPgPtr.Value += m * (Gm + dxpart * xgtg + T1 * ddxpart_dVg + gbdpg + xcdgbi);
+            DPbPtr.Value -= m * (gbd - Gmbs - dxpart * xgtb - T1 * ddxpart_dVb - gbdpb - xcdbbi);
+            DPspPtr.Value -= m * (gds + FwdSum - dxpart * xgts - T1 * ddxpart_dVs - gbdpsp - xcdsbi);
 
-            SPgPtr.Value -= Gm - sxpart * xgtg - T1 * dsxpart_dVg
-                             - gbspg - xcsgbi;
-            SPsPtr.Value -= gspr;
-            SPbPtr.Value -= gbs + Gmbs - sxpart * xgtb
-                                        - T1 * dsxpart_dVb - gbspb - xcsbbi;
-            SPdpPtr.Value -= gds + RevSum - sxpart * xgtd
-                                           - T1 * dsxpart_dVd - gbspdp - xcsdbi;
+            SPgPtr.Value -= m * (Gm - sxpart * xgtg - T1 * dsxpart_dVg - gbspg - xcsgbi);
+            SPsPtr.Value -= m * (gspr);
+            SPbPtr.Value -= m * (gbs + Gmbs - sxpart * xgtb - T1 * dsxpart_dVb - gbspb - xcsbbi);
+            SPdpPtr.Value -= m * (gds + RevSum - sxpart * xgtd - T1 * dsxpart_dVd - gbspdp - xcsdbi);
 
-            GgPtr.Value -= xgtg - xcggbi;
-            GbPtr.Value -= xgtb - xcgbbi;
-            GdpPtr.Value -= xgtd - xcgdbi;
-            GspPtr.Value -= xgts - xcgsbi;
+            GgPtr.Value -= m * (xgtg - xcggbi);
+            GbPtr.Value -= m * (xgtb - xcgbbi);
+            GdpPtr.Value -= m * (xgtd - xcgdbi);
+            GspPtr.Value -= m * (xgts - xcgsbi);
 
             if (_bp.NqsMod > 0)
             {
                 if (_bp.AcnqsMod > 0)
                 {
-                    QqPtr.Value += 1.0;
+                    QqPtr.Value += m;
                     QgPtr.Value += 0.0;
                     QdpPtr.Value += 0.0;
                     QspPtr.Value += 0.0;
@@ -566,22 +559,22 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 }
                 else
                 {
-                    QqPtr.Value += new Complex(0.0, omega * ScalingFactor);
-                    QgPtr.Value -= new Complex(0.0, xcqgb);
-                    QdpPtr.Value -= new Complex(0.0, xcqdb);
-                    QspPtr.Value -= new Complex(0.0, xcqsb);
-                    QbPtr.Value -= new Complex(0.0, xcqbb);
+                    QqPtr.Value += new Complex(0.0, m * (omega * ScalingFactor));
+                    QgPtr.Value -= new Complex(0.0, m * (xcqgb));
+                    QdpPtr.Value -= new Complex(0.0, m * (xcqdb));
+                    QspPtr.Value -= new Complex(0.0, m * (xcqsb));
+                    QbPtr.Value -= new Complex(0.0, m * (xcqbb));
 
-                    QqPtr.Value += _load.Gtau;
+                    QqPtr.Value += m * (_load.Gtau);
 
-                    DPqPtr.Value += dxpart * _load.Gtau;
-                    SPqPtr.Value += sxpart * _load.Gtau;
-                    GqPtr.Value -= _load.Gtau;
+                    DPqPtr.Value += m * (dxpart * _load.Gtau);
+                    SPqPtr.Value += m * (sxpart * _load.Gtau);
+                    GqPtr.Value -= m * (_load.Gtau);
 
-                    QgPtr.Value += xgtg;
-                    QdpPtr.Value += xgtd;
-                    QspPtr.Value += xgts;
-                    QbPtr.Value += xgtb;
+                    QgPtr.Value += m * (xgtg);
+                    QdpPtr.Value += m * (xgtd);
+                    QspPtr.Value += m * (xgts);
+                    QbPtr.Value += m * (xgtb);
                 }
             }
         }

@@ -32,11 +32,10 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 		public GivenParameter<double> DrainSquares { get; } = new GivenParameter<double>();
 		[ParameterName("off"), ParameterInfo("Device is initially off")]
 		public bool Off { get; set; }
-		[ParameterInfo("")]
+	    [ParameterName("m"), ParameterInfo("Multiplier")]
+	    public double Multiplier { get; set; } = 1.0;
 		public GivenParameter<double> IcVBS { get; } = new GivenParameter<double>();
-		[ParameterInfo("")]
 		public GivenParameter<double> IcVDS { get; } = new GivenParameter<double>();
-		[ParameterInfo("")]
 		public GivenParameter<double> IcVGS { get; } = new GivenParameter<double>();
 		[ParameterName("nqsmod"), ParameterInfo("Non-quasi-static model selector")]
 		public GivenParameter<int> NqsMod { get; } = new GivenParameter<int>();
