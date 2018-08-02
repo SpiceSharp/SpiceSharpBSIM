@@ -269,7 +269,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        double cqbulk;
 	        double cqdrn;
 	        double vt0;
-	        double[] args = new double[7];
+	        double[] args = new double[8];
 	        var pParam = _temp.Param;
 	        var state = simulation.RealState;
 
