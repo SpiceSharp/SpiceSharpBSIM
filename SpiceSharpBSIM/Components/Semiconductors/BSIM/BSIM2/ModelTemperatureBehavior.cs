@@ -29,14 +29,13 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         /// Size-dependent parameters for this model
         /// </summary>
         public Dictionary<Tuple<double, double>, BSIM2SizeDependParams> Params { get; } = new Dictionary<Tuple<double, double>, BSIM2SizeDependParams>();
-		
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		public ModelTemperatureBehavior(Identifier name) : base(name)
-		{
-			
-		}
+
+	    /// <summary>
+	    /// Constructor
+	    /// </summary>
+	    public ModelTemperatureBehavior(Identifier name) : base(name)
+	    {
+	    }
 		
 		/// <summary>
 		/// Setup the behavior
@@ -45,7 +44,9 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
-			_mbp = provider.GetParameterSet<ModelBaseParameters>("model");
+
+            // Get parameter sets
+			_mbp = provider.GetParameterSet<ModelBaseParameters>("entity");
 		}
 		
 		/// <summary>

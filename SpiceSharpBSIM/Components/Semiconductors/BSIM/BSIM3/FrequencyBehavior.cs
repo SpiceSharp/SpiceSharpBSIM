@@ -69,6 +69,9 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
         public override void Setup(SetupDataProvider provider)
         {
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
+
             // Get parameters
             _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
             _bp = provider.GetParameterSet<BaseParameters>("entity");
@@ -76,8 +79,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>("entity");
             _load = provider.GetBehavior<LoadBehavior>("entity");
-
-            base.Setup(provider);
         }
 
         /// <summary>

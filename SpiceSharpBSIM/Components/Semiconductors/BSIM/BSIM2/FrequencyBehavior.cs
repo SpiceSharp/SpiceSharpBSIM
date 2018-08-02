@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
@@ -57,11 +58,12 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         /// <param name="provider">Provider</param>
         public override void Setup(SetupDataProvider provider)
         {
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
+
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>("entity");
             _load = provider.GetBehavior<LoadBehavior>("entity");
-            
-            base.Setup(provider);
         }
 
         /// <summary>

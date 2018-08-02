@@ -64,7 +64,8 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <param name="provider">Data provider</param>
         public override void Setup(SetupDataProvider provider)
         {
-            base.Setup(provider);
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
 
             // Get parameters
             _mbp = provider.GetParameterSet<ModelBaseParameters>("model");

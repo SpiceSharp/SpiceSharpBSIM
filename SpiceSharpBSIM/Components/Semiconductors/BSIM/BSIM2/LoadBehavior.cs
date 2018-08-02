@@ -105,9 +105,13 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
+
+            // Get parameter sets
 			_mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-			_bp = provider.GetParameterSet<BaseParameters>("instance");
-			_temp = provider.GetBehavior<TemperatureBehavior>("instance");
+			_bp = provider.GetParameterSet<BaseParameters>("entity");
+
+            // Get behaviors
+			_temp = provider.GetBehavior<TemperatureBehavior>("entity");
 			_modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
 		}
 		
