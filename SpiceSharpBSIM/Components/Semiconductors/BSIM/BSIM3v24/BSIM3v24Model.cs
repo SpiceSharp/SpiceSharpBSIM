@@ -1,19 +1,19 @@
-﻿using SpiceSharp.Components.BSIM1Behaviors;
+﻿using SpiceSharp.Components.BSIM3v24Behaviors;
 
 namespace SpiceSharp.Components
 {
     /// <summary>
-    /// Model for the <see cref="BSIM1"/> component
+    /// Model for a <see cref="BSIM3v24"/>
     /// </summary>
-    public class BSIM1Model : Model
+    public class BSIM3v24Model : Model
     {
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="name">Name</param>
-        public BSIM1Model(Identifier name) : base(name)
+        /// <param name="name"></param>
+        public BSIM3v24Model(Identifier name) : base(name)
         {
-            // Add parameters
+            // Add parameter sets
             ParameterSets.Add(new ModelBaseParameters());
 
             // Add behaviors

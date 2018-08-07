@@ -1,5 +1,4 @@
-﻿using SpiceSharp.Behaviors;
-using SpiceSharp.Components.BSIM2Behaviors;
+﻿using SpiceSharp.Components.BSIM2Behaviors;
 
 namespace SpiceSharp.Components
 {
@@ -18,7 +17,7 @@ namespace SpiceSharp.Components
             ParameterSets.Add(new ModelBaseParameters());
 
             // Add behaviors
-            Behaviors.Add(typeof(BaseTemperatureBehavior), () => new ModelTemperatureBehavior(Name));
+            Behaviors.Add(typeof(ModelTemperatureBehavior), () => new ModelTemperatureBehavior(Name));
         }
     }
 }

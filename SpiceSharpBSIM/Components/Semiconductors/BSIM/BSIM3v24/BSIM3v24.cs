@@ -1,12 +1,12 @@
 ﻿using SpiceSharp.Attributes;
-using SpiceSharp.Components.BSIM3Behaviors;
+using SpiceSharp.Components.BSIM3v24Behaviors;
 
 namespace SpiceSharp.Components
 {
     /// <summary>
-    /// BSIM3 model transistor
+    /// BSIM 3.2.4
     /// </summary>
-    public class BSIM3 : Component
+    public class BSIM3v24 : Component
     {
         /// <summary>
         /// Set the model
@@ -24,7 +24,7 @@ namespace SpiceSharp.Components
         /// Constructor
         /// </summary>
         /// <param name="name">Name</param>
-        public BSIM3(Identifier name)
+        public BSIM3v24(Identifier name)
             : base(name, BSIM3PinCount)
         {
             // Add parameters
@@ -46,7 +46,7 @@ namespace SpiceSharp.Components
         /// <param name="gate">Gate</param>
         /// <param name="source">Source</param>
         /// <param name="bulk">Bulk</param>
-        public BSIM3(Identifier name, Identifier drain, Identifier gate, Identifier source, Identifier bulk)
+        public BSIM3v24(Identifier name, Identifier drain, Identifier gate, Identifier source, Identifier bulk)
             : base(name, BSIM3PinCount)
         {
             // Add parameters

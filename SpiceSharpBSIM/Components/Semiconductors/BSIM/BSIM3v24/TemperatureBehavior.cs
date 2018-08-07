@@ -2,11 +2,11 @@ using System;
 using System.IO;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
-namespace SpiceSharp.Components.BSIM3Behaviors
+namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
 	
 	/// <summary>
-	/// Temperature behavior for a <see cref="BSIM3" />
+	/// Temperature behavior for a <see cref="BSIM3v24" />
 	/// </summary>
 	public class TemperatureBehavior : BaseTemperatureBehavior
 	{
@@ -21,16 +21,11 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Size dependent parameters
         /// </summary>
-	    public BSIM3SizeDependParams Param { get; private set; }
-
+        public BSIM3SizeDependParams Param { get; private set; }
+		
 		/// <summary>
 		/// Properties
 		/// </summary>
-		public double Vth0 { get; private set; }
-		public double Vfb { get; private set; }
-		public double Vfbzb { get; private set; }
-		public double U0temp { get; private set; }
-		public double Tconst { get; private set; }
 		public double DrainConductance { get; private set; }
 		public double SourceConductance { get; private set; }
 		public double Cgso { get; set; }
@@ -45,7 +40,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 		/// </summary>
 		public TemperatureBehavior(Identifier name) : base(name)
 		{
-			
 		}
 		
 		/// <summary>
@@ -56,7 +50,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
 			_modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
-			_bp = provider.GetParameterSet<BaseParameters>("entity");
+			_bp = provider.GetParameterSet<BaseParameters>("instance");
 			_mbp = provider.GetParameterSet<ModelBaseParameters>("model");
 		}
 		
@@ -65,13 +59,13 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 		/// </summary>
 		public override void Temperature(BaseSimulation simulation)
 		{
-			double tmp, tmp1, tmp2, tmp3, t0 = 0.0, t1, t2, t3, t4, t5, ldrn, wdrn, inv_L, inv_W, inv_LW, nvtm, sourceSatCurrent, drainSatCurrent;
+			double tmp, tmp1, tmp2, tmp3, t0, t1, t2, t3, t4, t5, ldrn, wdrn, inv_L, inv_W, inv_LW, nvtm, sourceSatCurrent, drainSatCurrent;
 
 		    var size = new Tuple<double, double>(_bp.Width, _bp.Length);
-		    if (!_modelTemp.SizeDependParams.TryGetValue(size, out var pParam))
-            {
-                pParam = new BSIM3SizeDependParams();
-                Param = pParam;
+            if (!_modelTemp.SizeDependParams.TryGetValue(size, out var pParam))
+			{
+				pParam = new BSIM3SizeDependParams();
+			    Param = pParam;
                 _modelTemp.SizeDependParams.Add(size, pParam);
 				ldrn = _bp.Length;
 				wdrn = _bp.Width;
@@ -89,18 +83,26 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 				pParam.BSIM3dw = _mbp.Wint + tmp1;
 				tmp2 = _mbp.Wlc / t2 + _mbp.Wwc / t3 + _mbp.Wwlc / (t2 * t3);
 				pParam.BSIM3dwc = _mbp.Dwc + tmp2;
-				pParam.BSIM3leff = _bp.Length + _mbp.Xl - 2.0 * pParam.BSIM3dl;
+				pParam.BSIM3leff = _bp.Length - 2.0 * pParam.BSIM3dl;
 				if (pParam.BSIM3leff <= 0.0)
-                    throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length <= 0".FormatString(_modelTemp.Name, Name));
-				pParam.BSIM3weff = _bp.Width + _mbp.Xw - 2.0 * pParam.BSIM3dw;
+				{
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length <= 0".FormatString(_modelTemp.Name, Name));
+				}
+				pParam.BSIM3weff = _bp.Width - 2.0 * pParam.BSIM3dw;
 				if (pParam.BSIM3weff <= 0.0)
-                    throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width <= 0".FormatString(_modelTemp.Name, Name));
-				pParam.BSIM3leffCV = _bp.Length + _mbp.Xl - 2.0 * pParam.BSIM3dlc;
+				{
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width <= 0".FormatString(_modelTemp.Name, Name));
+				}
+				pParam.BSIM3leffCV = _bp.Length - 2.0 * pParam.BSIM3dlc;
 				if (pParam.BSIM3leffCV <= 0.0)
-                    throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length for C-V <= 0".FormatString(_modelTemp.Name, Name));
-				pParam.BSIM3weffCV = _bp.Width + _mbp.Xw - 2.0 * pParam.BSIM3dwc;
+				{
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length for C-V <= 0".FormatString(_modelTemp.Name, Name));
+				}
+				pParam.BSIM3weffCV = _bp.Width - 2.0 * pParam.BSIM3dwc;
 				if (pParam.BSIM3weffCV <= 0.0)
-                    throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width for C-V <= 0".FormatString(_modelTemp.Name, Name));
+				{
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width for C-V <= 0".FormatString(_modelTemp.Name, Name));
+				}
 				if (_mbp.BinUnit == 1)
 				{
 					inv_L = 1.0e-6 / pParam.BSIM3leff;
@@ -207,7 +209,9 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 				pParam.BSIM3vsattemp = pParam.BSIM3vsat - pParam.BSIM3at * t0;
 				pParam.BSIM3rds0 = (pParam.BSIM3rdsw + pParam.BSIM3prt * t0) / Math.Pow(pParam.BSIM3weff * 1E6, pParam.BSIM3wr);
 				if (Check())
-                    throw new CircuitException("Fatal error(s) detected during BSIM3V3.3 parameter checking for {0} in model {1}".FormatString(Name, _modelTemp.Name));
+				{
+					throw new CircuitException("Fatal error(s) detected during BSIM3V3.2 parameter checking for {0} in model {1}".FormatString(_modelTemp.Name, Name));
+				}
 				pParam.BSIM3cgdo = (_mbp.Cgdo + pParam.BSIM3cf) * pParam.BSIM3weffCV;
 				pParam.BSIM3cgso = (_mbp.Cgso + pParam.BSIM3cf) * pParam.BSIM3weffCV;
 				pParam.BSIM3cgbo = _mbp.Cgbo * pParam.BSIM3leffCV;
@@ -228,32 +232,30 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 				pParam.BSIM3cdep0 = Math.Sqrt(1.60219e-19 * 1.03594e-10 * pParam.BSIM3npeak * 1.0e6 / 2.0 / pParam.BSIM3phi);
 				pParam.BSIM3ldeb = Math.Sqrt(1.03594e-10 * _modelTemp.Vtm0 / (1.60219e-19 * pParam.BSIM3npeak * 1.0e6)) / 3.0;
 				pParam.BSIM3acde *= Math.Pow(pParam.BSIM3npeak / 2.0e16, -0.25);
-                if (_mbp.K1.Given || _mbp.K2.Given)
-                {
-                    if (!_mbp.K1.Given)
-                    {
-                        CircuitWarning.Warning(this, "Warning: k1 should be specified with k2.");
-                        pParam.BSIM3k1 = 0.53;
-                    }
-
-                    if (!_mbp.K2.Given)
-                    {
-                        CircuitWarning.Warning(this, "Warning: k2 should be specified with k1.");
-                        pParam.BSIM3k2 = -0.0186;
-                    }
-
-                    if (_mbp.Nsub.Given)
-                        CircuitWarning.Warning(this, "Warning: nsub is ignored because k1 or k2 is given.");
-                    if (_mbp.Xt.Given)
-                        CircuitWarning.Warning(this, "Warning: xt is ignored because k1 or k2 is given.");
-                    if (_mbp.Vbx.Given)
-                        CircuitWarning.Warning(this, "Warning: vbx is ignored because k1 or k2 is given.");
-                    if (_mbp.Gamma1.Given)
-                        CircuitWarning.Warning(this, "Warning: gamma1 is ignored because k1 or k2 is given.");
-                    if (_mbp.Gamma2.Given)
-                        CircuitWarning.Warning(this, "Warning: gamma2 is ignored because k1 or k2 is given.");
-                }
-                else
+				if (_mbp.K1.Given || _mbp.K2.Given)
+				{
+					if (!_mbp.K1.Given)
+					{
+					    CircuitWarning.Warning(this, "Warning: k1 should be specified with k2.");
+						pParam.BSIM3k1 = 0.53;
+					}
+					if (!_mbp.K2.Given)
+					{
+					    CircuitWarning.Warning(this, "Warning: k2 should be specified with k1.");
+						pParam.BSIM3k2 = -0.0186;
+					}
+				    if (_mbp.Nsub.Given)
+				        CircuitWarning.Warning(this, "Warning: nsub is ignored because k1 or k2 is given.");
+				    if (_mbp.Xt.Given)
+				        CircuitWarning.Warning(this, "Warning: xt is ignored because k1 or k2 is given.");
+				    if (_mbp.Vbx.Given)
+				        CircuitWarning.Warning(this, "Warning: vbx is ignored because k1 or k2 is given.");
+				    if (_mbp.Gamma1.Given)
+				        CircuitWarning.Warning(this, "Warning: gamma1 is ignored because k1 or k2 is given.");
+				    if (_mbp.Gamma2.Given)
+				        CircuitWarning.Warning(this, "Warning: gamma2 is ignored because k1 or k2 is given.");
+				}
+				else
 				{
 					if (!_mbp.Vbx.Given)
 						pParam.BSIM3vbx = pParam.BSIM3phi - 7.7348e-4 * pParam.BSIM3npeak * pParam.BSIM3xt * pParam.BSIM3xt;
@@ -343,27 +345,18 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 				tmp3 = _mbp.B3Type * pParam.BSIM3vth0 - t2 - t3 + pParam.BSIM3k3 * t4 + t5;
 				pParam.BSIM3vfbzb = tmp3 - pParam.BSIM3phi - pParam.BSIM3k1 * pParam.BSIM3sqrtPhi;
 			}
-
-		    Param = pParam;
-			Vth0 = Param.BSIM3vth0 + _bp.Delvto;
-			Vfb = Param.BSIM3vfb + _mbp.B3Type * _bp.Delvto;
-			Vfbzb = Param.BSIM3vfbzb + _mbp.B3Type * _bp.Delvto;
-			U0temp = Param.BSIM3u0temp * _bp.Mulu0;
-			Tconst = U0temp * Param.BSIM3elm / (_mbp.Cox * Param.BSIM3weffCV * Param.BSIM3leffCV * t0);
-
-		    var drainResistance = _mbp.SheetResistance * _bp.DrainSquares;
-		    var sourceResistance = _mbp.SheetResistance * _bp.SourceSquares;
-
-			if (drainResistance > 0.0)
-				DrainConductance = 1.0 / drainResistance;
+			DrainConductance = _mbp.SheetResistance * _bp.DrainSquares;
+			if (DrainConductance > 0.0)
+				DrainConductance = 1.0 / DrainConductance;
 			else
 				DrainConductance = 0.0;
-			if (sourceResistance > 0.0)
-				SourceConductance = 1.0 / sourceResistance;
+			SourceConductance = _mbp.SheetResistance * _bp.SourceSquares;
+			if (SourceConductance > 0.0)
+				SourceConductance = 1.0 / SourceConductance;
 			else
 				SourceConductance = 0.0;
-			Cgso = Param.BSIM3cgso;
-			Cgdo = Param.BSIM3cgdo;
+			Cgso = pParam.BSIM3cgso;
+			Cgdo = pParam.BSIM3cgdo;
 			nvtm = _modelTemp.Vtm * _mbp.JctEmissionCoeff;
 			if (_bp.SourceArea <= 0.0 && _bp.SourcePerimeter <= 0.0)
 			{
@@ -402,11 +395,11 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             var fatal = false;
             using (var sw = new StreamWriter(_mbp.CheckPath))
             {
-                sw.WriteLine("BSIM3v3.3.0 Parameter Checking.");
-                if (_mbp.Version != "3.3.0" && _mbp.Version != "3.30" && _mbp.Version != "3.3")
+                sw.WriteLine("BSIM3v3.2.4 Parameter Checking.");
+                if (_mbp.Version != "3.2.4" && _mbp.Version != "3.24")
                 {
-                    sw.WriteLine("Warning: This model is BSIM3v3.3.0; you specified a wrong version number.");
-                    CircuitWarning.Warning(this, "Warning: This model is BSIM3v3.3.0; you specified a wrong version number.");
+                    sw.WriteLine("Warning: This model is BSIM3v3.2.4; you specified a wrong version number.");
+                    CircuitWarning.Warning(this, "Warning: This model is BSIM3v3.2.4; you specified a wrong version number.");
                 }
                 sw.WriteLine("Model = {0}".FormatString(_modelTemp.Name));
 
@@ -428,14 +421,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 {
                     sw.WriteLine("Fatal: Toxm = {0} is not positive.".FormatString(_mbp.Toxm));
                     CircuitWarning.Warning(this, "Fatal: Toxm = {0} is not positive.".FormatString(_mbp.Toxm));
-                    fatal = true;
-                }
-
-                if (_mbp.Lintnoi > Param.BSIM3leff / 2)
-                {
-                    sw.WriteLine("Fatal: Lintnoi = {0} is too large - Leff for noise is negative.".FormatString(_mbp.Lintnoi));
-                    CircuitWarning.Warning(this,
-                        "Fatal: Lintnoi = {0} is too large - Leff for noise is negative.".FormatString(_mbp.Lintnoi));
                     fatal = true;
                 }
 
@@ -668,7 +653,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                         CircuitWarning.Warning(this, "Warning: Nsub = {0} may be too large.".FormatString(Param.BSIM3nsub));
                     }
 
-                    if ((Param.BSIM3ngate > 0.0) && (Param.BSIM3ngate <= 1.0e18))
+                    if (Param.BSIM3ngate > 0.0 && Param.BSIM3ngate <= 1.0e18)
                     {
                         sw.WriteLine("Warning: Ngate = {0} is less than 1.E18cm^-3.".FormatString(Param.BSIM3ngate));
                         CircuitWarning.Warning(this, "Warning: Ngate = {0} is less than 1.E18cm^-3.".FormatString(Param.BSIM3ngate));
@@ -739,10 +724,10 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                         Param.BSIM3rdsw = 0.0;
                         Param.BSIM3rds0 = 0.0;
                     }
-                    if (Param.BSIM3rds0 < 0.0)
+                    else if (Param.BSIM3rds0 < 0.0 && Param.BSIM3rds0 < 0.001)
                     {
                         sw.WriteLine("Warning: Rds at current temperature = {0} is negative. Set to zero.".FormatString(Param.BSIM3rds0));
-                        CircuitWarning.Warning(this, "Warning: Rds at current temperature = {0} is negative. Set to zero.".FormatString(Param.BSIM3rds0));
+                        CircuitWarning.Warning(this, "Warning: Rds at current temperature = {0} is less than 0.001 ohm. Set to zero.".FormatString(Param.BSIM3rds0));
                         Param.BSIM3rds0 = 0.0;
                     }
 

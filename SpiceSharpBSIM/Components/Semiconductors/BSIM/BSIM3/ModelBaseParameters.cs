@@ -861,7 +861,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         public double B3Type { get; private set; } = 1.0;
         public double Cox { get; private set; }
 
-        [ParameterName("tnom"), ParameterInfo("parameter measurement temperature")]
+        [ParameterName("tnom"), ParameterInfo("Parameter measurement temperature")]
         public double TnomCelsius
         {
             get => Tnom.Value - Circuit.CelsiusKelvin;
@@ -870,14 +870,14 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         public GivenParameter<double> Tnom { get; } = new GivenParameter<double>(300.15);
 
         [ParameterName("nmos"), ParameterInfo("Flag to indicate NMOS")]
-        public void SetNmos(bool flag)
+        public void SetNmos(bool flag = true)
         {
             if (flag)
                 B3Type = 1.0;
         }
 
         [ParameterName("pmos"), ParameterInfo("Flag to indicate PMOS")]
-        public void SetPmos(bool flag)
+        public void SetPmos(bool flag = true)
         {
             if (flag)
                 B3Type = -1.0;
@@ -891,6 +891,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         {
             var clone = (ModelBaseParameters) base.DeepClone();
             clone.B3Type = B3Type;
+            clone.Cox = Cox;
             return clone;
         }
 

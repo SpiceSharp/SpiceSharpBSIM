@@ -3,10 +3,10 @@ using SpiceSharp.Behaviors;
 using SpiceSharp.Components.NoiseSources;
 using SpiceSharp.Simulations;
 
-namespace SpiceSharp.Components.BSIM3Behaviors
+namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
     /// <summary>
-    /// Noise behavior for a <see cref="BSIM3"/>
+    /// Noise behavior for a <see cref="BSIM3v24"/>
     /// </summary>
     public class NoiseBehavior : BaseNoiseBehavior, IConnectedBehavior
     {
@@ -33,7 +33,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             new NoiseThermal("rs", 1, 5),
             new NoiseThermal("id", 4, 5),
             new NoiseGain("1overf", 4, 5)
-            );
+        );
 
         /// <summary>
         /// Constructor
@@ -101,15 +101,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             {
                 case 1:
                 case 3:
-                    TransistorNoise.Generators[2]
-                        .SetCoefficients(2.0 * Math.Abs(_load.Gm + _load.Gds + _load.Gmbs) / 3.0 * m);
-                    break;
-                case 5:
-                case 6:
-                    vds = Math.Min(_load.Vds, _load.Vdsat);
-                    TransistorNoise.Generators[2]
-                        .SetCoefficients((3.0 - vds / _load.Vdsat) * Math.Abs(_load.Gm + _load.Gds + _load.Gmbs) / 3.0 *
-                                         m);
+                    TransistorNoise.Generators[2].SetCoefficients(2.0 / 3.0 * Math.Abs(_load.Gm + _load.Gds + _load.Gmbs));
                     break;
                 case 2:
                 case 4:
@@ -127,7 +119,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             {
                 case 1:
                 case 4:
-                case 5:
                     TransistorNoise.Generators[3]
                         .SetCoefficients(
                             _mbp.Kf * Math.Exp(_mbp.Af * Math.Log(Math.Max(Math.Abs(_load.Cd), N_MINLOG))) /
@@ -135,7 +126,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                     break;
                 case 2:
                 case 3:
-                case 6:
                     vds = _load.Vds;
                     if (vds < 0.0)
                         vds = -vds;
@@ -168,8 +158,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             var pParam = _temp.Param;
             var cd = Math.Abs(_load.Cd);
-            var leff = pParam.BSIM3leff - 2.0 * _mbp.Lintnoi;
-            var leffsq = leff * leff;
             var esat = 2.0 * pParam.BSIM3vsattemp / _load.Ueff;
             if (_mbp.Em <= 0.0)
                 delClm = 0.0;
@@ -177,12 +165,11 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             {
                 var t0 = ((vds - _load.Vdseff) / pParam.BSIM3litl + _mbp.Em) / esat;
                 delClm = pParam.BSIM3litl * Math.Log(Math.Max(t0, N_MINLOG));
-                if (delClm < 0.0) delClm = 0.0; /* bugfix */
             }
 
             var effFreq = Math.Pow(freq, _mbp.Ef);
             var t1 = Circuit.Charge * Circuit.Charge * 8.62e-5 * cd * temp * _load.Ueff;
-            var t2 = 1.0e8 * effFreq * _load.Abulk * _mbp.Cox * leffsq;
+            var t2 = 1.0e8 * effFreq * _load.Abulk * _mbp.Cox;
             var n0 = _mbp.Cox * _load.Vgsteff / Circuit.Charge;
             var nl = _mbp.Cox * _load.Vgsteff * (1.0 - _load.AbovVgst2Vtm * _load.Vdseff) / Circuit.Charge;
 
@@ -191,7 +178,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             var t5 = _mbp.OxideTrapDensityC * 0.5 * (n0 * n0 - nl * nl);
 
             var t6 = 8.62e-5 * temp * cd * cd;
-            var t7 = 1.0e8 * effFreq * leffsq * pParam.BSIM3weff;
+            var t7 = 1.0e8 * effFreq * pParam.BSIM3leff * pParam.BSIM3leff * pParam.BSIM3weff;
             var t8 = _mbp.OxideTrapDensityA + _mbp.OxideTrapDensityB * nl + _mbp.OxideTrapDensityC * nl * nl;
             var t9 = (nl + 2.0e14) * (nl + 2.0e14);
 
