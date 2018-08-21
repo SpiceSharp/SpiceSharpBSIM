@@ -172,20 +172,16 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         [ParameterName("dell"), ParameterInfo("Length reduction of source drain diffusion")]
         public GivenParameter<double> DeltaLength { get; } = new GivenParameter<double>();
         [ParameterName("nmos"), ParameterInfo("Flag to indicate NMOS")]
-        public void SetNmos(int value)
+        public void SetNMOS(bool flag = true)
         {
-            if (value != 0)
-            {
+            if (flag)
                 Type = 1;
-            }
         }
         [ParameterName("pmos"), ParameterInfo("Flag to indicate PMOS")]
-        public void SetPmos(int value)
+        public void SetPMOS(bool flag = true)
         {
-            if (value != 0)
-            {
+            if (flag)
                 Type = -1;
-            }
         }
 
         /// <summary>

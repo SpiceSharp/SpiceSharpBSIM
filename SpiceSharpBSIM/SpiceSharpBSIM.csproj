@@ -5,13 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="SpiceSharp">
-      <HintPath>..\..\SpiceSharp\SpiceSharp\bin\Debug\netstandard2.0\SpiceSharp.dll</HintPath>
-    </Reference>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <PackageReference Include="SpiceSharp-Parser" Version="1.0.9" />
   </ItemGroup>
 
 </Project>

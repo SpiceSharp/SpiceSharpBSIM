@@ -5,6 +5,9 @@ using SpiceSharp;
 using SpiceSharp.Components;
 using SpiceSharp.Components.BSIM3Behaviors;
 using SpiceSharp.Simulations;
+using SpiceSharpBSIM.Parser;
+using SpiceSharpParser;
+using SpiceSharpParser.ModelsReaders.Netlist.Spice.Evaluation.CustomFunctions;
 
 namespace SpiceSharpTest.Models
 {
@@ -228,6 +231,34 @@ namespace SpiceSharpTest.Models
 
             // run simulation
             AnalyzeAC(ac, ckt, exports, references);
+        }
+
+        [Test]
+        public void When_BSIM3Netlist_Expect_Parameters()
+        {
+            // Create the parser
+            var parser = new ParserFacade();
+            var settings = new ParserSettings();
+            settings.SpiceNetlistModelReaderSettings.EvaluatorMode = SpiceEvaluatorMode.Spice3f5;
+            settings.SpiceNetlistParserSettings.HasTitle = false;
+            settings.SpiceNetlistModelReaderSettings.Context.Models.Add(new MosfetModelGenerator(), true);
+            settings.SpiceNetlistModelReaderSettings.Context.Components.Add(new MosfetGenerator(), true);
+
+            var netlist = "M1 d g 0 0 nmodel w=10u l=40u\r\n"
+                          + ".model nmodel nmos(level=49 tnom=27.0 nch=1.024685e+17 tox=1.00000e-08 xj=1.00000e-07 lint=3.75860e-08 wint=-2.02101528644562e-07 vth0=0.6094574 k1=0.5341038 k2=1.703463e-03 k3=-17.24589 dvt0=0.1767506 dvt1=0.5109418 dvt2=-0.05 nlx=9.979638e-08 w0=1e-6 k3b=4.139039 vsat=97662.05 ua=-1.748481e-09 ub=3.178541e-18 uc=1.3623e-10 rdsw=298.873 u0=307.2991 prwb=-2.24e-4 a0=0.4976366 keta=-2.195445e-02 a1=0.0332883 a2=0.9 voff=-9.623903e-02 nfactor=0.8408191 cit=3.994609e-04 cdsc=1.130797e-04 cdscb=2.4e-5 eta0=0.0145072 etab=-3.870303e-03 dsub=0.4116711 pclm=1.813153 pdiblc1=2.003703e-02 pdiblc2=0.00129051 pdiblcb=-1.034e-3 drout=0.4380235 pscbe1=5.752058e+08 pscbe2=7.510319e-05 pvag=0.6370527 prt=68.7 ngate=1.e20 alpha0=1.e-7 beta0=28.4 prwg=-0.001 ags=1.2 dvt0w=0.58 dvt1w=5.3e6 dvt2w=-0.0032 kt1=-.3 kt2=-.03 at=33000 ute=-1.5 ua1=4.31e-09 ub1=7.61e-18 uc1=-2.378e-10 kt1l=1e-8 wr=1 b0=1e-7 b1=1e-7 dwg=5e-8 dwb=2e-8 delta=0.015 cgdl=1e-10 cgsl=1e-10 cgbo=1e-10 xpart=0.0 cgdo=0.4e-9 cgso=0.4e-9 clc=0.1e-6 cle=0.6 ckappa=0.6)\r\n";
+            var result = parser.ParseNetlist(netlist, settings);
+
+            // Find back the model
+            var entity = (BSIM3) result.ReaderResult.Circuit.Objects["M1"];
+            var model = (BSIM3Model) entity.Model;
+
+            // Check a few component parameters
+            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("w"), 10e-6, 1e-12);
+            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("l"), 40e-6, 1e-12);
+
+            // Check a few model parameters
+            Assert.AreEqual(model.ParameterSets.GetParameter<double>("nch"), 1.024685e+17, 1e-12);
+            Assert.AreEqual(model.ParameterSets.GetParameter<double>("lint"), 3.75860e-08, 1e-12);
         }
     }
 }

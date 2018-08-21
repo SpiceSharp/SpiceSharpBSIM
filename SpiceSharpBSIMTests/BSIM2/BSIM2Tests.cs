@@ -8,6 +8,9 @@ using SpiceSharp.Behaviors;
 using SpiceSharp.Components;
 using SpiceSharp.IntegrationMethods;
 using SpiceSharp.Simulations;
+using SpiceSharpBSIM.Parser;
+using SpiceSharpParser;
+using SpiceSharpParser.ModelsReaders.Netlist.Spice.Evaluation.CustomFunctions;
 
 namespace SpiceSharpTest.Models
 {
@@ -234,6 +237,34 @@ namespace SpiceSharpTest.Models
 
             // Run test
             AnalyzeAC(ac, ckt, exports, references);
+        }
+
+        [Test]
+        public void When_BSIM2Netlist_Expect_Parameters()
+        {
+            // Create the parser
+            var parser = new ParserFacade();
+            var settings = new ParserSettings();
+            settings.SpiceNetlistModelReaderSettings.EvaluatorMode = SpiceEvaluatorMode.Spice3f5;
+            settings.SpiceNetlistParserSettings.HasTitle = false;
+            settings.SpiceNetlistModelReaderSettings.Context.Models.Add(new MosfetModelGenerator(), true);
+            settings.SpiceNetlistModelReaderSettings.Context.Components.Add(new MosfetGenerator(), true);
+
+            var netlist = "M1 d g 0 0 nmodel w=10u l=40u\r\n"
+                          + ".model nmodel nmos(level=5 vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0)\r\n";
+            var result = parser.ParseNetlist(netlist, settings);
+
+            // Find back the model
+            var entity = (BSIM2) result.ReaderResult.Circuit.Objects["M1"];
+            var model = (BSIM2Model) entity.Model;
+
+            // Check a few component parameters
+            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("w"), 10e-6, 1e-12);
+            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("l"), 40e-6, 1e-12);
+
+            // Check a few model parameters
+            Assert.AreEqual(model.ParameterSets.GetParameter<double>("vfb"), -0.3, 1e-12);
+            Assert.AreEqual(model.ParameterSets.GetParameter<double>("mu0"), 250.0, 1e-12);
         }
     }
 }
