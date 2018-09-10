@@ -62,7 +62,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// Setup the behavior
         /// </summary>
         /// <param name="provider">Data provider</param>
-        public override void Setup(SetupDataProvider provider)
+        public override void Setup(Simulation simulation, SetupDataProvider provider)
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));

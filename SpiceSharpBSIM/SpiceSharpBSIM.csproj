@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SpiceSharp-Parser" Version="1.0.9" />
+    <PackageReference Include="SpiceSharp" Version="2.3.0" />
   </ItemGroup>
 
 </Project>

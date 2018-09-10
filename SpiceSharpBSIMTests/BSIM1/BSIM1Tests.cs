@@ -3,9 +3,6 @@ using NUnit.Framework;
 using SpiceSharp;
 using SpiceSharp.Components;
 using SpiceSharp.Simulations;
-using SpiceSharpBSIM.Parser;
-using SpiceSharpParser;
-using SpiceSharpParser.ModelsReaders.Netlist.Spice.Evaluation.CustomFunctions;
 
 namespace SpiceSharpTest.Models
 {
@@ -122,7 +119,7 @@ namespace SpiceSharpTest.Models
             tran.Nodes.MapNode("in");
             tran.Nodes.MapNode("vdd");
             tran.Nodes.MapNode("out");
-            tran.OnBeforeTemperatureCalculations += (sender, data) =>
+            tran.BeforeTemperature += (sender, data) =>
             {
                 // Swap columns and rows in the matrix
                 var sim = (Simulation) sender;
@@ -350,7 +347,7 @@ namespace SpiceSharpTest.Models
             // Run test
             AnalyzeAC(ac, ckt, exports, references);
         }
-
+        /*
         [Test]
         public void When_BSIM1Netlist_Expect_Parameters()
         {
@@ -378,5 +375,6 @@ namespace SpiceSharpTest.Models
             Assert.AreEqual(model.ParameterSets.GetParameter<double>("vfb"), -7.744e-1, 1e-12);
             Assert.AreEqual(model.ParameterSets.GetParameter<double>("muz"), 8.052e2, 1e-12);
         }
+        */
     }
 }

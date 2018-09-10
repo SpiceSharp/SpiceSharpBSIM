@@ -1,16 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Numerics;
-using NUnit;
+﻿using System.Numerics;
 using NUnit.Framework;
 using SpiceSharp;
-using SpiceSharp.Behaviors;
 using SpiceSharp.Components;
-using SpiceSharp.IntegrationMethods;
 using SpiceSharp.Simulations;
-using SpiceSharpBSIM.Parser;
-using SpiceSharpParser;
-using SpiceSharpParser.ModelsReaders.Netlist.Spice.Evaluation.CustomFunctions;
 
 namespace SpiceSharpTest.Models
 {
@@ -238,7 +230,7 @@ namespace SpiceSharpTest.Models
             // Run test
             AnalyzeAC(ac, ckt, exports, references);
         }
-
+        /*
         [Test]
         public void When_BSIM2Netlist_Expect_Parameters()
         {
@@ -266,5 +258,6 @@ namespace SpiceSharpTest.Models
             Assert.AreEqual(model.ParameterSets.GetParameter<double>("vfb"), -0.3, 1e-12);
             Assert.AreEqual(model.ParameterSets.GetParameter<double>("mu0"), 250.0, 1e-12);
         }
+        */
     }
 }

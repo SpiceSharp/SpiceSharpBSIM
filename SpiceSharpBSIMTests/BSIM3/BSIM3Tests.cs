@@ -5,9 +5,6 @@ using SpiceSharp;
 using SpiceSharp.Components;
 using SpiceSharp.Components.BSIM3Behaviors;
 using SpiceSharp.Simulations;
-using SpiceSharpBSIM.Parser;
-using SpiceSharpParser;
-using SpiceSharpParser.ModelsReaders.Netlist.Spice.Evaluation.CustomFunctions;
 
 namespace SpiceSharpTest.Models
 {
@@ -233,6 +230,7 @@ namespace SpiceSharpTest.Models
             AnalyzeAC(ac, ckt, exports, references);
         }
 
+        /*
         [Test]
         public void When_BSIM3Netlist_Expect_Parameters()
         {
@@ -260,5 +258,6 @@ namespace SpiceSharpTest.Models
             Assert.AreEqual(model.ParameterSets.GetParameter<double>("nch"), 1.024685e+17, 1e-12);
             Assert.AreEqual(model.ParameterSets.GetParameter<double>("lint"), 3.75860e-08, 1e-12);
         }
+        */
     }
 }

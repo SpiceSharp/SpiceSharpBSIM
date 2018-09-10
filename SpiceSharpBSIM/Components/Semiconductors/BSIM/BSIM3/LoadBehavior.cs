@@ -145,13 +145,13 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Setup the behavior
         /// </summary>
-        public override void Setup(SetupDataProvider provider)
+        public override void Setup(Simulation simulation, SetupDataProvider provider)
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
             _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-            _bp = provider.GetParameterSet<BaseParameters>("entity");
-            _temp = provider.GetBehavior<TemperatureBehavior>("entity");
+            _bp = provider.GetParameterSet<BaseParameters>();
+            _temp = provider.GetBehavior<TemperatureBehavior>();
             _modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
         }
 
