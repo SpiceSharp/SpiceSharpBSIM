@@ -38,18 +38,20 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
-            _load = provider.GetBehavior<LoadBehavior>("entity");
+            _load = provider.GetBehavior<LoadBehavior>();
             _load.TranBehavior = this;
         }
 
         /// <summary>
         /// Create states
         /// </summary>
-        public override void CreateStates(StatePool states)
+        public override void CreateStates(IntegrationMethod method)
         {
-            Qb = states.CreateDerivative();
-            Qg = states.CreateDerivative();
-            Qd = states.CreateDerivative();
+            if (method == null)
+                throw new ArgumentNullException(nameof(method));
+            Qb = method.CreateDerivative();
+            Qg = method.CreateDerivative();
+            Qd = method.CreateDerivative();
         }
 
         /// <summary>
@@ -65,19 +67,6 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         public override void Transient(TimeSimulation simulation)
         {
             // Do nothing
-        }
-
-        /// <summary>
-        /// Truncate
-        /// </summary>
-        /// <returns></returns>
-        public override double Truncate()
-        {
-            var timetmp = double.PositiveInfinity;
-            timetmp = Math.Min(timetmp, Qb.LocalTruncationError());
-            timetmp = Math.Min(timetmp, Qg.LocalTruncationError());
-            timetmp = Math.Min(timetmp, Qd.LocalTruncationError());
-            return timetmp;
         }
     }
 }

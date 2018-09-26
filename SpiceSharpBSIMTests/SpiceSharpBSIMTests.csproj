@@ -49,8 +49,8 @@
     <Reference Include="nunit.framework, Version=3.10.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="SpiceSharp, Version=2.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SpiceSharp.2.3.0\lib\net45\SpiceSharp.dll</HintPath>
+    <Reference Include="SpiceSharp, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SpiceSharp.2.4.0\lib\net45\SpiceSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -61,8 +61,6 @@
     <Compile Include="BSIM2\BSIM2Tests.cs" />
     <Compile Include="BSIM3\BSIM3Tests.cs" />
     <Compile Include="Framework.cs" />
-    <Compile Include="TransientMock.cs" />
-    <Compile Include="TrapezoidalMock.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

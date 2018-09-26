@@ -624,9 +624,13 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                 TranBehavior.Qg.Current = qgate;
                 TranBehavior.Qd.Current = qdrn - this.Qbd;
                 TranBehavior.Qb.Current = qbulk + this.Qbd + this.Qbs;
-                TranBehavior.Qb.Integrate();
-                TranBehavior.Qg.Integrate();
-                TranBehavior.Qd.Integrate();
+
+                if (!state.UseDc)
+                {
+                    TranBehavior.Qb.Integrate();
+                    TranBehavior.Qg.Integrate();
+                    TranBehavior.Qd.Integrate();
+                }
             }
 
             goto line860;

@@ -48,13 +48,13 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 		/// <summary>
 		/// Create states
 		/// </summary>
-		public override void CreateStates(StatePool states)
+		public override void CreateStates(IntegrationMethod method)
 		{
-			Qb = states.CreateDerivative();
-			Qg = states.CreateDerivative();
-			Qd = states.CreateDerivative();
-			Qcheq = states.CreateDerivative();
-			Qcdump = states.CreateDerivative();
+			Qb = method.CreateDerivative();
+			Qg = method.CreateDerivative();
+			Qd = method.CreateDerivative();
+			Qcheq = method.CreateDerivative(false);
+			Qcdump = method.CreateDerivative(false);
 		}
 		
 		/// <summary>

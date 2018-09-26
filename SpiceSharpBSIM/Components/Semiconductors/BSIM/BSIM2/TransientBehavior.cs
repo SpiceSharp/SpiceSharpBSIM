@@ -39,18 +39,20 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
-			this._load = provider.GetBehavior<LoadBehavior>("instance");
+			_load = provider.GetBehavior<LoadBehavior>();
 			_load.TranBehavior = this;
 		}
 		
 		/// <summary>
 		/// Create states
 		/// </summary>
-		public override void CreateStates(StatePool states)
+		public override void CreateStates(IntegrationMethod method)
 		{
-			Qb = states.CreateDerivative();
-			Qg = states.CreateDerivative();
-			Qd = states.CreateDerivative();
+            if (method == null)
+                throw new ArgumentNullException(nameof(method));
+		    Qb = method.CreateDerivative();
+		    Qg = method.CreateDerivative();
+		    Qd = method.CreateDerivative();
 		}
 		
 		/// <summary>
