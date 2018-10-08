@@ -61,7 +61,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// Constructor
         /// </summary>
         /// <param name="name">Name</param>
-        public FrequencyBehavior(Identifier name) : base(name)
+        public FrequencyBehavior(string name) : base(name)
         {
         }
 
@@ -76,11 +76,11 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 
             // Get parameter sets
             _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-            _bp = provider.GetParameterSet<BaseParameters>("entity");
+            _bp = provider.GetParameterSet<BaseParameters>();
 
             // Get behaviors
-            _load = provider.GetBehavior<LoadBehavior>("entity");
-            _temp = provider.GetBehavior<TemperatureBehavior>("entity");
+            _load = provider.GetBehavior<LoadBehavior>();
+            _temp = provider.GetBehavior<TemperatureBehavior>();
         }
 
         /// <summary>

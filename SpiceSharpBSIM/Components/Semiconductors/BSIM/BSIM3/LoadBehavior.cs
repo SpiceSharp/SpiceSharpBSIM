@@ -29,6 +29,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         private BaseParameters _bp;
         private TemperatureBehavior _temp;
         private ModelTemperatureBehavior _modelTemp;
+        private BaseConfiguration _baseConfig;
 
         /// <summary>
         /// Properties
@@ -137,7 +138,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public LoadBehavior(Identifier name) : base(name)
+        public LoadBehavior(string name) : base(name)
         {
 
         }
@@ -149,6 +150,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
+            _baseConfig = simulation.Configurations.Get<BaseConfiguration>();
             _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
             _bp = provider.GetParameterSet<BaseParameters>();
             _temp = provider.GetBehavior<TemperatureBehavior>();
@@ -173,7 +175,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         {
             if (_mbp.SheetResistance > 0.0 && _bp.DrainSquares > 0.0)
             {
-                DrainNodePrime = variables.Create(new SubIdentifier(Name, "drain")).Index;
+                DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
             }
             else
             {
@@ -184,7 +186,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             if (_mbp.SheetResistance > 0.0 && _bp.SourceSquares > 0.0)
             {
-                SourceNodePrime = variables.Create(new SubIdentifier(Name, "source")).Index;
+                SourceNodePrime = variables.Create(Name.Combine("source")).Index;
             }
             else
             {
@@ -195,7 +197,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             if (_bp.NqsMod > 0 && QNode == 0)
             {
-                QNode = variables.Create(new SubIdentifier(Name, "charge")).Index;
+                QNode = variables.Create(Name.Combine("charge")).Index;
             }
             else
             {
@@ -327,16 +329,17 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             double dQac0_dVg, dQac0_dVb, dQsub0_dVg, dQsub0_dVd, dQsub0_dVb;
             bool check, chargeComputationNeeded;
 
-            chargeComputationNeeded = (TranBehavior != null || state.Domain == RealState.DomainType.Frequency);
+            chargeComputationNeeded = TranBehavior != null;
             check = true;
-            if (state.Domain == RealState.DomainType.Frequency)
+            if (simulation is FrequencySimulation && !state.UseDc)
             {
                 vbs = this.Vbs;
                 vgs = this.Vgs;
                 vds = this.Vds;
                 qdef = this.Qdef;
+                chargeComputationNeeded = true;
             }
-            else if (state.Init == RealState.InitializationStates.InitJunction && !_bp.Off)
+            else if (state.Init == InitializationModes.Junction && !_bp.Off)
             {
                 vds = _mbp.B3Type * _bp.IcVDS;
                 vgs = _mbp.B3Type * _bp.IcVGS;
@@ -344,15 +347,15 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 qdef = 0.0;
 
                 if ((vds == 0.0) && (vgs == 0.0) && (vbs == 0.0) &&
-                    (state.Domain == RealState.DomainType.None || state.UseDc || TranBehavior != null || !state.UseIc))
+                    (state.UseDc || TranBehavior != null || !state.UseIc))
                 {
                     vbs = 0.0;
                     vgs = _mbp.B3Type * pParam.BSIM3vth0 + 0.1;
                     vds = 0.1;
                 }
             }
-            else if ((state.Init == RealState.InitializationStates.InitJunction ||
-                      state.Init == RealState.InitializationStates.InitFix) && (_bp.Off))
+            else if ((state.Init == InitializationModes.Junction ||
+                      state.Init == InitializationModes.Fix) && (_bp.Off))
             {
                 qdef = vbs = vgs = vds = 0.0;
             }
@@ -416,7 +419,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             if (SourceSatCurrent <= 0.0)
             {
-                this.Gbs = state.Gmin;
+                this.Gbs = _baseConfig.Gmin;
                 this.Cbs = Gbs * vbs;
             }
             else
@@ -424,25 +427,25 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 if (_mbp.Ijth == 0.0)
                 {
                     evbs = Math.Exp(vbs / Nvtm);
-                    this.Gbs = SourceSatCurrent * evbs / Nvtm + state.Gmin;
-                    this.Cbs = SourceSatCurrent * (evbs - 1.0) + state.Gmin * vbs;
+                    this.Gbs = SourceSatCurrent * evbs / Nvtm + _baseConfig.Gmin;
+                    this.Cbs = SourceSatCurrent * (evbs - 1.0) + _baseConfig.Gmin * vbs;
                 }
                 else
                 {
                     if (vbs < _temp.Vjsm)
                     {
                         evbs = Math.Exp(vbs / Nvtm);
-                        this.Gbs = SourceSatCurrent * evbs / Nvtm + state.Gmin;
+                        this.Gbs = SourceSatCurrent * evbs / Nvtm + _baseConfig.Gmin;
                         this.Cbs = SourceSatCurrent * (evbs - 1.0)
-                                   + state.Gmin * vbs;
+                                   + _baseConfig.Gmin * vbs;
                     }
                     else
                     {
                         T0 = _temp.IsEvjsm / Nvtm;
-                        this.Gbs = T0 + state.Gmin;
+                        this.Gbs = T0 + _baseConfig.Gmin;
                         this.Cbs = _temp.IsEvjsm - SourceSatCurrent
                                    + T0 * (vbs - _temp.Vjsm)
-                                   + state.Gmin * vbs;
+                                   + _baseConfig.Gmin * vbs;
                     }
                 }
             }
@@ -461,7 +464,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             if (DrainSatCurrent <= 0.0)
             {
-                this.Gbd = state.Gmin;
+                this.Gbd = _baseConfig.Gmin;
                 this.Cbd = this.Gbd * vbd;
             }
             else
@@ -469,26 +472,26 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 if (_mbp.Ijth == 0.0)
                 {
                     evbd = Math.Exp(vbd / Nvtm);
-                    this.Gbd = DrainSatCurrent * evbd / Nvtm + state.Gmin;
+                    this.Gbd = DrainSatCurrent * evbd / Nvtm + _baseConfig.Gmin;
                     this.Cbd = DrainSatCurrent * (evbd - 1.0)
-                               + state.Gmin * vbd;
+                               + _baseConfig.Gmin * vbd;
                 }
                 else
                 {
                     if (vbd < _temp.Vjdm)
                     {
                         evbd = Math.Exp(vbd / Nvtm);
-                        this.Gbd = DrainSatCurrent * evbd / Nvtm + state.Gmin;
+                        this.Gbd = DrainSatCurrent * evbd / Nvtm + _baseConfig.Gmin;
                         this.Cbd = DrainSatCurrent * (evbd - 1.0)
-                                   + state.Gmin * vbd;
+                                   + _baseConfig.Gmin * vbd;
                     }
                     else
                     {
                         T0 = _temp.IsEvjdm / Nvtm;
-                        this.Gbd = T0 + state.Gmin;
+                        this.Gbd = T0 + _baseConfig.Gmin;
                         this.Cbd = _temp.IsEvjdm - DrainSatCurrent
                                    + T0 * (vbd - _temp.Vjdm)
-                                   + state.Gmin * vbd;
+                                   + _baseConfig.Gmin * vbd;
                     }
                 }
             }
@@ -2567,7 +2570,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             /*
              *  check convergence
              */
-            if ((!_bp.Off) || state.Init != RealState.InitializationStates.InitFix)
+            if ((!_bp.Off) || state.Init != InitializationModes.Fix)
             {
                 if (check)
                 {
@@ -2946,10 +2949,8 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             }
 
             /* store small signal parameters */
-            if (state.Domain == RealState.DomainType.Frequency)
-            {
+            if (simulation is FrequencySimulation && !state.UseDc)
                 goto line1000;
-            }
 
             if (!chargeComputationNeeded)
                 goto line850;

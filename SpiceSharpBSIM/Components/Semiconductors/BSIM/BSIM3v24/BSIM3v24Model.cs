@@ -11,7 +11,7 @@ namespace SpiceSharp.Components
         /// Constructor
         /// </summary>
         /// <param name="name"></param>
-        public BSIM3v24Model(Identifier name) : base(name)
+        public BSIM3v24Model(string name) : base(name)
         {
             // Add parameter sets
             ParameterSets.Add(new ModelBaseParameters());

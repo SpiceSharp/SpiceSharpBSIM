@@ -44,7 +44,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public ModelTemperatureBehavior(Identifier name) : base(name)
+		public ModelTemperatureBehavior(string name) : base(name)
 		{
 			
 		}

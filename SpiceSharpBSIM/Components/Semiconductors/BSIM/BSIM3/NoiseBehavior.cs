@@ -39,7 +39,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// Constructor
         /// </summary>
         /// <param name="name">Name</param>
-        public NoiseBehavior(Identifier name) : base(name)
+        public NoiseBehavior(string name) : base(name)
         {
         }
 
@@ -53,12 +53,12 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 throw new ArgumentNullException(nameof(provider));
 
             // Get parameter sets
-            _bp = provider.GetParameterSet<BaseParameters>("entity");
-            _mbp = provider.GetParameterSet<ModelBaseParameters>("entity");
+            _bp = provider.GetParameterSet<BaseParameters>();
+            _mbp = provider.GetParameterSet<ModelBaseParameters>();
 
             // Get behaviors
-            _temp = provider.GetBehavior<TemperatureBehavior>("entity");
-            _load = provider.GetBehavior<LoadBehavior>("entity");
+            _temp = provider.GetBehavior<TemperatureBehavior>();
+            _load = provider.GetBehavior<LoadBehavior>();
         }
 
         /// <summary>

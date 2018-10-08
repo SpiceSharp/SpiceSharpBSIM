@@ -24,7 +24,7 @@ namespace SpiceSharp.Components
         /// Constructor
         /// </summary>
         /// <param name="name">Name</param>
-        public BSIM3v24(Identifier name)
+        public BSIM3v24(string name)
             : base(name, BSIM3PinCount)
         {
             // Add parameters
@@ -46,7 +46,7 @@ namespace SpiceSharp.Components
         /// <param name="gate">Gate</param>
         /// <param name="source">Source</param>
         /// <param name="bulk">Bulk</param>
-        public BSIM3v24(Identifier name, Identifier drain, Identifier gate, Identifier source, Identifier bulk)
+        public BSIM3v24(string name, string drain, string gate, string source, string bulk)
             : base(name, BSIM3PinCount)
         {
             // Add parameters
@@ -72,7 +72,7 @@ namespace SpiceSharp.Components
         /// <param name="bulk">Bulk</param>
         /// <param name="width">Transistor width</param>
         /// <param name="length">Transistor length</param>
-        public BSIM3v24(Identifier name, Identifier drain, Identifier gate, Identifier source, Identifier bulk, double width, double length)
+        public BSIM3v24(string name, string drain, string gate, string source, string bulk, double width, double length)
             : base(name, BSIM3PinCount)
         {
             // Add parameters

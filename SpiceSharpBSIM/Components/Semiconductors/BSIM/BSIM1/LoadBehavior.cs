@@ -20,6 +20,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         private BaseParameters _bp;
         private TemperatureBehavior _temp;
         private ModelTemperatureBehavior _modelTemp;
+        private BaseConfiguration _baseConfig;
 
         /// <summary>
         /// Properties
@@ -94,7 +95,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public LoadBehavior(Identifier name) : base(name)
+        public LoadBehavior(string name) : base(name)
         {
 
         }
@@ -106,6 +107,9 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
+
+            // Get configurations
+            _baseConfig = simulation.Configurations.Get<BaseConfiguration>();
 
             // Get parameters
             _bp = provider.GetParameterSet<BaseParameters>();
@@ -133,13 +137,13 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         public override void GetEquationPointers(VariableSet variables, Solver<double> solver)
         {
             if (_mbp.SheetResistance > 0 && _bp.DrainSquares > 0.0)
-                DrainNodePrime = variables.Create(new SubIdentifier(Name, "drain")).Index;
+                DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
             else
                 DrainNodePrime = _drainNode;
             DrainNodePrimePtr = solver.GetRhsElement(DrainNodePrime);
 
             if (_mbp.SheetResistance > 0 && _bp.SourceSquares > 0.0)
-                SourceNodePrime = variables.Create(new SubIdentifier(Name, "source")).Index;
+                SourceNodePrime = variables.Create(Name.Combine("source")).Index;
             else
                 SourceNodePrime = _sourceNode;
             SourceNodePrimePtr = solver.GetRhsElement(SourceNodePrime);
@@ -277,6 +281,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             double[] args = new double[8];
             int ByPass = 0;
             int error = 0;
+            bool chargeComputationsNeeded = TranBehavior != null;
 
             EffectiveLength = _bp.Length - _mbp.DeltaL * 1.0e-6; /* m */
             DrainArea = _bp.DrainArea;
@@ -303,27 +308,28 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             vt0 = _mbp.Type * _temp.Vt0;
 
             Check = true;
-            if (state.Domain == RealState.DomainType.Frequency)
+            if (simulation is FrequencySimulation && !state.UseDc)
             {
                 vbs = this.Vbs;
                 vgs = this.Vgs;
                 vds = this.Vds;
+                chargeComputationsNeeded = true;
             }
-            else if (state.Init == RealState.InitializationStates.InitJunction && !_bp.Off)
+            else if (state.Init == InitializationModes.Junction && !_bp.Off)
             {
                 vds = _mbp.Type * _bp.IcVDS;
                 vgs = _mbp.Type * _bp.IcVGS;
                 vbs = _mbp.Type * _bp.IcVBS;
                 if ((vds == 0) && (vgs == 0) && (vbs == 0) &&
-                    (state.Domain == RealState.DomainType.None || state.UseDc || TranBehavior != null || !state.UseIc))
+                    (state.UseDc || TranBehavior != null || !state.UseIc))
                 {
                     vbs = -1;
                     vgs = vt0;
                     vds = 0;
                 }
             }
-            else if ((state.Init == RealState.InitializationStates.InitJunction ||
-                      state.Init == RealState.InitializationStates.InitFix) && (_bp.Off))
+            else if ((state.Init == InitializationModes.Junction ||
+                      state.Init == InitializationModes.Fix) && (_bp.Off))
             {
                 vbs = vgs = vds = 0;
             }
@@ -375,26 +381,26 @@ namespace SpiceSharp.Components.BSIM1Behaviors
 
             if (vbs <= 0.0)
             {
-                gbs = SourceSatCurrent / Circuit.Vt0 + state.Gmin;
+                gbs = SourceSatCurrent / Circuit.Vt0 + _baseConfig.Gmin;
                 cbs = gbs * vbs;
             }
             else
             {
                 evbs = Math.Exp(vbs / Circuit.Vt0);
-                gbs = SourceSatCurrent * evbs / Circuit.Vt0 + state.Gmin;
-                cbs = SourceSatCurrent * (evbs - 1) + state.Gmin * vbs;
+                gbs = SourceSatCurrent * evbs / Circuit.Vt0 + _baseConfig.Gmin;
+                cbs = SourceSatCurrent * (evbs - 1) + _baseConfig.Gmin * vbs;
             }
 
             if (vbd <= 0.0)
             {
-                gbd = DrainSatCurrent / Circuit.Vt0 + state.Gmin;
+                gbd = DrainSatCurrent / Circuit.Vt0 + _baseConfig.Gmin;
                 cbd = gbd * vbd;
             }
             else
             {
                 evbd = Math.Exp(vbd / Circuit.Vt0);
-                gbd = DrainSatCurrent * evbd / Circuit.Vt0 + state.Gmin;
-                cbd = DrainSatCurrent * (evbd - 1) + state.Gmin * vbd;
+                gbd = DrainSatCurrent * evbd / Circuit.Vt0 + _baseConfig.Gmin;
+                cbd = DrainSatCurrent * (evbd - 1) + _baseConfig.Gmin * vbd;
             }
 
             /* line 400 */
@@ -415,14 +421,14 @@ namespace SpiceSharp.Components.BSIM1Behaviors
              */
             if (vds >= 0)
             {
-                Evaluate(TranBehavior != null || state.Domain == RealState.DomainType.Frequency,
+                Evaluate(chargeComputationsNeeded,
                     vds, vbs, vgs, out gm, out gds, out gmbs, out qgate,
                     out qbulk, out qdrn, out cggb, out cgdb, out cgsb, out cbgb, out cbdb, out cbsb, out cdgb,
                     out cddb, out cdsb, out cdrain, out von, out vdsat);
             }
             else
             {
-                Evaluate(TranBehavior != null || state.Domain == RealState.DomainType.Frequency,
+                Evaluate(chargeComputationsNeeded,
                     -vds, vbd, vgd, out gm, out gds, out gmbs, out qgate,
                     out qbulk, out qsrc, out cggb, out cgsb, out cgdb, out cbgb, out cbsb, out cbdb, out csgb,
                     out cssb, out csdb, out cdrain, out von, out vdsat);
@@ -435,7 +441,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
              *  COMPUTE EQUIVALENT DRAIN CURRENT SOURCE
              */
             cd = this.Mode * cdrain - cbd;
-            if (TranBehavior != null || state.Domain == RealState.DomainType.Frequency)
+            if (chargeComputationsNeeded)
             {
                 /*
                  *  charge storage elements
@@ -497,7 +503,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             /*
              *  check convergence
              */
-            if ((!_bp.Off) || state.Init != RealState.InitializationStates.InitFix)
+            if ((!_bp.Off) || state.Init != InitializationModes.Fix)
             {
                 if (Check)
                 {
@@ -536,7 +542,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
 
             /* bulk and channel charge plus overlaps */
             // if (!(ckt->CKTmode & (MODETRAN | MODEAC)) && (!(ckt->CKTmode & MODETRANOP) || !(ckt->CKTmode & MODEUIC)) && !(ckt->CKTmode & MODEINITSMSIG))
-            if (TranBehavior == null && state.Domain != RealState.DomainType.Frequency)
+            if (!chargeComputationsNeeded)
                 goto line850;
 
             line755:
@@ -603,7 +609,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             // if ((!(ckt->CKTmode & (MODEAC | MODETRAN))) && (ckt->CKTmode & MODETRANOP) && (ckt->CKTmode & MODEUIC))
                 // goto line850;
 
-            if (state.Domain == RealState.DomainType.Frequency)
+            if (simulation is FrequencySimulation && !state.UseDc)
             {
                 this.Cggb = cggb;
                 this.Cgdb = cgdb;
@@ -657,8 +663,8 @@ namespace SpiceSharp.Components.BSIM1Behaviors
              *  load current vector
              */
             line900:
-            ceqbs = _mbp.Type * (cbs - (gbs - state.Gmin) * vbs);
-            ceqbd = _mbp.Type * (cbd - (gbd - state.Gmin) * vbd);
+            ceqbs = _mbp.Type * (cbs - (gbs - _baseConfig.Gmin) * vbs);
+            ceqbd = _mbp.Type * (cbd - (gbd - _baseConfig.Gmin) * vbd);
 
             ceqqg = _mbp.Type * ceqqg;
             ceqqb = _mbp.Type * ceqqb;

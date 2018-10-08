@@ -54,14 +54,16 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// Constructor
         /// </summary>
         /// <param name="name">Name</param>
-        public FrequencyBehavior(Identifier name) : base(name)
+        public FrequencyBehavior(string name) : base(name)
         {
         }
 
         /// <summary>
-        /// Setup the behavior
+        /// Set up the behavior.
         /// </summary>
-        /// <param name="provider">Data provider</param>
+        /// <param name="simulation">The simulation.</param>
+        /// <param name="provider">The provider.</param>
+        /// <exception cref="ArgumentNullException">provider</exception>
         public override void Setup(Simulation simulation, SetupDataProvider provider)
         {
             if (provider == null)
@@ -69,17 +71,18 @@ namespace SpiceSharp.Components.BSIM1Behaviors
 
             // Get parameters
             _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-            _bp = provider.GetParameterSet<BaseParameters>("entity");
+            _bp = provider.GetParameterSet<BaseParameters>();
 
             // Get behaviors
             _modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
-            _temp = provider.GetBehavior<TemperatureBehavior>("entity");
-            _load = provider.GetBehavior<LoadBehavior>("entity");
+            _temp = provider.GetBehavior<TemperatureBehavior>();
+            _load = provider.GetBehavior<LoadBehavior>();
         }
 
         /// <summary>
-        /// Connect
+        /// Connects the specified pins.
         /// </summary>
+        /// <param name="pins">The pins.</param>
         public void Connect(params int[] pins)
         {
             _drainNode = pins[0];
@@ -89,9 +92,9 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         }
 
         /// <summary>
-        /// Get equation pointers
+        /// Gets the equation pointers.
         /// </summary>
-        /// <param name="solver">Solver</param>
+        /// <param name="solver">The solver.</param>
         public override void GetEquationPointers(Solver<Complex> solver)
         {
             _drainNodePrime = _load.DrainNodePrime;

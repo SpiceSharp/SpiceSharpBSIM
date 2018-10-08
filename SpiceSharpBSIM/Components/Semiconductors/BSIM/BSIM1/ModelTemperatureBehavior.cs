@@ -23,7 +23,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public ModelTemperatureBehavior(Identifier name) : base(name)
+        public ModelTemperatureBehavior(string name) : base(name)
         {
 
         }
@@ -35,7 +35,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
-            _mbp = provider.GetParameterSet<ModelBaseParameters>("entity");
+            _mbp = provider.GetParameterSet<ModelBaseParameters>();
         }
 
         /// <summary>

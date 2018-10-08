@@ -27,7 +27,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public TransientBehavior(Identifier name) : base(name)
+		public TransientBehavior(string name) : base(name)
 		{
 			
 		}
