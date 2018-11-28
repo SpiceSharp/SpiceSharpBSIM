@@ -3,19 +3,20 @@ using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.IntegrationMethods;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
+
 namespace SpiceSharp.Components.BSIM2Behaviors
-{
-	
+{	
 	/// <summary>
 	/// Transient behavior for a <see cref="BSIM2"/>
 	/// </summary>
-	public class TransientBehavior : BaseTransientBehavior
+	public class TransientBehavior : ExportingBehavior, ITimeBehavior
 	{
 		
 		/// <summary>
 		/// Necessary behaviors and parameters
 		/// </summary>
-		private LoadBehavior _load;
+		private BiasingBehavior _load;
 		
 		/// <summary>
 		/// Properties
@@ -39,14 +40,14 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
-			_load = provider.GetBehavior<LoadBehavior>();
+			_load = provider.GetBehavior<BiasingBehavior>();
 			_load.TranBehavior = this;
 		}
 		
 		/// <summary>
 		/// Create states
 		/// </summary>
-		public override void CreateStates(IntegrationMethod method)
+		public void CreateStates(IntegrationMethod method)
 		{
             if (method == null)
                 throw new ArgumentNullException(nameof(method));
@@ -54,21 +55,27 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		    Qg = method.CreateDerivative();
 		    Qd = method.CreateDerivative();
 		}
-		
-		/// <summary>
+
+        /// <summary>
+        /// Gets the state of the dc.
+        /// </summary>
+        /// <param name="simulation">The simulation.</param>
+        public void GetDcState(TimeSimulation simulation)
+	    {
+	    }
+
+	    /// <summary>
 		/// Get equation pointers
 		/// </summary>
-		public override void GetEquationPointers(Solver<double> solver)
-		{
-			
+		public void GetEquationPointers(Solver<double> solver)
+		{	
 		}
 		
 		/// <summary>
 		/// Transient behavior
 		/// </summary>
-		public override void Transient(TimeSimulation simulation)
-		{
-			
+		public void Transient(TimeSimulation simulation)
+		{	
 		}
 	}
 }

@@ -33,7 +33,7 @@ namespace SpiceSharp.Components
 
             // Add behaviors
             Behaviors.Add(typeof(BaseTemperatureBehavior), () => new TemperatureBehavior(Name));
-            Behaviors.Add(typeof(BaseLoadBehavior), () => new LoadBehavior(Name));
+            Behaviors.Add(typeof(BaseLoadBehavior), () => new BiasingBehavior(Name));
             Behaviors.Add(typeof(TransientBehavior), () => new TransientBehavior(Name));
             Behaviors.Add(typeof(BaseFrequencyBehavior), () => new FrequencyBehavior(Name));
         }
@@ -54,7 +54,7 @@ namespace SpiceSharp.Components
 
             // Add behaviors
             Behaviors.Add(typeof(BaseTemperatureBehavior), () => new TemperatureBehavior(Name));
-            Behaviors.Add(typeof(BaseLoadBehavior), () => new LoadBehavior(Name));
+            Behaviors.Add(typeof(BaseLoadBehavior), () => new BiasingBehavior(Name));
             Behaviors.Add(typeof(TransientBehavior), () => new TransientBehavior(Name));
             Behaviors.Add(typeof(BaseFrequencyBehavior), () => new FrequencyBehavior(Name));
 
@@ -82,7 +82,7 @@ namespace SpiceSharp.Components
 
             // Add behaviors
             Behaviors.Add(typeof(BaseTemperatureBehavior), () => new TemperatureBehavior(Name));
-            Behaviors.Add(typeof(BaseLoadBehavior), () => new LoadBehavior(Name));
+            Behaviors.Add(typeof(BaseLoadBehavior), () => new BiasingBehavior(Name));
             Behaviors.Add(typeof(TransientBehavior), () => new TransientBehavior(Name));
             Behaviors.Add(typeof(BaseFrequencyBehavior), () => new FrequencyBehavior(Name));
 

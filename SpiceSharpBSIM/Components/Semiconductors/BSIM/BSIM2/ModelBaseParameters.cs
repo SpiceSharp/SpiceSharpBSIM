@@ -1,14 +1,13 @@
 using System;
 using SpiceSharp.Attributes;
+
 namespace SpiceSharp.Components.BSIM2Behaviors
 {
-	
 	/// <summary>
 	/// Base parameters for a <see cref="BSIM2Model" />
 	/// </summary>
 	public class ModelBaseParameters : ParameterSet
 	{
-		
 		/// <summary>
 		/// Properties
 		/// </summary>
@@ -279,14 +278,21 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		public GivenParameter<double> DefaultWidth { get; } = new GivenParameter<double>(10);
 		[ParameterName("dell"), ParameterInfo("Length reduction of source drain diffusion")]
 		public GivenParameter<double> DeltaLength { get; } = new GivenParameter<double>();
+        
+	    public double Cox { get; private set; }
+	    public double Vdd2 { get; private set; }
+	    public double Vgg2 { get; private set; }
+	    public double Vbb2 { get; private set; }
+
 		[ParameterName("nmos"), ParameterInfo("Flag to indicate NMOS")]
-		public void SetNMOS(bool flag = true)
+		public void SetNmos(bool flag = true)
 		{
             if (flag)
 				Type = 1;
 		}
+
 		[ParameterName("pmos"), ParameterInfo("Flag to indicate PMOS")]
-		public void SetPMOS(bool flag = true)
+		public void SetPmos(bool flag = true)
 		{
             if (flag)
 				Type = -1;
@@ -301,6 +307,21 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        var cloned = (ModelBaseParameters) base.DeepClone();
 	        cloned.Type = Type;
 	        return cloned;
+	    }
+
+        /// <summary>
+        /// Calculates the defaults.
+        /// </summary>
+        public override void CalculateDefaults()
+	    {
+	        if (BulkJctPotential < 0.1)
+	            BulkJctPotential.Value = 0.1;
+	        if (SidewallJctPotential < 0.1)
+	            SidewallJctPotential.Value = 0.1;
+	        Cox = 3.453e-13 / (Tox * 1.0e-4);
+	        Vdd2 = 2.0 * Vdd;
+	        Vgg2 = 2.0 * Vgg;
+	        Vbb2 = 2.0 * Vbb;
 	    }
 	}
 }

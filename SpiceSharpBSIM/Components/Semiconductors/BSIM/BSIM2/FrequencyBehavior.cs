@@ -15,7 +15,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         /// Necessary behaviors and parameters
         /// </summary>
         private BaseParameters _bp;
-        private LoadBehavior _load;
+        private BiasingBehavior _load;
         private TemperatureBehavior _temp;
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>();
-            _load = provider.GetBehavior<LoadBehavior>();
+            _load = provider.GetBehavior<BiasingBehavior>();
         }
 
         /// <summary>

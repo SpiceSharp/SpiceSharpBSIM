@@ -501,7 +501,6 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                 }
             }
 
-
             this.Vbs = vbs;
             this.Vbd = vbd;
             this.Vgs = vgs;
@@ -592,8 +591,6 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                     ref qgate, ref qbulk,
                     ref qsrc, out qdrn);
             }
-
-
 
             // store small signal parameters
             // if ((!(ckt->CKTmode & (MODEAC | MODETRAN))) && (ckt->CKTmode & MODETRANOP) && (ckt->CKTmode & MODEUIC))

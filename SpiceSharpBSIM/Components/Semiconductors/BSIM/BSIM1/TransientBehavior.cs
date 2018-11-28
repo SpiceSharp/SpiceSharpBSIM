@@ -3,13 +3,15 @@ using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.IntegrationMethods;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
+
 namespace SpiceSharp.Components.BSIM1Behaviors
 {
 
     /// <summary>
     /// Transient behavior for a <see cref="BSIM1"/>
     /// </summary>
-    public class TransientBehavior : BaseTransientBehavior
+    public class TransientBehavior : ExportingBehavior, ITimeBehavior
     {
 
         /// <summary>
@@ -45,7 +47,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <summary>
         /// Create states
         /// </summary>
-        public override void CreateStates(IntegrationMethod method)
+        public void CreateStates(IntegrationMethod method)
         {
             if (method == null)
                 throw new ArgumentNullException(nameof(method));
@@ -55,18 +57,25 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         }
 
         /// <summary>
+        /// Gets the state of the dc.
+        /// </summary>
+        /// <param name="simulation">The simulation.</param>
+        public void GetDcState(TimeSimulation simulation)
+        {
+        }
+
+        /// <summary>
         /// Get equation pointers
         /// </summary>
-        public override void GetEquationPointers(Solver<double> solver)
+        public void GetEquationPointers(Solver<double> solver)
         {
         }
 
         /// <summary>
         /// Transient behavior
         /// </summary>
-        public override void Transient(TimeSimulation simulation)
+        public void Transient(TimeSimulation simulation)
         {
-            // Do nothing
         }
     }
 }

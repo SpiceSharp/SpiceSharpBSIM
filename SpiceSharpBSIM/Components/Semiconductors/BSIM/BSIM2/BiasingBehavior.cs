@@ -4,23 +4,21 @@ using SpiceSharp.Behaviors;
 using SpiceSharp.Algebra;
 using SpiceSharp.Components.MosfetBehaviors;
 using SpiceSharp.Components.Semiconductors;
+
 namespace SpiceSharp.Components.BSIM2Behaviors
-{
-	
+{	
 	/// <summary>
 	/// Load behavior for a <see cref="BSIM2" />
 	/// </summary>
-	public class LoadBehavior : BaseLoadBehavior, IConnectedBehavior
+	public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior, IConnectedBehavior
 	{
-		
-		/// <summary>
-		/// Necessary behaviors and parameters
-		/// </summary>
-		private ModelBaseParameters _mbp;
-		private BaseParameters _bp;
-		private TemperatureBehavior _temp;
-		private ModelTemperatureBehavior _modelTemp;
-	    private BaseConfiguration _baseConfig;
+        /// <summary>
+        /// Gets the base configuration.
+        /// </summary>
+        /// <value>
+        /// The base configuration.
+        /// </value>
+        protected BaseConfiguration BaseConfiguration { get; private set; }
 		
 		/// <summary>
 		/// Properties
@@ -61,7 +59,10 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		/// <summary>
 		/// Nodes
 		/// </summary>
-		private int _drainNode, _gateNode, _sourceNode, _bulkNode;
+		protected int DrainNode { get; private set; }
+	    protected int GateNode { get; private set; }
+	    protected int SourceNode { get;private set; }
+	    protected int BulkNode { get; private set; }
 		protected VectorElement<double> DrainNodePrimePtr { get; private set; }
 		public int DrainNodePrime { get; private set; }
 		protected VectorElement<double> SourceNodePrimePtr { get; private set; }
@@ -90,14 +91,13 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		protected MatrixElement<double> SPdpPtr { get; private set; }
 		protected VectorElement<double> GateNodePtr { get; private set; }
 		protected VectorElement<double> BulkNodePtr { get; private set; }
-		
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		public LoadBehavior(string name) : base(name)
-		{
-			
-		}
+
+	    /// <summary>
+	    /// Constructor
+	    /// </summary>
+	    public BiasingBehavior(string name) : base(name)
+	    {
+	    }
 		
 		/// <summary>
 		/// Setup the behavior
@@ -106,17 +106,10 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
+            base.Setup(simulation, provider);
 
             // Get configuration
-		    _baseConfig = simulation.Configurations.Get<BaseConfiguration>();
-
-            // Get parameter sets
-			_mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-			_bp = provider.GetParameterSet<BaseParameters>();
-
-            // Get behaviors
-			_temp = provider.GetBehavior<TemperatureBehavior>();
-			_modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
+		    BaseConfiguration = simulation.Configurations.Get<BaseConfiguration>();
 		}
 		
 		/// <summary>
@@ -124,68 +117,58 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		/// </summary>
 		public void Connect(params int[] pins)
 		{
-			_drainNode = pins[0];
-			_gateNode = pins[1];
-			_sourceNode = pins[2];
-			_bulkNode = pins[3];
+			DrainNode = pins[0];
+			GateNode = pins[1];
+			SourceNode = pins[2];
+			BulkNode = pins[3];
 		}
 		
 		/// <summary>
 		/// Get equation pointers
 		/// </summary>
-		public override void GetEquationPointers(VariableSet variables, Solver<double> solver)
+		public void GetEquationPointers(VariableSet variables, Solver<double> solver)
 		{
-			if ((_mbp.SheetResistance != 0) && (_bp.DrainSquares != 0.0))
-			{
+			if ((ModelParameters.SheetResistance > 0) && (BaseParameters.DrainSquares > 0.0))
 				DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
-			}
 			else
-			{
-				DrainNodePrime = _drainNode;
-			}
+				DrainNodePrime = DrainNode;
 			DrainNodePrimePtr = solver.GetRhsElement(DrainNodePrime);
-			if ((_mbp.SheetResistance != 0) && (_bp.SourceSquares != 0.0))
-			{
-				if (SourceNodePrime == 0)
-				{
+			if ((ModelParameters.SheetResistance > 0) && (BaseParameters.SourceSquares > 0.0))
 					SourceNodePrime = variables.Create(Name.Combine("source")).Index;
-				}
-			}
 			else
-			{
-				SourceNodePrime = _sourceNode;
-			}
+				SourceNodePrime = SourceNode;
+
 			SourceNodePrimePtr = solver.GetRhsElement(SourceNodePrime);
-			DdPtr = solver.GetMatrixElement(_drainNode, _drainNode);
-			GgPtr = solver.GetMatrixElement(_gateNode, _gateNode);
-			SsPtr = solver.GetMatrixElement(_sourceNode, _sourceNode);
-			BbPtr = solver.GetMatrixElement(_bulkNode, _bulkNode);
+			DdPtr = solver.GetMatrixElement(DrainNode, DrainNode);
+			GgPtr = solver.GetMatrixElement(GateNode, GateNode);
+			SsPtr = solver.GetMatrixElement(SourceNode, SourceNode);
+			BbPtr = solver.GetMatrixElement(BulkNode, BulkNode);
 			DPdpPtr = solver.GetMatrixElement(DrainNodePrime, DrainNodePrime);
 			SPspPtr = solver.GetMatrixElement(SourceNodePrime, SourceNodePrime);
-			DdpPtr = solver.GetMatrixElement(_drainNode, DrainNodePrime);
-			GbPtr = solver.GetMatrixElement(_gateNode, _bulkNode);
-			GdpPtr = solver.GetMatrixElement(_gateNode, DrainNodePrime);
-			GspPtr = solver.GetMatrixElement(_gateNode, SourceNodePrime);
-			SspPtr = solver.GetMatrixElement(_sourceNode, SourceNodePrime);
-			BdpPtr = solver.GetMatrixElement(_bulkNode, DrainNodePrime);
-			BspPtr = solver.GetMatrixElement(_bulkNode, SourceNodePrime);
+			DdpPtr = solver.GetMatrixElement(DrainNode, DrainNodePrime);
+			GbPtr = solver.GetMatrixElement(GateNode, BulkNode);
+			GdpPtr = solver.GetMatrixElement(GateNode, DrainNodePrime);
+			GspPtr = solver.GetMatrixElement(GateNode, SourceNodePrime);
+			SspPtr = solver.GetMatrixElement(SourceNode, SourceNodePrime);
+			BdpPtr = solver.GetMatrixElement(BulkNode, DrainNodePrime);
+			BspPtr = solver.GetMatrixElement(BulkNode, SourceNodePrime);
 			DPspPtr = solver.GetMatrixElement(DrainNodePrime, SourceNodePrime);
-			DPdPtr = solver.GetMatrixElement(DrainNodePrime, _drainNode);
-			BgPtr = solver.GetMatrixElement(_bulkNode, _gateNode);
-			DPgPtr = solver.GetMatrixElement(DrainNodePrime, _gateNode);
-			SPgPtr = solver.GetMatrixElement(SourceNodePrime, _gateNode);
-			SPsPtr = solver.GetMatrixElement(SourceNodePrime, _sourceNode);
-			DPbPtr = solver.GetMatrixElement(DrainNodePrime, _bulkNode);
-			SPbPtr = solver.GetMatrixElement(SourceNodePrime, _bulkNode);
+			DPdPtr = solver.GetMatrixElement(DrainNodePrime, DrainNode);
+			BgPtr = solver.GetMatrixElement(BulkNode, GateNode);
+			DPgPtr = solver.GetMatrixElement(DrainNodePrime, GateNode);
+			SPgPtr = solver.GetMatrixElement(SourceNodePrime, GateNode);
+			SPsPtr = solver.GetMatrixElement(SourceNodePrime, SourceNode);
+			DPbPtr = solver.GetMatrixElement(DrainNodePrime, BulkNode);
+			SPbPtr = solver.GetMatrixElement(SourceNodePrime, BulkNode);
 			SPdpPtr = solver.GetMatrixElement(SourceNodePrime, DrainNodePrime);
-			GateNodePtr = solver.GetRhsElement(_gateNode);
-			BulkNodePtr = solver.GetRhsElement(_bulkNode);
+			GateNodePtr = solver.GetRhsElement(GateNode);
+			BulkNodePtr = solver.GetRhsElement(BulkNode);
 		}
 
 	    /// <summary>
 	    /// Temperature behavior
 	    /// </summary>
-	    public override void Load(BaseSimulation simulation)
+	    public void Load(BaseSimulation simulation)
 	    {
 	        double DrainSatCurrent;
 	        double EffectiveLength;
@@ -274,33 +257,33 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        double cqdrn;
 	        double vt0;
 	        double[] args = new double[8];
-	        var pParam = _temp.Param;
+	        var pParam = base.Param;
 	        var state = simulation.RealState;
 	        bool chargeComputationNeeded = TranBehavior != null;
 
-	        EffectiveLength = _bp.Length - _mbp.DeltaL * 1.0e-6; /* m */
-	        DrainArea = _bp.DrainArea;
-	        SourceArea = _bp.SourceArea;
-	        DrainPerimeter = _bp.DrainPerimeter;
-	        SourcePerimeter = _bp.SourcePerimeter;
-	        if ((DrainSatCurrent = DrainArea * _mbp.JctSatCurDensity)
+	        EffectiveLength = BaseParameters.Length - ModelParameters.DeltaL * 1.0e-6; /* m */
+	        DrainArea = BaseParameters.DrainArea;
+	        SourceArea = BaseParameters.SourceArea;
+	        DrainPerimeter = BaseParameters.DrainPerimeter;
+	        SourcePerimeter = BaseParameters.SourcePerimeter;
+	        if ((DrainSatCurrent = DrainArea * ModelParameters.JctSatCurDensity)
 	            < 1e-15)
 	        {
 	            DrainSatCurrent = 1.0e-15;
 	        }
 
-	        if ((SourceSatCurrent = SourceArea * _mbp.JctSatCurDensity)
+	        if ((SourceSatCurrent = SourceArea * ModelParameters.JctSatCurDensity)
 	            < 1.0e-15)
 	        {
 	            SourceSatCurrent = 1.0e-15;
 	        }
 
-	        GateSourceOverlapCap = _mbp.GateSourceOverlapCap * _bp.Width;
-	        GateDrainOverlapCap = _mbp.GateDrainOverlapCap * _bp.Width;
-	        GateBulkOverlapCap = _mbp.GateBulkOverlapCap * EffectiveLength;
-	        von = _mbp.Type * _temp.Von;
-	        vdsat = _mbp.Type * this.Vdsat;
-	        vt0 = _mbp.Type * pParam.B2vt0;
+	        GateSourceOverlapCap = ModelParameters.GateSourceOverlapCap * BaseParameters.Width;
+	        GateDrainOverlapCap = ModelParameters.GateDrainOverlapCap * BaseParameters.Width;
+	        GateBulkOverlapCap = ModelParameters.GateBulkOverlapCap * EffectiveLength;
+	        von = ModelParameters.Type * base.Von;
+	        vdsat = ModelParameters.Type * this.Vdsat;
+	        vt0 = ModelParameters.Type * pParam.B2vt0;
 
 	        Check = true;
 	        if (simulation is FrequencySimulation && !state.UseDc)
@@ -310,11 +293,11 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	            vds = this.Vds;
 	            chargeComputationNeeded = true;
 	        }
-	        else if (state.Init == InitializationModes.Junction && !_bp.Off)
+	        else if (state.Init == InitializationModes.Junction && !BaseParameters.Off)
 	        {
-	            vds = _mbp.Type * _bp.IcVDS;
-	            vgs = _mbp.Type * _bp.IcVGS;
-	            vbs = _mbp.Type * _bp.IcVBS;
+	            vds = ModelParameters.Type * BaseParameters.IcVDS;
+	            vgs = ModelParameters.Type * BaseParameters.IcVGS;
+	            vbs = ModelParameters.Type * BaseParameters.IcVBS;
 	            if ((vds == 0) && (vgs == 0) && (vbs == 0) &&
 	                (state.UseDc || TranBehavior != null || !state.UseIc))
 	            {
@@ -324,20 +307,20 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	            }
 	        }
 	        else if ((state.Init == InitializationModes.Junction ||
-	                  state.Init == InitializationModes.Fix) && (_bp.Off))
+	                  state.Init == InitializationModes.Fix) && (BaseParameters.Off))
 	        {
 	            vbs = vgs = vds = 0;
 	        }
 	        else
 	        {
-	            vbs = _mbp.Type * (state.Solution[_bulkNode] - state.Solution[SourceNodePrime]);
-	            vgs = _mbp.Type * (state.Solution[_gateNode] - state.Solution[SourceNodePrime]);
-	            vds = _mbp.Type * (state.Solution[DrainNodePrime] - state.Solution[SourceNodePrime]);
+	            vbs = ModelParameters.Type * (state.Solution[BulkNode] - state.Solution[SourceNodePrime]);
+	            vgs = ModelParameters.Type * (state.Solution[GateNode] - state.Solution[SourceNodePrime]);
+	            vds = ModelParameters.Type * (state.Solution[DrainNodePrime] - state.Solution[SourceNodePrime]);
 	            vbd = vbs - vds;
 	            vgd = vgs - vds;
 	            vgdo = this.Vgs - this.Vds;
 
-	            von = _mbp.Type * _temp.Von;
+	            von = ModelParameters.Type * base.Von;
 	            if (this.Vds >= 0)
 	            {
 	                vgs = Transistor.LimitFet(vgs, this.Vgs, von);
@@ -375,26 +358,26 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 
 	        if (vbs <= 0.0)
 	        {
-	            gbs = SourceSatCurrent / Circuit.Vt0 + _baseConfig.Gmin;
+	            gbs = SourceSatCurrent / Circuit.Vt0 + BaseConfiguration.Gmin;
 	            cbs = gbs * vbs;
 	        }
 	        else
 	        {
 	            evbs = Math.Exp(vbs / Circuit.Vt0);
-	            gbs = SourceSatCurrent * evbs / Circuit.Vt0 + _baseConfig.Gmin;
-	            cbs = SourceSatCurrent * (evbs - 1) + _baseConfig.Gmin * vbs;
+	            gbs = SourceSatCurrent * evbs / Circuit.Vt0 + BaseConfiguration.Gmin;
+	            cbs = SourceSatCurrent * (evbs - 1) + BaseConfiguration.Gmin * vbs;
 	        }
 
 	        if (vbd <= 0.0)
 	        {
-	            gbd = DrainSatCurrent / Circuit.Vt0 + _baseConfig.Gmin;
+	            gbd = DrainSatCurrent / Circuit.Vt0 + BaseConfiguration.Gmin;
 	            cbd = gbd * vbd;
 	        }
 	        else
 	        {
 	            evbd = Math.Exp(vbd / Circuit.Vt0);
-	            gbd = DrainSatCurrent * evbd / Circuit.Vt0 + _baseConfig.Gmin;
-	            cbd = DrainSatCurrent * (evbd - 1) + _baseConfig.Gmin * vbd;
+	            gbd = DrainSatCurrent * evbd / Circuit.Vt0 + BaseConfiguration.Gmin;
+	            cbd = DrainSatCurrent * (evbd - 1) + BaseConfiguration.Gmin * vbd;
 	        }
 
 	        /* line 400 */
@@ -426,8 +409,8 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	                out cssb, out csdb, out cdrain, out von, out vdsat);
 	        }
 
-	        _temp.Von = _mbp.Type * von;
-	        this.Vdsat = _mbp.Type * vdsat;
+	        base.Von = ModelParameters.Type * von;
+	        this.Vdsat = ModelParameters.Type * vdsat;
 
 	        /*
              *  COMPUTE EQUIVALENT DRAIN CURRENT SOURCE
@@ -445,14 +428,14 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                  * czbssw:zero bias source junction sidewall capacitance
                  */
 
-	            czbd = _mbp.UnitAreaJctCap * DrainArea;
-	            czbs = _mbp.UnitAreaJctCap * SourceArea;
-	            czbdsw = _mbp.UnitLengthSidewallJctCap * DrainPerimeter;
-	            czbssw = _mbp.UnitLengthSidewallJctCap * SourcePerimeter;
-	            PhiB = _mbp.BulkJctPotential;
-	            PhiBSW = _mbp.SidewallJctPotential;
-	            MJ = _mbp.BulkJctBotGradingCoeff;
-	            MJSW = _mbp.BulkJctSideGradingCoeff;
+	            czbd = ModelParameters.UnitAreaJctCap * DrainArea;
+	            czbs = ModelParameters.UnitAreaJctCap * SourceArea;
+	            czbdsw = ModelParameters.UnitLengthSidewallJctCap * DrainPerimeter;
+	            czbssw = ModelParameters.UnitLengthSidewallJctCap * SourcePerimeter;
+	            PhiB = ModelParameters.BulkJctPotential;
+	            PhiBSW = ModelParameters.SidewallJctPotential;
+	            MJ = ModelParameters.BulkJctBotGradingCoeff;
+	            MJSW = ModelParameters.BulkJctSideGradingCoeff;
 
 	            /* Source Bulk Junction */
 	            if (vbs < 0)
@@ -495,7 +478,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        /*
              *  check convergence
              */
-	        if (!_bp.Off || state.Init != InitializationModes.Fix)
+	        if (!BaseParameters.Off || state.Init != InitializationModes.Fix)
 	        {
 	            if (Check)
 	            {
@@ -642,26 +625,26 @@ namespace SpiceSharp.Components.BSIM2Behaviors
              */
 	        line900:
 
-	        ceqbs = _mbp.Type * (cbs - (gbs - _baseConfig.Gmin) * vbs);
-	        ceqbd = _mbp.Type * (cbd - (gbd - _baseConfig.Gmin) * vbd);
+	        ceqbs = ModelParameters.Type * (cbs - (gbs - BaseConfiguration.Gmin) * vbs);
+	        ceqbd = ModelParameters.Type * (cbd - (gbd - BaseConfiguration.Gmin) * vbd);
 
-	        ceqqg = _mbp.Type * ceqqg;
-	        ceqqb = _mbp.Type * ceqqb;
-	        ceqqd = _mbp.Type * ceqqd;
+	        ceqqg = ModelParameters.Type * ceqqg;
+	        ceqqb = ModelParameters.Type * ceqqb;
+	        ceqqd = ModelParameters.Type * ceqqd;
 	        if (this.Mode >= 0)
 	        {
 	            xnrm = 1;
 	            xrev = 0;
-	            cdreq = _mbp.Type * (cdrain - gds * vds - gm * vgs - gmbs * vbs);
+	            cdreq = ModelParameters.Type * (cdrain - gds * vds - gm * vgs - gmbs * vbs);
 	        }
 	        else
 	        {
 	            xnrm = 0;
 	            xrev = 1;
-	            cdreq = -_mbp.Type * (cdrain + gds * vds - gm * vgd - gmbs * vbd);
+	            cdreq = -ModelParameters.Type * (cdrain + gds * vds - gm * vgd - gmbs * vbd);
 	        }
 
-	        var m = _bp.Multiplier;
+	        var m = BaseParameters.Multiplier;
 	        GateNodePtr.Value -= m * ceqqg;
 	        BulkNodePtr.Value -= m * (ceqbs + ceqbd + ceqqb);
 	        DrainNodePrimePtr.Value += m * (ceqbd - cdreq - ceqqd);
@@ -670,31 +653,40 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        /*
              *  load y matrix
              */
-	        DdPtr.Value += m * (_temp.DrainConductance);
+	        DdPtr.Value += m * (base.DrainConductance);
 	        GgPtr.Value += m * (gcggb);
-	        SsPtr.Value += m * (_temp.SourceConductance);
+	        SsPtr.Value += m * (base.SourceConductance);
 	        BbPtr.Value += m * (gbd + gbs - gcbgb - gcbdb - gcbsb);
-	        DPdpPtr.Value += m * (_temp.DrainConductance + gds + gbd + xrev * (gm + gmbs) + gcddb);
-	        SPspPtr.Value += m * (_temp.SourceConductance + gds + gbs + xnrm * (gm + gmbs) + gcssb);
-	        DdpPtr.Value += m * (-_temp.DrainConductance);
+	        DPdpPtr.Value += m * (base.DrainConductance + gds + gbd + xrev * (gm + gmbs) + gcddb);
+	        SPspPtr.Value += m * (base.SourceConductance + gds + gbs + xnrm * (gm + gmbs) + gcssb);
+	        DdpPtr.Value += m * (-base.DrainConductance);
 	        GbPtr.Value += m * (-gcggb - gcgdb - gcgsb);
 	        GdpPtr.Value += m * (gcgdb);
 	        GspPtr.Value += m * (gcgsb);
-	        SspPtr.Value += m * (-_temp.SourceConductance);
+	        SspPtr.Value += m * (-base.SourceConductance);
 	        BgPtr.Value += m * (gcbgb);
 	        BdpPtr.Value += m * (-gbd + gcbdb);
 	        BspPtr.Value += m * (-gbs + gcbsb);
-	        DPdPtr.Value += m * (-_temp.DrainConductance);
+	        DPdPtr.Value += m * (-base.DrainConductance);
 	        DPgPtr.Value += m * ((xnrm - xrev) * gm + gcdgb);
 	        DPbPtr.Value += m * (-gbd + (xnrm - xrev) * gmbs - gcdgb - gcddb - gcdsb);
 	        DPspPtr.Value += m * (-gds - xnrm * (gm + gmbs) + gcdsb);
 	        SPgPtr.Value += m * (-(xnrm - xrev) * gm + gcsgb);
-	        SPsPtr.Value += m * (-_temp.SourceConductance);
+	        SPsPtr.Value += m * (-base.SourceConductance);
 	        SPbPtr.Value += m * (-gbs - (xnrm - xrev) * gmbs - gcsgb - gcsdb - gcssb);
 	        SPdpPtr.Value += m * (-gds - xrev * (gm + gmbs) + gcsdb);
 
 	        line1000: ;
 	    }
+
+        /// <summary>
+        /// Determines whether the specified simulation is convergent.
+        /// </summary>
+        /// <param name="simulation">The simulation.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified simulation is convergent; otherwise, <c>false</c>.
+        /// </returns>
+        public bool IsConvergent(BaseSimulation simulation) => true;
 
 	    /// <summary>
         /// Helper method Evaluate
@@ -703,46 +695,46 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         {
             double vth, vdsat = 0, phisb, t1s, eta, gg, aa, inv_Aa, u1, u1s, vc, kk, sqrtKk, dPhisb_dVb, dT1s_dVb, dVth_dVb, dVth_dVd, dAa_dVb, dVc_dVd, dVc_dVg, dVc_dVb, dKk_dVc, dVdsat_dVd = 0, dVdsat_dVg = 0, dVdsat_dVb = 0, dUvert_dVg, dUvert_dVd, dUvert_dVb, inv_Kk, dUtot_dVd, dUtot_dVb, dUtot_dVg, ai, bi, vghigh, vglow, vgeff, vof, vbseff, vgst, vgdt, qbulk, utot, t0, t1, t2, t3, t4, t5, arg1, arg2, exp0 = 0, tmp, tmp1, tmp2, tmp3, uvert, beta1, beta2, beta0, dGg_dVb, exp1 = 0, t6, t7, t8, t9, n = 0, expArg, expArg1, beta, dQbulk_dVb, dVgdt_dVg, dVgdt_dVd, dVbseff_dVb, ua, ub, dVgdt_dVb, dQbulk_dVd, con1, con3, con4, sqrVghigh, sqrVglow, cubVghigh, cubVglow, delta, coeffa, coeffb, coeffc, coeffd, inv_Uvert, inv_Utot, inv_Vdsat, tanh, sqrsech, dBeta1_dVb, dU1_dVd, dU1_dVg, dU1_dVb, betaeff, fR, dFR_dVd, dFR_dVg, dFR_dVb, betas, beta3, beta4, dBeta_dVd, dBeta_dVg, dBeta_dVb, dVgeff_dVg, dVgeff_dVd, dVgeff_dVb, dCon3_dVd, dCon3_dVb, dCon4_dVd, dCon4_dVb, dCoeffa_dVd, dCoeffa_dVb, dCoeffb_dVd, dCoeffb_dVb, dCoeffc_dVd, dCoeffc_dVb, dCoeffd_dVd, dCoeffd_dVb;
 
-            if (vbs < _modelTemp.Vbb2)
-                vbs = _modelTemp.Vbb2;
-            if (vgs > _modelTemp.Vgg2)
-                vgs = _modelTemp.Vgg2;
-            if (vds > _modelTemp.Vdd2)
-                vds = _modelTemp.Vdd2;
+            if (vbs < ModelParameters.Vbb2)
+                vbs = ModelParameters.Vbb2;
+            if (vgs > ModelParameters.Vgg2)
+                vgs = ModelParameters.Vgg2;
+            if (vds > ModelParameters.Vdd2)
+                vds = ModelParameters.Vdd2;
             if (vbs <= 0.0)
             {
-                phisb = _temp.Param.B2phi - vbs;
+                phisb = base.Param.B2phi - vbs;
                 dPhisb_dVb = -1.0;
                 t1s = Math.Sqrt(phisb);
                 dT1s_dVb = -0.5 / t1s;
             }
             else
             {
-                tmp = _temp.Param.B2phi / (_temp.Param.B2phi + vbs);
-                phisb = _temp.Param.B2phi * tmp;
+                tmp = base.Param.B2phi / (base.Param.B2phi + vbs);
+                phisb = base.Param.B2phi * tmp;
                 dPhisb_dVb = -tmp * tmp;
-                t1s = _temp.Param.Phis3 / (_temp.Param.B2phi + 0.5 * vbs);
-                dT1s_dVb = -0.5 * t1s * t1s / _temp.Param.Phis3;
+                t1s = base.Param.Phis3 / (base.Param.B2phi + 0.5 * vbs);
+                dT1s_dVb = -0.5 * t1s * t1s / base.Param.Phis3;
             }
-            eta = _temp.Param.B2eta0 + _temp.Param.B2etaB * vbs;
-            ua = _temp.Param.B2ua0 + _temp.Param.B2uaB * vbs;
-            ub = _temp.Param.B2ub0 + _temp.Param.B2ubB * vbs;
-            u1s = _temp.Param.B2u10 + _temp.Param.B2u1B * vbs;
-            vth = _temp.Param.B2vfb + _temp.Param.B2phi + _temp.Param.B2k1 * t1s - _temp.Param.B2k2 * phisb - eta * vds;
+            eta = base.Param.B2eta0 + base.Param.B2etaB * vbs;
+            ua = base.Param.B2ua0 + base.Param.B2uaB * vbs;
+            ub = base.Param.B2ub0 + base.Param.B2ubB * vbs;
+            u1s = base.Param.B2u10 + base.Param.B2u1B * vbs;
+            vth = base.Param.B2vfb + base.Param.B2phi + base.Param.B2k1 * t1s - base.Param.B2k2 * phisb - eta * vds;
             dVth_dVd = -eta;
-            dVth_dVb = _temp.Param.B2k1 * dT1s_dVb + _temp.Param.B2k2 - _temp.Param.B2etaB * vds;
+            dVth_dVb = base.Param.B2k1 * dT1s_dVb + base.Param.B2k2 - base.Param.B2etaB * vds;
             vgst = vgs - vth;
             tmp = 1.0 / (1.744 + 0.8364 * phisb);
             gg = 1.0 - tmp;
             dGg_dVb = 0.8364 * tmp * tmp * dPhisb_dVb;
             t0 = gg / t1s;
-            tmp1 = 0.5 * t0 * _temp.Param.B2k1;
+            tmp1 = 0.5 * t0 * base.Param.B2k1;
             aa = 1.0 + tmp1;
             dAa_dVb = (aa - 1.0) * (dGg_dVb / gg - dT1s_dVb / t1s);
             inv_Aa = 1.0 / aa;
-            vghigh = _temp.Param.B2vghigh;
-            vglow = _temp.Param.B2vglow;
-            if ((vgst >= vghigh) || (_temp.Param.B2n0 == 0.0))
+            vghigh = base.Param.B2vghigh;
+            vglow = base.Param.B2vglow;
+            if ((vgst >= vghigh) || (base.Param.B2n0 == 0.0))
             {
                 vgeff = vgst;
                 dVgeff_dVg = 1.0;
@@ -751,10 +743,10 @@ namespace SpiceSharp.Components.BSIM2Behaviors
             }
             else
             {
-                vof = _temp.Param.B2vof0 + _temp.Param.B2vofB * vbs + _temp.Param.B2vofD * vds;
-                n = _temp.Param.B2n0 + _temp.Param.B2nB / t1s + _temp.Param.B2nD * vds;
-                tmp = 0.5 / (n * _modelTemp.Vtm);
-                expArg1 = -vds / _modelTemp.Vtm;
+                vof = base.Param.B2vof0 + base.Param.B2vofB * vbs + base.Param.B2vofD * vds;
+                n = base.Param.B2n0 + base.Param.B2nB / t1s + base.Param.B2nD * vds;
+                tmp = 0.5 / (n * ModelTemperature.Vtm);
+                expArg1 = -vds / ModelTemperature.Vtm;
                 expArg1 = Math.Max(expArg1, -30.0);
                 exp1 = Math.Exp(expArg1);
                 tmp1 = 1.0 - exp1;
@@ -765,18 +757,18 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                     expArg = vgst * tmp;
                     expArg = Math.Max(expArg, -30.0);
                     exp0 = Math.Exp(0.5 * vof + expArg);
-                    vgeff = Math.Sqrt(tmp2) * _modelTemp.Vtm * exp0;
-                    t0 = n * _modelTemp.Vtm;
+                    vgeff = Math.Sqrt(tmp2) * ModelTemperature.Vtm * exp0;
+                    t0 = n * ModelTemperature.Vtm;
                     dVgeff_dVg = vgeff * tmp;
-                    dVgeff_dVd = dVgeff_dVg * (n / tmp1 * exp1 - dVth_dVd - vgst * _temp.Param.B2nD / n + t0 * _temp.Param.B2vofD);
-                    dVgeff_dVb = dVgeff_dVg * (_temp.Param.B2vofB * t0 - dVth_dVb + _temp.Param.B2nB * vgst / (n * t1s * t1s) * dT1s_dVb + t0 * inv_Aa * dAa_dVb);
+                    dVgeff_dVd = dVgeff_dVg * (n / tmp1 * exp1 - dVth_dVd - vgst * base.Param.B2nD / n + t0 * base.Param.B2vofD);
+                    dVgeff_dVb = dVgeff_dVg * (base.Param.B2vofB * t0 - dVth_dVb + base.Param.B2nB * vgst / (n * t1s * t1s) * dT1s_dVb + t0 * inv_Aa * dAa_dVb);
                 }
                 else
                 {
                     expArg = vglow * tmp;
                     expArg = Math.Max(expArg, -30.0);
                     exp0 = Math.Exp(0.5 * vof + expArg);
-                    vgeff = Math.Sqrt(2.0 * aa * (1.0 - exp1)) * _modelTemp.Vtm * exp0;
+                    vgeff = Math.Sqrt(2.0 * aa * (1.0 - exp1)) * ModelTemperature.Vtm * exp0;
                     con1 = vghigh;
                     con3 = vgeff;
                     con4 = con3 * tmp;
@@ -801,11 +793,11 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                     vgeff = (coeffa + vgst * (coeffb + vgst * (coeffc + vgst * coeffd))) * delta;
                     dVgeff_dVg = (coeffb + vgst * (2.0 * coeffc + 3.0 * vgst * coeffd)) * delta;
                     t7 = con3 * tmp;
-                    t8 = dT1s_dVb * _temp.Param.B2nB / (t1s * t1s * n);
-                    t9 = n * _modelTemp.Vtm;
-                    dCon3_dVd = t7 * (n * exp1 / tmp1 - vglow * _temp.Param.B2nD / n + t9 * _temp.Param.B2vofD);
-                    dCon3_dVb = t7 * (t9 * inv_Aa * dAa_dVb + vglow * t8 + t9 * _temp.Param.B2vofB);
-                    dCon4_dVd = tmp * dCon3_dVd - t7 * _temp.Param.B2nD / n;
+                    t8 = dT1s_dVb * base.Param.B2nB / (t1s * t1s * n);
+                    t9 = n * ModelTemperature.Vtm;
+                    dCon3_dVd = t7 * (n * exp1 / tmp1 - vglow * base.Param.B2nD / n + t9 * base.Param.B2vofD);
+                    dCon3_dVb = t7 * (t9 * inv_Aa * dAa_dVb + vglow * t8 + t9 * base.Param.B2vofB);
+                    dCon4_dVd = tmp * dCon3_dVd - t7 * base.Param.B2nD / n;
                     dCon4_dVb = tmp * dCon3_dVb + t7 * t8;
                     dCoeffb_dVd = dCon4_dVd * (t2 * t5 - t0 * t6) + dCon3_dVd * (t1 * t2 - t0 * t3);
                     dCoeffc_dVd = dCon4_dVd * (t6 - t2 * t4) + dCon3_dVd * (t3 - t2);
@@ -827,13 +819,13 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 t8 = ua + 2.0 * ub * vgeff;
                 dUvert_dVg = t8 * dVgeff_dVg;
                 dUvert_dVd = t8 * dVgeff_dVd;
-                dUvert_dVb = t8 * dVgeff_dVb + vgeff * (_temp.Param.B2uaB + vgeff * _temp.Param.B2ubB);
+                dUvert_dVb = t8 * dVgeff_dVb + vgeff * (base.Param.B2uaB + vgeff * base.Param.B2ubB);
                 t8 = u1s * inv_Aa * inv_Uvert;
                 vc = t8 * vgeff;
                 t9 = vc * inv_Uvert;
                 dVc_dVg = t8 * dVgeff_dVg - t9 * dUvert_dVg;
                 dVc_dVd = t8 * dVgeff_dVd - t9 * dUvert_dVd;
-                dVc_dVb = t8 * dVgeff_dVb + _temp.Param.B2u1B * vgeff * inv_Aa * inv_Uvert - vc * inv_Aa * dAa_dVb - t9 * dUvert_dVb;
+                dVc_dVb = t8 * dVgeff_dVb + base.Param.B2u1B * vgeff * inv_Aa * inv_Uvert - vc * inv_Aa * dAa_dVb - t9 * dUvert_dVb;
                 tmp2 = Math.Sqrt(1.0 + 2.0 * vc);
                 kk = 0.5 * (1.0 + vc + tmp2);
                 inv_Kk = 1.0 / kk;
@@ -847,12 +839,12 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 dVdsat_dVd = t8 * dVgeff_dVd - t9 * dVc_dVd;
                 dVdsat_dVg = t8 * dVgeff_dVg - t9 * dVc_dVg;
                 dVdsat_dVb = t8 * dVgeff_dVb - t9 * dVc_dVb - vdsat * inv_Aa * dAa_dVb;
-                beta0 = _temp.Param.B2beta0 + _temp.Param.B2beta0B * vbs;
-                betas = _temp.Param.B2betas0 + _temp.Param.B2betasB * vbs;
-                beta2 = _temp.Param.B2beta20 + _temp.Param.B2beta2B * vbs + _temp.Param.B2beta2G * vgs;
-                beta3 = _temp.Param.B2beta30 + _temp.Param.B2beta3B * vbs + _temp.Param.B2beta3G * vgs;
-                beta4 = _temp.Param.B2beta40 + _temp.Param.B2beta4B * vbs + _temp.Param.B2beta4G * vgs;
-                beta1 = betas - (beta0 + _mbp.Vdd * (beta3 - _mbp.Vdd * beta4));
+                beta0 = base.Param.B2beta0 + base.Param.B2beta0B * vbs;
+                betas = base.Param.B2betas0 + base.Param.B2betasB * vbs;
+                beta2 = base.Param.B2beta20 + base.Param.B2beta2B * vbs + base.Param.B2beta2G * vgs;
+                beta3 = base.Param.B2beta30 + base.Param.B2beta3B * vbs + base.Param.B2beta3G * vgs;
+                beta4 = base.Param.B2beta40 + base.Param.B2beta4B * vbs + base.Param.B2beta4G * vgs;
+                beta1 = betas - (beta0 + ModelParameters.Vdd * (beta3 - ModelParameters.Vdd * beta4));
                 t0 = vds * beta2 * inv_Vdsat;
                 t0 = Math.Min(t0, 30.0);
                 t1 = Math.Exp(t0);
@@ -862,26 +854,26 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 sqrsech = 4.0 * t2 / (t3 * t3);
                 beta = beta0 + beta1 * tanh + vds * (beta3 - beta4 * vds);
                 t4 = beta1 * sqrsech * inv_Vdsat;
-                t5 = _mbp.Vdd * tanh;
+                t5 = ModelParameters.Vdd * tanh;
                 dBeta_dVd = beta3 - 2.0 * beta4 * vds + t4 * (beta2 - t0 * dVdsat_dVd);
-                dBeta_dVg = t4 * (_temp.Param.B2beta2G * vds - t0 * dVdsat_dVg) + _temp.Param.B2beta3G * (vds - t5) - _temp.Param.B2beta4G * (vds * vds - _mbp.Vdd * t5);
-                dBeta1_dVb = _temp.Param.Arg;
-                dBeta_dVb = _temp.Param.B2beta0B + dBeta1_dVb * tanh + vds * (_temp.Param.B2beta3B - vds * _temp.Param.B2beta4B) + t4 * (_temp.Param.B2beta2B * vds - t0 * dVdsat_dVb);
+                dBeta_dVg = t4 * (base.Param.B2beta2G * vds - t0 * dVdsat_dVg) + base.Param.B2beta3G * (vds - t5) - base.Param.B2beta4G * (vds * vds - ModelParameters.Vdd * t5);
+                dBeta1_dVb = base.Param.Arg;
+                dBeta_dVb = base.Param.B2beta0B + dBeta1_dVb * tanh + vds * (base.Param.B2beta3B - vds * base.Param.B2beta4B) + t4 * (base.Param.B2beta2B * vds - t0 * dVdsat_dVb);
                 if (vgst > vglow)
                 {
                     if (vds <= vdsat)
                     {
                         t3 = vds * inv_Vdsat;
                         t4 = t3 - 1.0;
-                        t2 = 1.0 - _temp.Param.B2u1D * t4 * t4;
+                        t2 = 1.0 - base.Param.B2u1D * t4 * t4;
                         u1 = u1s * t2;
                         utot = uvert + u1 * vds;
                         utot = Math.Max(utot, 0.5);
                         inv_Utot = 1.0 / utot;
-                        t5 = 2.0 * u1s * _temp.Param.B2u1D * inv_Vdsat * t4;
+                        t5 = 2.0 * u1s * base.Param.B2u1D * inv_Vdsat * t4;
                         dU1_dVd = t5 * (t3 * dVdsat_dVd - 1.0);
                         dU1_dVg = t5 * t3 * dVdsat_dVg;
-                        dU1_dVb = t5 * t3 * dVdsat_dVb + _temp.Param.B2u1B * t2;
+                        dU1_dVb = t5 * t3 * dVdsat_dVb + base.Param.B2u1B * t2;
                         dUtot_dVd = dUvert_dVd + u1 + vds * dU1_dVd;
                         dUtot_dVg = dUvert_dVg + vds * dU1_dVg;
                         dUtot_dVb = dUvert_dVb + vds * dU1_dVb;
@@ -903,10 +895,10 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                         t0 = Ids / betaeff * inv_Uvert;
                         t1 = betaeff * vgeff * inv_Aa * inv_Kk;
                         t2 = Ids * inv_Kk * dKk_dVc;
-                        if (_temp.Param.B2ai0 != 0.0)
+                        if (base.Param.B2ai0 != 0.0)
                         {
-                            ai = _temp.Param.B2ai0 + _temp.Param.B2aiB * vbs;
-                            bi = _temp.Param.B2bi0 + _temp.Param.B2biB * vbs;
+                            ai = base.Param.B2ai0 + base.Param.B2aiB * vbs;
+                            bi = base.Param.B2bi0 + base.Param.B2biB * vbs;
                             t5 = bi / (vds - vdsat);
                             t5 = Math.Min(t5, 30.0);
                             t6 = Math.Exp(-t5);
@@ -915,7 +907,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                             t8 = (1.0 - fR) * t7;
                             dFR_dVd = t8 * (dVdsat_dVd - 1.0);
                             dFR_dVg = t8 * dVdsat_dVg;
-                            dFR_dVb = t8 * dVdsat_dVb + t6 * (_temp.Param.B2aiB - ai * _temp.Param.B2biB / (vds - vdsat));
+                            dFR_dVb = t8 * dVdsat_dVb + t6 * (base.Param.B2aiB - ai * base.Param.B2biB / (vds - vdsat));
                             gds = (t0 * (dBeta_dVd - betaeff * dUvert_dVd) + t1 * dVgeff_dVd - t2 * dVc_dVd) * fR + Ids * dFR_dVd;
                             gm = (t0 * (dBeta_dVg - betaeff * dUvert_dVg) + t1 * dVgeff_dVg - t2 * dVc_dVg) * fR + Ids * dFR_dVg;
                             gmb = (t0 * (dBeta_dVb - betaeff * dUvert_dVb) + t1 * dVgeff_dVb - t2 * dVc_dVb - Ids * inv_Aa * dAa_dVb) * fR + Ids * dFR_dVb;
@@ -933,14 +925,14 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 {
                     t0 = exp0 * exp0;
                     t1 = exp1;
-                    Ids = beta * _modelTemp.Vtm * _modelTemp.Vtm * t0 * (1.0 - t1);
+                    Ids = beta * ModelTemperature.Vtm * ModelTemperature.Vtm * t0 * (1.0 - t1);
                     t2 = Ids / beta;
-                    t4 = n * _modelTemp.Vtm;
+                    t4 = n * ModelTemperature.Vtm;
                     t3 = Ids / t4;
-                    if ((vds > vdsat) && _temp.Param.B2ai0 != 0.0)
+                    if ((vds > vdsat) && base.Param.B2ai0 != 0.0)
                     {
-                        ai = _temp.Param.B2ai0 + _temp.Param.B2aiB * vbs;
-                        bi = _temp.Param.B2bi0 + _temp.Param.B2biB * vbs;
+                        ai = base.Param.B2ai0 + base.Param.B2aiB * vbs;
+                        bi = base.Param.B2bi0 + base.Param.B2biB * vbs;
                         t5 = bi / (vds - vdsat);
                         t5 = Math.Min(t5, 30.0);
                         t6 = Math.Exp(-t5);
@@ -949,7 +941,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                         t8 = (1.0 - fR) * t7;
                         dFR_dVd = t8 * (dVdsat_dVd - 1.0);
                         dFR_dVg = t8 * dVdsat_dVg;
-                        dFR_dVb = t8 * dVdsat_dVb + t6 * (_temp.Param.B2aiB - ai * _temp.Param.B2biB / (vds - vdsat));
+                        dFR_dVb = t8 * dVdsat_dVb + t6 * (base.Param.B2aiB - ai * base.Param.B2biB / (vds - vdsat));
                     }
                     else
                     {
@@ -958,9 +950,9 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                         dFR_dVg = 0.0;
                         dFR_dVb = 0.0;
                     }
-                    gds = (t2 * dBeta_dVd + t3 * (_temp.Param.B2vofD * t4 - dVth_dVd - _temp.Param.B2nD * vgst / n) + beta * _modelTemp.Vtm * t0 * t1) * fR + Ids * dFR_dVd;
+                    gds = (t2 * dBeta_dVd + t3 * (base.Param.B2vofD * t4 - dVth_dVd - base.Param.B2nD * vgst / n) + beta * ModelTemperature.Vtm * t0 * t1) * fR + Ids * dFR_dVd;
                     gm = (t2 * dBeta_dVg + t3) * fR + Ids * dFR_dVg;
-                    gmb = (t2 * dBeta_dVb + t3 * (_temp.Param.B2vofB * t4 - dVth_dVb + _temp.Param.B2nB * vgst / (n * t1s * t1s) * dT1s_dVb)) * fR + Ids * dFR_dVb;
+                    gmb = (t2 * dBeta_dVb + t3 * (base.Param.B2vofB * t4 - dVth_dVb + base.Param.B2nB * vgst / (n * t1s * t1s) * dT1s_dVb)) * fR + Ids * dFR_dVb;
                     Ids *= fR;
                 }
             }
@@ -974,7 +966,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 
             ChargeComputation:
             gds = Math.Max(gds, 1.0e-20);
-            if ((_mbp.ChannelChargePartitionFlag > 1) || ((!chargeComputationNeeded) && (_mbp.ChannelChargePartitionFlag > -5)))
+            if ((ModelParameters.ChannelChargePartitionFlag > 1) || ((!chargeComputationNeeded) && (ModelParameters.ChannelChargePartitionFlag > -5)))
             {
                 qg = 0.0;
                 qd = 0.0;
@@ -999,37 +991,37 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 }
                 else
                 {
-                    vbseff = _temp.Param.B2phi - phisb;
+                    vbseff = base.Param.B2phi - phisb;
                     dVbseff_dVb = -dPhisb_dVb;
                 }
-                arg1 = vgs - vbseff - _temp.Param.B2vfb;
+                arg1 = vgs - vbseff - base.Param.B2vfb;
                 arg2 = arg1 - vgst;
-                qbulk = _temp.Param.One_Third_CoxWL * arg2;
-                dQbulk_dVb = _temp.Param.One_Third_CoxWL * (dVth_dVb - dVbseff_dVb);
-                dQbulk_dVd = _temp.Param.One_Third_CoxWL * dVth_dVd;
+                qbulk = base.Param.One_Third_CoxWL * arg2;
+                dQbulk_dVb = base.Param.One_Third_CoxWL * (dVth_dVb - dVbseff_dVb);
+                dQbulk_dVd = base.Param.One_Third_CoxWL * dVth_dVd;
                 if (arg1 <= 0.0)
                 {
-                    qg = _temp.Param.CoxWL * arg1;
+                    qg = base.Param.CoxWL * arg1;
                     qb = -(qg);
                     qd = 0.0;
-                    cgg = _temp.Param.CoxWL;
+                    cgg = base.Param.CoxWL;
                     cgd = 0.0;
                     cgs = -cgg * (1.0 - dVbseff_dVb);
                     cdg = 0.0;
                     cdd = 0.0;
                     cds = 0.0;
-                    cbg = -_temp.Param.CoxWL;
+                    cbg = -base.Param.CoxWL;
                     cbd = 0.0;
                     cbs = -cgs;
                 }
                 else if (vgst <= 0.0)
                 {
                     t2 = arg1 / arg2;
-                    t3 = t2 * t2 * (_temp.Param.CoxWL - _temp.Param.Two_Third_CoxWL * t2);
-                    qg = _temp.Param.CoxWL * arg1 * (1.0 - t2 * (1.0 - t2 / 3.0));
+                    t3 = t2 * t2 * (base.Param.CoxWL - base.Param.Two_Third_CoxWL * t2);
+                    qg = base.Param.CoxWL * arg1 * (1.0 - t2 * (1.0 - t2 / 3.0));
                     qb = -(qg);
                     qd = 0.0;
-                    cgg = _temp.Param.CoxWL * (1.0 - t2 * (2.0 - t2));
+                    cgg = base.Param.CoxWL * (1.0 - t2 * (2.0 - t2));
                     tmp = t3 * dVth_dVb - (cgg + t3) * dVbseff_dVb;
                     cgd = t3 * dVth_dVd;
                     cgs = -(cgg + cgd + tmp);
@@ -1042,20 +1034,20 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 }
                 else
                 {
-                    if (vgst < _temp.Param.B2vghigh)
+                    if (vgst < base.Param.B2vghigh)
                     {
                         uvert = 1.0 + vgst * (ua + vgst * ub);
                         uvert = Math.Max(uvert, 0.2);
                         inv_Uvert = 1.0 / uvert;
                         dUvert_dVg = ua + 2.0 * ub * vgst;
                         dUvert_dVd = -dUvert_dVg * dVth_dVd;
-                        dUvert_dVb = -dUvert_dVg * dVth_dVb + vgst * (_temp.Param.B2uaB + vgst * _temp.Param.B2ubB);
+                        dUvert_dVb = -dUvert_dVg * dVth_dVb + vgst * (base.Param.B2uaB + vgst * base.Param.B2ubB);
                         t8 = u1s * inv_Aa * inv_Uvert;
                         vc = t8 * vgst;
                         t9 = vc * inv_Uvert;
                         dVc_dVg = t8 - t9 * dUvert_dVg;
                         dVc_dVd = -t8 * dVth_dVd - t9 * dUvert_dVd;
-                        dVc_dVb = -t8 * dVth_dVb + _temp.Param.B2u1B * vgst * inv_Aa * inv_Uvert - vc * inv_Aa * dAa_dVb - t9 * dUvert_dVb;
+                        dVc_dVb = -t8 * dVth_dVb + base.Param.B2u1B * vgst * inv_Aa * inv_Uvert - vc * inv_Aa * dAa_dVb - t9 * dUvert_dVb;
                         tmp2 = Math.Sqrt(1.0 + 2.0 * vc);
                         kk = 0.5 * (1.0 + vc + tmp2);
                         inv_Kk = 1.0 / kk;
@@ -1070,7 +1062,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                     }
                     if (vds >= vdsat)
                     {
-                        cgg = _temp.Param.Two_Third_CoxWL;
+                        cgg = base.Param.Two_Third_CoxWL;
                         cgd = -cgg * dVth_dVd + dQbulk_dVd;
                         tmp = -cgg * dVth_dVb + dQbulk_dVb;
                         cgs = -(cgg + cgd + tmp);
@@ -1082,7 +1074,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                         cdd = -cdg * dVth_dVd;
                         cds = -(cdg + cdd + tmp);
                         qb = -qbulk;
-                        qg = _temp.Param.Two_Third_CoxWL * vgst + qbulk;
+                        qg = base.Param.Two_Third_CoxWL * vgst + qbulk;
                         qd = cdg * vgst;
                     }
                     else
@@ -1100,18 +1092,18 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                         dVgdt_dVg = t9 + t6 * dVdsat_dVg;
                         dVgdt_dVd = t6 * dVdsat_dVd - t8 - t9 * dVth_dVd;
                         dVgdt_dVb = t6 * dVdsat_dVb - t9 * dVth_dVb;
-                        qg = _temp.Param.Two_Third_CoxWL * (vgst + vgdt - vgdt * t0) + qbulk;
+                        qg = base.Param.Two_Third_CoxWL * (vgst + vgdt - vgdt * t0) + qbulk;
                         qb = -qbulk;
-                        qd = -_temp.Param.One_Third_CoxWL * (0.2 * vgdt + 0.8 * vgst + vgdt * t1 + 0.2 * t5 * (vgdt - vgst));
-                        cgg = _temp.Param.Two_Third_CoxWL * (t2 + t3 * dVgdt_dVg);
-                        tmp = dQbulk_dVb + _temp.Param.Two_Third_CoxWL * (t3 * dVgdt_dVb - t2 * dVth_dVb);
-                        cgd = _temp.Param.Two_Third_CoxWL * (t3 * dVgdt_dVd - t2 * dVth_dVd) + dQbulk_dVd;
+                        qd = -base.Param.One_Third_CoxWL * (0.2 * vgdt + 0.8 * vgst + vgdt * t1 + 0.2 * t5 * (vgdt - vgst));
+                        cgg = base.Param.Two_Third_CoxWL * (t2 + t3 * dVgdt_dVg);
+                        tmp = dQbulk_dVb + base.Param.Two_Third_CoxWL * (t3 * dVgdt_dVb - t2 * dVth_dVb);
+                        cgd = base.Param.Two_Third_CoxWL * (t3 * dVgdt_dVd - t2 * dVth_dVd) + dQbulk_dVd;
                         cgs = -(cgg + cgd + tmp);
                         t2 = 0.8 - 0.4 * t1 * (2.0 * t1 + t0 + t0 * (t1 - t0));
                         t3 = 0.2 + t1 + t0 * (1.0 - 0.4 * t0 * (t1 + 3.0 * t0));
-                        cdg = -_temp.Param.One_Third_CoxWL * (t2 + t3 * dVgdt_dVg);
-                        tmp = _temp.Param.One_Third_CoxWL * (t2 * dVth_dVb - t3 * dVgdt_dVb);
-                        cdd = _temp.Param.One_Third_CoxWL * (t2 * dVth_dVd - t3 * dVgdt_dVd);
+                        cdg = -base.Param.One_Third_CoxWL * (t2 + t3 * dVgdt_dVg);
+                        tmp = base.Param.One_Third_CoxWL * (t2 * dVth_dVb - t3 * dVgdt_dVb);
+                        cdd = base.Param.One_Third_CoxWL * (t2 * dVth_dVd - t3 * dVgdt_dVd);
                         cds = -(cdg + tmp + cdd);
                         cbg = 0.0;
                         cbd = -dQbulk_dVd;
@@ -1120,7 +1112,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 }
             }
             finished:
-            switch (-_mbp.ChannelChargePartitionFlag)
+            switch (-ModelParameters.ChannelChargePartitionFlag)
             {
                 case 0:
                     Ids = Math.Max(Ids, 1e-50);
