@@ -17,8 +17,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         private ModelBaseParameters _mbp;
         private BaseParameters _bp;
         private TemperatureBehavior _temp;
-        private ModelTemperatureBehavior _modelTemp;
-        private LoadBehavior _load;
+        private BiasingBehavior _load;
 
         /// <summary>
         /// Nodes
@@ -74,9 +73,8 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             _bp = provider.GetParameterSet<BaseParameters>();
 
             // Get behaviors
-            _modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
             _temp = provider.GetBehavior<TemperatureBehavior>();
-            _load = provider.GetBehavior<LoadBehavior>();
+            _load = provider.GetBehavior<BiasingBehavior>();
         }
 
         /// <summary>

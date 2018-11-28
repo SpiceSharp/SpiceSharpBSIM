@@ -1,8 +1,7 @@
-﻿using System;
-using SpiceSharp.Attributes;
+﻿using SpiceSharp.Attributes;
+
 namespace SpiceSharp.Components.BSIM1Behaviors
 {
-
     /// <summary>
     /// Base parameters for a <see cref="BSIM1Model" />
     /// </summary>
@@ -185,6 +184,14 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         }
 
         /// <summary>
+        /// Gets the oxide capacitance.
+        /// </summary>
+        /// <value>
+        /// The oxide capacitance.
+        /// </value>
+        public double Cox { get; private set; }
+
+        /// <summary>
         /// Deep cloning
         /// </summary>
         /// <returns></returns>
@@ -193,6 +200,18 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             var cloned = (ModelBaseParameters) base.DeepClone();
             cloned.Type = Type;
             return cloned;
+        }
+
+        /// <summary>
+        /// Calculates the defaults.
+        /// </summary>
+        public override void CalculateDefaults()
+        {
+            if (BulkJctPotential < 0.1)
+                BulkJctPotential.Value = 0.1;
+            if (SidewallJctPotential < 0.1)
+                SidewallJctPotential.Value = 0.1;
+            Cox = 3.453e-13 / (OxideThickness * 1.0e-4);
         }
     }
 }

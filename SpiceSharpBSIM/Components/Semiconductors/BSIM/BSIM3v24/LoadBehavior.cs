@@ -376,7 +376,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                 {
                     vgs = Transistor.LimitFet(vgs, this.Vgs, von);
                     vds = vgs - vgd;
-                    vds = Transistor.LimitVoltageDs(vds, this.Vds);
+                    vds = Transistor.LimitVds(vds, this.Vds);
                     vgd = vgs - vds;
 
                 }
@@ -384,7 +384,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                 {
                     vgd = Transistor.LimitFet(vgd, vgdo, von);
                     vds = vgs - vgd;
-                    vds = -Transistor.LimitVoltageDs(-vds, -this.Vds);
+                    vds = -Transistor.LimitVds(-vds, -this.Vds);
                     vgs = vgd + vds;
                 }
 

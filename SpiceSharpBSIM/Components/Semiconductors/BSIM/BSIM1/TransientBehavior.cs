@@ -15,7 +15,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <summary>
         /// Necessary behaviors and parameters
         /// </summary>
-        private LoadBehavior _load;
+        private BiasingBehavior _load;
 
         /// <summary>
         /// States
@@ -38,7 +38,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
-            _load = provider.GetBehavior<LoadBehavior>();
+            _load = provider.GetBehavior<BiasingBehavior>();
             _load.TranBehavior = this;
         }
 

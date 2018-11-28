@@ -15,9 +15,6 @@ namespace SpiceSharp.Components
         {
             // Add parameters
             ParameterSets.Add(new ModelBaseParameters());
-
-            // Add behaviors
-            Behaviors.Add(typeof(ModelTemperatureBehavior), () => new ModelTemperatureBehavior(Name));
         }
     }
 }

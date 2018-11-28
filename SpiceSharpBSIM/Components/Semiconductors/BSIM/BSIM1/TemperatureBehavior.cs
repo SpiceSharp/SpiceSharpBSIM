@@ -1,21 +1,20 @@
 ﻿using System;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
+
 namespace SpiceSharp.Components.BSIM1Behaviors
 {
-
     /// <summary>
     /// Temperature behavior for a <see cref="BSIM1" />
     /// </summary>
-    public class TemperatureBehavior : BaseTemperatureBehavior
+    public class TemperatureBehavior : ExportingBehavior, ITemperatureBehavior
     {
-
         /// <summary>
         /// Necessary behaviors and parameters
         /// </summary>
-        private BaseParameters _bp;
-        private ModelBaseParameters _mbp;
-        private ModelTemperatureBehavior _modelTemp;
+        protected BaseParameters BaseParameters { get; private set; }
+        protected ModelBaseParameters ModelParameters { get; private set; }
 
         /// <summary>
         /// Properties
@@ -63,59 +62,60 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         {
             if (provider == null)
                 throw new ArgumentNullException(nameof(provider));
-            _bp = provider.GetParameterSet<BaseParameters>();
-            _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-            _modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
+
+            // Get parameters
+            BaseParameters = provider.GetParameterSet<BaseParameters>();
+            ModelParameters = provider.GetParameterSet<ModelBaseParameters>("model");
         }
 
         /// <summary>
         /// Temperature behavior
         /// </summary>
-        public override void Temperature(BaseSimulation simulation)
+        public void Temperature(BaseSimulation simulation)
         {
             double effChanLength, effChanWidth, coxWoverL, leff, weff;
-            if ((effChanLength = _bp.Length - _mbp.DeltaL * 1e-6) <= 0)
+            if ((effChanLength = BaseParameters.Length - ModelParameters.DeltaL * 1e-6) <= 0)
             {
-                throw new CircuitException("B1: mosfet {0}, model {1}: Effective channel length <=0".FormatString(_modelTemp.Name, Name));
+                throw new CircuitException("B1: mosfet {0}: Effective channel length <= 0".FormatString(Name));
             }
-            if ((effChanWidth = _bp.Width - _mbp.DeltaW * 1e-6) <= 0)
+            if ((effChanWidth = BaseParameters.Width - ModelParameters.DeltaW * 1e-6) <= 0)
             {
-                throw new CircuitException("B1: mosfet {0}, model {1}: Effective channel width <=0".FormatString(_modelTemp.Name, Name));
+                throw new CircuitException("B1: mosfet {0}: Effective channel width <= 0".FormatString(Name));
             }
-            GDoverlapCap = effChanWidth * _mbp.GateDrainOverlapCap;
-            GSoverlapCap = effChanWidth * _mbp.GateSourceOverlapCap;
-            GBoverlapCap = _bp.Length * _mbp.GateBulkOverlapCap;
-            if ((DrainConductance = _mbp.SheetResistance * _bp.DrainSquares) != 0.0)
+            GDoverlapCap = effChanWidth * ModelParameters.GateDrainOverlapCap;
+            GSoverlapCap = effChanWidth * ModelParameters.GateSourceOverlapCap;
+            GBoverlapCap = BaseParameters.Length * ModelParameters.GateBulkOverlapCap;
+            if ((DrainConductance = ModelParameters.SheetResistance * BaseParameters.DrainSquares) != 0.0)
             {
                 DrainConductance = 1.0 / DrainConductance;
             }
-            if ((SourceConductance = _mbp.SheetResistance * _bp.SourceSquares) != 0.0)
+            if ((SourceConductance = ModelParameters.SheetResistance * BaseParameters.SourceSquares) != 0.0)
             {
                 SourceConductance = 1.0 / SourceConductance;
             }
             leff = effChanLength * 1.0e6;
             weff = effChanWidth * 1.0e6;
-            coxWoverL = _modelTemp.Cox * weff / leff;
-            Vfb = _mbp.Vfb0 + _mbp.VfbL / leff + _mbp.VfbW / weff;
-            Phi = _mbp.Phi0 + _mbp.PhiL / leff + _mbp.PhiW / weff;
-            K1 = _mbp.K10 + _mbp.K1L / leff + _mbp.K1W / weff;
-            K2 = _mbp.K20 + _mbp.K2L / leff + _mbp.K2W / weff;
-            Eta = _mbp.Eta0 + _mbp.EtaL / leff + _mbp.EtaW / weff;
-            EtaB = _mbp.EtaB0 + _mbp.EtaBl / leff + _mbp.EtaBw / weff;
-            EtaD = _mbp.EtaD0 + _mbp.EtaDl / leff + _mbp.EtaDw / weff;
-            BetaZero = _mbp.MobZero;
-            BetaZeroB = _mbp.MobZeroB0 + _mbp.MobZeroBl / leff + _mbp.MobZeroBw / weff;
-            Ugs = _mbp.Ugs0 + _mbp.UgsL / leff + _mbp.UgsW / weff;
-            UgsB = _mbp.UgsB0 + _mbp.UgsBL / leff + _mbp.UgsBW / weff;
-            Uds = _mbp.Uds0 + _mbp.UdsL / leff + _mbp.UdsW / weff;
-            UdsB = _mbp.UdsB0 + _mbp.UdsBL / leff + _mbp.UdsBW / weff;
-            UdsD = _mbp.UdsD0 + _mbp.UdsDL / leff + _mbp.UdsDW / weff;
-            BetaVdd = _mbp.MobVdd0 + _mbp.MobVddl / leff + _mbp.MobVddw / weff;
-            BetaVddB = _mbp.MobVddB0 + _mbp.MobVddBl / leff + _mbp.MobVddBw / weff;
-            BetaVddD = _mbp.MobVddD0 + _mbp.MobVddDl / leff + _mbp.MobVddDw / weff;
-            SubthSlope = _mbp.SubthSlope0 + _mbp.SubthSlopeL / leff + _mbp.SubthSlopeW / weff;
-            SubthSlopeB = _mbp.SubthSlopeB0 + _mbp.SubthSlopeBL / leff + _mbp.SubthSlopeBW / weff;
-            SubthSlopeD = _mbp.SubthSlopeD0 + _mbp.SubthSlopeDL / leff + _mbp.SubthSlopeDW / weff;
+            coxWoverL = ModelParameters.Cox * weff / leff;
+            Vfb = ModelParameters.Vfb0 + ModelParameters.VfbL / leff + ModelParameters.VfbW / weff;
+            Phi = ModelParameters.Phi0 + ModelParameters.PhiL / leff + ModelParameters.PhiW / weff;
+            K1 = ModelParameters.K10 + ModelParameters.K1L / leff + ModelParameters.K1W / weff;
+            K2 = ModelParameters.K20 + ModelParameters.K2L / leff + ModelParameters.K2W / weff;
+            Eta = ModelParameters.Eta0 + ModelParameters.EtaL / leff + ModelParameters.EtaW / weff;
+            EtaB = ModelParameters.EtaB0 + ModelParameters.EtaBl / leff + ModelParameters.EtaBw / weff;
+            EtaD = ModelParameters.EtaD0 + ModelParameters.EtaDl / leff + ModelParameters.EtaDw / weff;
+            BetaZero = ModelParameters.MobZero;
+            BetaZeroB = ModelParameters.MobZeroB0 + ModelParameters.MobZeroBl / leff + ModelParameters.MobZeroBw / weff;
+            Ugs = ModelParameters.Ugs0 + ModelParameters.UgsL / leff + ModelParameters.UgsW / weff;
+            UgsB = ModelParameters.UgsB0 + ModelParameters.UgsBL / leff + ModelParameters.UgsBW / weff;
+            Uds = ModelParameters.Uds0 + ModelParameters.UdsL / leff + ModelParameters.UdsW / weff;
+            UdsB = ModelParameters.UdsB0 + ModelParameters.UdsBL / leff + ModelParameters.UdsBW / weff;
+            UdsD = ModelParameters.UdsD0 + ModelParameters.UdsDL / leff + ModelParameters.UdsDW / weff;
+            BetaVdd = ModelParameters.MobVdd0 + ModelParameters.MobVddl / leff + ModelParameters.MobVddw / weff;
+            BetaVddB = ModelParameters.MobVddB0 + ModelParameters.MobVddBl / leff + ModelParameters.MobVddBw / weff;
+            BetaVddD = ModelParameters.MobVddD0 + ModelParameters.MobVddDl / leff + ModelParameters.MobVddDw / weff;
+            SubthSlope = ModelParameters.SubthSlope0 + ModelParameters.SubthSlopeL / leff + ModelParameters.SubthSlopeW / weff;
+            SubthSlopeB = ModelParameters.SubthSlopeB0 + ModelParameters.SubthSlopeBL / leff + ModelParameters.SubthSlopeBW / weff;
+            SubthSlopeD = ModelParameters.SubthSlopeD0 + ModelParameters.SubthSlopeDL / leff + ModelParameters.SubthSlopeDW / weff;
             if (Phi < 0.1)
                 Phi = 0.1;
             if (K1 < 0.0)
