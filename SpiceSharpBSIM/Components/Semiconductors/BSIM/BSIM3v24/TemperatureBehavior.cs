@@ -2,21 +2,40 @@ using System;
 using System.IO;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
+
 namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
 	
 	/// <summary>
 	/// Temperature behavior for a <see cref="BSIM3v24" />
 	/// </summary>
-	public class TemperatureBehavior : BaseTemperatureBehavior
+	public class TemperatureBehavior : ExportingBehavior, ITemperatureBehavior
 	{
-		
-		/// <summary>
-		/// Necessary behaviors and parameters
-		/// </summary>
-		private ModelTemperatureBehavior _modelTemp;
-		private BaseParameters _bp;
-		private ModelBaseParameters _mbp;
+
+        /// <summary>
+        /// Gets the model temperature behavior.
+        /// </summary>
+        /// <value>
+        /// The model temperature behavior.
+        /// </value>
+        protected ModelTemperatureBehavior ModelTemperature { get; private set; }
+
+        /// <summary>
+        /// Gets the base parameters.
+        /// </summary>
+        /// <value>
+        /// The base parameters.
+        /// </value>
+        protected BaseParameters BaseParameters { get; private set; }
+
+        /// <summary>
+        /// Gets the model parameters.
+        /// </summary>
+        /// <value>
+        /// The model parameters.
+        /// </value>
+        protected ModelBaseParameters ModelParameters { get; private set; }
 
         /// <summary>
         /// Size dependent parameters
@@ -49,61 +68,65 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 		{
 			if (provider == null)
 				throw new ArgumentNullException(nameof(provider));
-			_modelTemp = provider.GetBehavior<ModelTemperatureBehavior>("model");
-			_bp = provider.GetParameterSet<BaseParameters>("instance");
-			_mbp = provider.GetParameterSet<ModelBaseParameters>("model");
+
+            // Get behaviors
+			ModelTemperature = provider.GetBehavior<ModelTemperatureBehavior>("model");
+
+            // Get parameters
+			BaseParameters = provider.GetParameterSet<BaseParameters>("instance");
+			ModelParameters = provider.GetParameterSet<ModelBaseParameters>("model");
 		}
 		
 		/// <summary>
 		/// Temperature behavior
 		/// </summary>
-		public override void Temperature(BaseSimulation simulation)
+		public void Temperature(BaseSimulation simulation)
 		{
 			double tmp, tmp1, tmp2, tmp3, t0, t1, t2, t3, t4, t5, ldrn, wdrn, inv_L, inv_W, inv_LW, nvtm, sourceSatCurrent, drainSatCurrent;
 
-		    var size = new Tuple<double, double>(_bp.Width, _bp.Length);
-            if (!_modelTemp.SizeDependParams.TryGetValue(size, out var pParam))
+		    var size = new Tuple<double, double>(BaseParameters.Width, BaseParameters.Length);
+            if (!ModelTemperature.SizeDependParams.TryGetValue(size, out var pParam))
 			{
 				pParam = new BSIM3SizeDependParams();
 			    Param = pParam;
-                _modelTemp.SizeDependParams.Add(size, pParam);
-				ldrn = _bp.Length;
-				wdrn = _bp.Width;
+                ModelTemperature.SizeDependParams.Add(size, pParam);
+				ldrn = BaseParameters.Length;
+				wdrn = BaseParameters.Width;
 				pParam.Length = ldrn;
 				pParam.Width = wdrn;
-				t0 = Math.Pow(ldrn, _mbp.Lln);
-				t1 = Math.Pow(wdrn, _mbp.Lwn);
-				tmp1 = _mbp.Ll / t0 + _mbp.Lw / t1 + _mbp.Lwl / (t0 * t1);
-				pParam.BSIM3dl = _mbp.Lint + tmp1;
-				tmp2 = _mbp.Llc / t0 + _mbp.Lwc / t1 + _mbp.Lwlc / (t0 * t1);
-				pParam.BSIM3dlc = _mbp.Dlc + tmp2;
-				t2 = Math.Pow(ldrn, _mbp.Wln);
-				t3 = Math.Pow(wdrn, _mbp.Wwn);
-				tmp1 = _mbp.Wl / t2 + _mbp.Ww / t3 + _mbp.Wwl / (t2 * t3);
-				pParam.BSIM3dw = _mbp.Wint + tmp1;
-				tmp2 = _mbp.Wlc / t2 + _mbp.Wwc / t3 + _mbp.Wwlc / (t2 * t3);
-				pParam.BSIM3dwc = _mbp.Dwc + tmp2;
-				pParam.BSIM3leff = _bp.Length - 2.0 * pParam.BSIM3dl;
+				t0 = Math.Pow(ldrn, ModelParameters.Lln);
+				t1 = Math.Pow(wdrn, ModelParameters.Lwn);
+				tmp1 = ModelParameters.Ll / t0 + ModelParameters.Lw / t1 + ModelParameters.Lwl / (t0 * t1);
+				pParam.BSIM3dl = ModelParameters.Lint + tmp1;
+				tmp2 = ModelParameters.Llc / t0 + ModelParameters.Lwc / t1 + ModelParameters.Lwlc / (t0 * t1);
+				pParam.BSIM3dlc = ModelParameters.Dlc + tmp2;
+				t2 = Math.Pow(ldrn, ModelParameters.Wln);
+				t3 = Math.Pow(wdrn, ModelParameters.Wwn);
+				tmp1 = ModelParameters.Wl / t2 + ModelParameters.Ww / t3 + ModelParameters.Wwl / (t2 * t3);
+				pParam.BSIM3dw = ModelParameters.Wint + tmp1;
+				tmp2 = ModelParameters.Wlc / t2 + ModelParameters.Wwc / t3 + ModelParameters.Wwlc / (t2 * t3);
+				pParam.BSIM3dwc = ModelParameters.Dwc + tmp2;
+				pParam.BSIM3leff = BaseParameters.Length - 2.0 * pParam.BSIM3dl;
 				if (pParam.BSIM3leff <= 0.0)
 				{
-					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length <= 0".FormatString(_modelTemp.Name, Name));
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length <= 0".FormatString(ModelTemperature.Name, Name));
 				}
-				pParam.BSIM3weff = _bp.Width - 2.0 * pParam.BSIM3dw;
+				pParam.BSIM3weff = BaseParameters.Width - 2.0 * pParam.BSIM3dw;
 				if (pParam.BSIM3weff <= 0.0)
 				{
-					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width <= 0".FormatString(_modelTemp.Name, Name));
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width <= 0".FormatString(ModelTemperature.Name, Name));
 				}
-				pParam.BSIM3leffCV = _bp.Length - 2.0 * pParam.BSIM3dlc;
+				pParam.BSIM3leffCV = BaseParameters.Length - 2.0 * pParam.BSIM3dlc;
 				if (pParam.BSIM3leffCV <= 0.0)
 				{
-					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length for C-V <= 0".FormatString(_modelTemp.Name, Name));
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel length for C-V <= 0".FormatString(ModelTemperature.Name, Name));
 				}
-				pParam.BSIM3weffCV = _bp.Width - 2.0 * pParam.BSIM3dwc;
+				pParam.BSIM3weffCV = BaseParameters.Width - 2.0 * pParam.BSIM3dwc;
 				if (pParam.BSIM3weffCV <= 0.0)
 				{
-					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width for C-V <= 0".FormatString(_modelTemp.Name, Name));
+					throw new CircuitException("BSIM3: mosfet {0}, model {1}: Effective channel width for C-V <= 0".FormatString(ModelTemperature.Name, Name));
 				}
-				if (_mbp.BinUnit == 1)
+				if (ModelParameters.BinUnit == 1)
 				{
 					inv_L = 1.0e-6 / pParam.BSIM3leff;
 					inv_W = 1.0e-6 / pParam.BSIM3weff;
@@ -115,158 +138,158 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 					inv_W = 1.0 / pParam.BSIM3weff;
 					inv_LW = 1.0 / (pParam.BSIM3leff * pParam.BSIM3weff);
 				}
-				pParam.BSIM3cdsc = _mbp.Cdsc + _mbp.Lcdsc * inv_L + _mbp.Wcdsc * inv_W + _mbp.Pcdsc * inv_LW;
-				pParam.BSIM3cdscb = _mbp.Cdscb + _mbp.Lcdscb * inv_L + _mbp.Wcdscb * inv_W + _mbp.Pcdscb * inv_LW;
-				pParam.BSIM3cdscd = _mbp.Cdscd + _mbp.Lcdscd * inv_L + _mbp.Wcdscd * inv_W + _mbp.Pcdscd * inv_LW;
-				pParam.BSIM3cit = _mbp.Cit + _mbp.Lcit * inv_L + _mbp.Wcit * inv_W + _mbp.Pcit * inv_LW;
-				pParam.BSIM3nfactor = _mbp.Nfactor + _mbp.Lnfactor * inv_L + _mbp.Wnfactor * inv_W + _mbp.Pnfactor * inv_LW;
-				pParam.BSIM3xj = _mbp.Xj + _mbp.Lxj * inv_L + _mbp.Wxj * inv_W + _mbp.Pxj * inv_LW;
-				pParam.BSIM3vsat = _mbp.Vsat + _mbp.Lvsat * inv_L + _mbp.Wvsat * inv_W + _mbp.Pvsat * inv_LW;
-				pParam.BSIM3at = _mbp.At + _mbp.Lat * inv_L + _mbp.Wat * inv_W + _mbp.Pat * inv_LW;
-				pParam.BSIM3a0 = _mbp.A0 + _mbp.La0 * inv_L + _mbp.Wa0 * inv_W + _mbp.Pa0 * inv_LW;
-				pParam.BSIM3ags = _mbp.Ags + _mbp.Lags * inv_L + _mbp.Wags * inv_W + _mbp.Pags * inv_LW;
-				pParam.BSIM3a1 = _mbp.A1 + _mbp.La1 * inv_L + _mbp.Wa1 * inv_W + _mbp.Pa1 * inv_LW;
-				pParam.BSIM3a2 = _mbp.A2 + _mbp.La2 * inv_L + _mbp.Wa2 * inv_W + _mbp.Pa2 * inv_LW;
-				pParam.BSIM3keta = _mbp.Keta + _mbp.Lketa * inv_L + _mbp.Wketa * inv_W + _mbp.Pketa * inv_LW;
-				pParam.BSIM3nsub = _mbp.Nsub + _mbp.Lnsub * inv_L + _mbp.Wnsub * inv_W + _mbp.Pnsub * inv_LW;
-				pParam.BSIM3npeak = _mbp.Npeak + _mbp.Lnpeak * inv_L + _mbp.Wnpeak * inv_W + _mbp.Pnpeak * inv_LW;
-				pParam.BSIM3ngate = _mbp.Ngate + _mbp.Lngate * inv_L + _mbp.Wngate * inv_W + _mbp.Pngate * inv_LW;
-				pParam.BSIM3gamma1 = _mbp.Gamma1 + _mbp.Lgamma1 * inv_L + _mbp.Wgamma1 * inv_W + _mbp.Pgamma1 * inv_LW;
-				pParam.BSIM3gamma2 = _mbp.Gamma2 + _mbp.Lgamma2 * inv_L + _mbp.Wgamma2 * inv_W + _mbp.Pgamma2 * inv_LW;
-				pParam.BSIM3vbx = _mbp.Vbx + _mbp.Lvbx * inv_L + _mbp.Wvbx * inv_W + _mbp.Pvbx * inv_LW;
-				pParam.BSIM3vbm = _mbp.Vbm + _mbp.Lvbm * inv_L + _mbp.Wvbm * inv_W + _mbp.Pvbm * inv_LW;
-				pParam.BSIM3xt = _mbp.Xt + _mbp.Lxt * inv_L + _mbp.Wxt * inv_W + _mbp.Pxt * inv_LW;
-				pParam.BSIM3vfb = _mbp.Vfb + _mbp.Lvfb * inv_L + _mbp.Wvfb * inv_W + _mbp.Pvfb * inv_LW;
-				pParam.BSIM3k1 = _mbp.K1 + _mbp.Lk1 * inv_L + _mbp.Wk1 * inv_W + _mbp.Pk1 * inv_LW;
-				pParam.BSIM3kt1 = _mbp.Kt1 + _mbp.Lkt1 * inv_L + _mbp.Wkt1 * inv_W + _mbp.Pkt1 * inv_LW;
-				pParam.BSIM3kt1l = _mbp.Kt1l + _mbp.Lkt1l * inv_L + _mbp.Wkt1l * inv_W + _mbp.Pkt1l * inv_LW;
-				pParam.BSIM3k2 = _mbp.K2 + _mbp.Lk2 * inv_L + _mbp.Wk2 * inv_W + _mbp.Pk2 * inv_LW;
-				pParam.BSIM3kt2 = _mbp.Kt2 + _mbp.Lkt2 * inv_L + _mbp.Wkt2 * inv_W + _mbp.Pkt2 * inv_LW;
-				pParam.BSIM3k3 = _mbp.K3 + _mbp.Lk3 * inv_L + _mbp.Wk3 * inv_W + _mbp.Pk3 * inv_LW;
-				pParam.BSIM3k3b = _mbp.K3b + _mbp.Lk3b * inv_L + _mbp.Wk3b * inv_W + _mbp.Pk3b * inv_LW;
-				pParam.BSIM3w0 = _mbp.W0 + _mbp.Lw0 * inv_L + _mbp.Ww0 * inv_W + _mbp.Pw0 * inv_LW;
-				pParam.BSIM3nlx = _mbp.Nlx + _mbp.Lnlx * inv_L + _mbp.Wnlx * inv_W + _mbp.Pnlx * inv_LW;
-				pParam.BSIM3dvt0 = _mbp.Dvt0 + _mbp.Ldvt0 * inv_L + _mbp.Wdvt0 * inv_W + _mbp.Pdvt0 * inv_LW;
-				pParam.BSIM3dvt1 = _mbp.Dvt1 + _mbp.Ldvt1 * inv_L + _mbp.Wdvt1 * inv_W + _mbp.Pdvt1 * inv_LW;
-				pParam.BSIM3dvt2 = _mbp.Dvt2 + _mbp.Ldvt2 * inv_L + _mbp.Wdvt2 * inv_W + _mbp.Pdvt2 * inv_LW;
-				pParam.BSIM3dvt0w = _mbp.Dvt0w + _mbp.Ldvt0w * inv_L + _mbp.Wdvt0w * inv_W + _mbp.Pdvt0w * inv_LW;
-				pParam.BSIM3dvt1w = _mbp.Dvt1w + _mbp.Ldvt1w * inv_L + _mbp.Wdvt1w * inv_W + _mbp.Pdvt1w * inv_LW;
-				pParam.BSIM3dvt2w = _mbp.Dvt2w + _mbp.Ldvt2w * inv_L + _mbp.Wdvt2w * inv_W + _mbp.Pdvt2w * inv_LW;
-				pParam.BSIM3drout = _mbp.Drout + _mbp.Ldrout * inv_L + _mbp.Wdrout * inv_W + _mbp.Pdrout * inv_LW;
-				pParam.BSIM3dsub = _mbp.Dsub + _mbp.Ldsub * inv_L + _mbp.Wdsub * inv_W + _mbp.Pdsub * inv_LW;
-				pParam.BSIM3vth0 = _mbp.Vth0 + _mbp.Lvth0 * inv_L + _mbp.Wvth0 * inv_W + _mbp.Pvth0 * inv_LW;
-				pParam.BSIM3ua = _mbp.Ua + _mbp.Lua * inv_L + _mbp.Wua * inv_W + _mbp.Pua * inv_LW;
-				pParam.BSIM3ua1 = _mbp.Ua1 + _mbp.Lua1 * inv_L + _mbp.Wua1 * inv_W + _mbp.Pua1 * inv_LW;
-				pParam.BSIM3ub = _mbp.Ub + _mbp.Lub * inv_L + _mbp.Wub * inv_W + _mbp.Pub * inv_LW;
-				pParam.BSIM3ub1 = _mbp.Ub1 + _mbp.Lub1 * inv_L + _mbp.Wub1 * inv_W + _mbp.Pub1 * inv_LW;
-				pParam.BSIM3uc = _mbp.Uc + _mbp.Luc * inv_L + _mbp.Wuc * inv_W + _mbp.Puc * inv_LW;
-				pParam.BSIM3uc1 = _mbp.Uc1 + _mbp.Luc1 * inv_L + _mbp.Wuc1 * inv_W + _mbp.Puc1 * inv_LW;
-				pParam.BSIM3u0 = _mbp.U0 + _mbp.Lu0 * inv_L + _mbp.Wu0 * inv_W + _mbp.Pu0 * inv_LW;
-				pParam.BSIM3ute = _mbp.Ute + _mbp.Lute * inv_L + _mbp.Wute * inv_W + _mbp.Pute * inv_LW;
-				pParam.BSIM3voff = _mbp.Voff + _mbp.Lvoff * inv_L + _mbp.Wvoff * inv_W + _mbp.Pvoff * inv_LW;
-				pParam.BSIM3delta = _mbp.Delta + _mbp.Ldelta * inv_L + _mbp.Wdelta * inv_W + _mbp.Pdelta * inv_LW;
-				pParam.BSIM3rdsw = _mbp.Rdsw + _mbp.Lrdsw * inv_L + _mbp.Wrdsw * inv_W + _mbp.Prdsw * inv_LW;
-				pParam.BSIM3prwg = _mbp.Prwg + _mbp.Lprwg * inv_L + _mbp.Wprwg * inv_W + _mbp.Pprwg * inv_LW;
-				pParam.BSIM3prwb = _mbp.Prwb + _mbp.Lprwb * inv_L + _mbp.Wprwb * inv_W + _mbp.Pprwb * inv_LW;
-				pParam.BSIM3prt = _mbp.Prt + _mbp.Lprt * inv_L + _mbp.Wprt * inv_W + _mbp.Pprt * inv_LW;
-				pParam.BSIM3eta0 = _mbp.Eta0 + _mbp.Leta0 * inv_L + _mbp.Weta0 * inv_W + _mbp.Peta0 * inv_LW;
-				pParam.BSIM3etab = _mbp.Etab + _mbp.Letab * inv_L + _mbp.Wetab * inv_W + _mbp.Petab * inv_LW;
-				pParam.BSIM3pclm = _mbp.Pclm + _mbp.Lpclm * inv_L + _mbp.Wpclm * inv_W + _mbp.Ppclm * inv_LW;
-				pParam.BSIM3pdibl1 = _mbp.Pdibl1 + _mbp.Lpdibl1 * inv_L + _mbp.Wpdibl1 * inv_W + _mbp.Ppdibl1 * inv_LW;
-				pParam.BSIM3pdibl2 = _mbp.Pdibl2 + _mbp.Lpdibl2 * inv_L + _mbp.Wpdibl2 * inv_W + _mbp.Ppdibl2 * inv_LW;
-				pParam.BSIM3pdiblb = _mbp.Pdiblb + _mbp.Lpdiblb * inv_L + _mbp.Wpdiblb * inv_W + _mbp.Ppdiblb * inv_LW;
-				pParam.BSIM3pscbe1 = _mbp.Pscbe1 + _mbp.Lpscbe1 * inv_L + _mbp.Wpscbe1 * inv_W + _mbp.Ppscbe1 * inv_LW;
-				pParam.BSIM3pscbe2 = _mbp.Pscbe2 + _mbp.Lpscbe2 * inv_L + _mbp.Wpscbe2 * inv_W + _mbp.Ppscbe2 * inv_LW;
-				pParam.BSIM3pvag = _mbp.Pvag + _mbp.Lpvag * inv_L + _mbp.Wpvag * inv_W + _mbp.Ppvag * inv_LW;
-				pParam.BSIM3wr = _mbp.Wr + _mbp.Lwr * inv_L + _mbp.Wwr * inv_W + _mbp.Pwr * inv_LW;
-				pParam.BSIM3dwg = _mbp.Dwg + _mbp.Ldwg * inv_L + _mbp.Wdwg * inv_W + _mbp.Pdwg * inv_LW;
-				pParam.BSIM3dwb = _mbp.Dwb + _mbp.Ldwb * inv_L + _mbp.Wdwb * inv_W + _mbp.Pdwb * inv_LW;
-				pParam.BSIM3b0 = _mbp.B0 + _mbp.Lb0 * inv_L + _mbp.Wb0 * inv_W + _mbp.Pb0 * inv_LW;
-				pParam.BSIM3b1 = _mbp.B1 + _mbp.Lb1 * inv_L + _mbp.Wb1 * inv_W + _mbp.Pb1 * inv_LW;
-				pParam.BSIM3alpha0 = _mbp.Alpha0 + _mbp.Lalpha0 * inv_L + _mbp.Walpha0 * inv_W + _mbp.Palpha0 * inv_LW;
-				pParam.BSIM3alpha1 = _mbp.Alpha1 + _mbp.Lalpha1 * inv_L + _mbp.Walpha1 * inv_W + _mbp.Palpha1 * inv_LW;
-				pParam.BSIM3beta0 = _mbp.Beta0 + _mbp.Lbeta0 * inv_L + _mbp.Wbeta0 * inv_W + _mbp.Pbeta0 * inv_LW;
-				pParam.BSIM3elm = _mbp.Elm + _mbp.Lelm * inv_L + _mbp.Welm * inv_W + _mbp.Pelm * inv_LW;
-				pParam.BSIM3cgsl = _mbp.Cgsl + _mbp.Lcgsl * inv_L + _mbp.Wcgsl * inv_W + _mbp.Pcgsl * inv_LW;
-				pParam.BSIM3cgdl = _mbp.Cgdl + _mbp.Lcgdl * inv_L + _mbp.Wcgdl * inv_W + _mbp.Pcgdl * inv_LW;
-				pParam.BSIM3ckappa = _mbp.Ckappa + _mbp.Lckappa * inv_L + _mbp.Wckappa * inv_W + _mbp.Pckappa * inv_LW;
-				pParam.BSIM3cf = _mbp.Cf + _mbp.Lcf * inv_L + _mbp.Wcf * inv_W + _mbp.Pcf * inv_LW;
-				pParam.BSIM3clc = _mbp.Clc + _mbp.Lclc * inv_L + _mbp.Wclc * inv_W + _mbp.Pclc * inv_LW;
-				pParam.BSIM3cle = _mbp.Cle + _mbp.Lcle * inv_L + _mbp.Wcle * inv_W + _mbp.Pcle * inv_LW;
-				pParam.BSIM3vfbcv = _mbp.Vfbcv + _mbp.Lvfbcv * inv_L + _mbp.Wvfbcv * inv_W + _mbp.Pvfbcv * inv_LW;
-				pParam.BSIM3acde = _mbp.Acde + _mbp.Lacde * inv_L + _mbp.Wacde * inv_W + _mbp.Pacde * inv_LW;
-				pParam.BSIM3moin = _mbp.Moin + _mbp.Lmoin * inv_L + _mbp.Wmoin * inv_W + _mbp.Pmoin * inv_LW;
-				pParam.BSIM3noff = _mbp.Noff + _mbp.Lnoff * inv_L + _mbp.Wnoff * inv_W + _mbp.Pnoff * inv_LW;
-				pParam.BSIM3voffcv = _mbp.Voffcv + _mbp.Lvoffcv * inv_L + _mbp.Wvoffcv * inv_W + _mbp.Pvoffcv * inv_LW;
+				pParam.BSIM3cdsc = ModelParameters.Cdsc + ModelParameters.Lcdsc * inv_L + ModelParameters.Wcdsc * inv_W + ModelParameters.Pcdsc * inv_LW;
+				pParam.BSIM3cdscb = ModelParameters.Cdscb + ModelParameters.Lcdscb * inv_L + ModelParameters.Wcdscb * inv_W + ModelParameters.Pcdscb * inv_LW;
+				pParam.BSIM3cdscd = ModelParameters.Cdscd + ModelParameters.Lcdscd * inv_L + ModelParameters.Wcdscd * inv_W + ModelParameters.Pcdscd * inv_LW;
+				pParam.BSIM3cit = ModelParameters.Cit + ModelParameters.Lcit * inv_L + ModelParameters.Wcit * inv_W + ModelParameters.Pcit * inv_LW;
+				pParam.BSIM3nfactor = ModelParameters.Nfactor + ModelParameters.Lnfactor * inv_L + ModelParameters.Wnfactor * inv_W + ModelParameters.Pnfactor * inv_LW;
+				pParam.BSIM3xj = ModelParameters.Xj + ModelParameters.Lxj * inv_L + ModelParameters.Wxj * inv_W + ModelParameters.Pxj * inv_LW;
+				pParam.BSIM3vsat = ModelParameters.Vsat + ModelParameters.Lvsat * inv_L + ModelParameters.Wvsat * inv_W + ModelParameters.Pvsat * inv_LW;
+				pParam.BSIM3at = ModelParameters.At + ModelParameters.Lat * inv_L + ModelParameters.Wat * inv_W + ModelParameters.Pat * inv_LW;
+				pParam.BSIM3a0 = ModelParameters.A0 + ModelParameters.La0 * inv_L + ModelParameters.Wa0 * inv_W + ModelParameters.Pa0 * inv_LW;
+				pParam.BSIM3ags = ModelParameters.Ags + ModelParameters.Lags * inv_L + ModelParameters.Wags * inv_W + ModelParameters.Pags * inv_LW;
+				pParam.BSIM3a1 = ModelParameters.A1 + ModelParameters.La1 * inv_L + ModelParameters.Wa1 * inv_W + ModelParameters.Pa1 * inv_LW;
+				pParam.BSIM3a2 = ModelParameters.A2 + ModelParameters.La2 * inv_L + ModelParameters.Wa2 * inv_W + ModelParameters.Pa2 * inv_LW;
+				pParam.BSIM3keta = ModelParameters.Keta + ModelParameters.Lketa * inv_L + ModelParameters.Wketa * inv_W + ModelParameters.Pketa * inv_LW;
+				pParam.BSIM3nsub = ModelParameters.Nsub + ModelParameters.Lnsub * inv_L + ModelParameters.Wnsub * inv_W + ModelParameters.Pnsub * inv_LW;
+				pParam.BSIM3npeak = ModelParameters.Npeak + ModelParameters.Lnpeak * inv_L + ModelParameters.Wnpeak * inv_W + ModelParameters.Pnpeak * inv_LW;
+				pParam.BSIM3ngate = ModelParameters.Ngate + ModelParameters.Lngate * inv_L + ModelParameters.Wngate * inv_W + ModelParameters.Pngate * inv_LW;
+				pParam.BSIM3gamma1 = ModelParameters.Gamma1 + ModelParameters.Lgamma1 * inv_L + ModelParameters.Wgamma1 * inv_W + ModelParameters.Pgamma1 * inv_LW;
+				pParam.BSIM3gamma2 = ModelParameters.Gamma2 + ModelParameters.Lgamma2 * inv_L + ModelParameters.Wgamma2 * inv_W + ModelParameters.Pgamma2 * inv_LW;
+				pParam.BSIM3vbx = ModelParameters.Vbx + ModelParameters.Lvbx * inv_L + ModelParameters.Wvbx * inv_W + ModelParameters.Pvbx * inv_LW;
+				pParam.BSIM3vbm = ModelParameters.Vbm + ModelParameters.Lvbm * inv_L + ModelParameters.Wvbm * inv_W + ModelParameters.Pvbm * inv_LW;
+				pParam.BSIM3xt = ModelParameters.Xt + ModelParameters.Lxt * inv_L + ModelParameters.Wxt * inv_W + ModelParameters.Pxt * inv_LW;
+				pParam.BSIM3vfb = ModelParameters.Vfb + ModelParameters.Lvfb * inv_L + ModelParameters.Wvfb * inv_W + ModelParameters.Pvfb * inv_LW;
+				pParam.BSIM3k1 = ModelParameters.K1 + ModelParameters.Lk1 * inv_L + ModelParameters.Wk1 * inv_W + ModelParameters.Pk1 * inv_LW;
+				pParam.BSIM3kt1 = ModelParameters.Kt1 + ModelParameters.Lkt1 * inv_L + ModelParameters.Wkt1 * inv_W + ModelParameters.Pkt1 * inv_LW;
+				pParam.BSIM3kt1l = ModelParameters.Kt1l + ModelParameters.Lkt1l * inv_L + ModelParameters.Wkt1l * inv_W + ModelParameters.Pkt1l * inv_LW;
+				pParam.BSIM3k2 = ModelParameters.K2 + ModelParameters.Lk2 * inv_L + ModelParameters.Wk2 * inv_W + ModelParameters.Pk2 * inv_LW;
+				pParam.BSIM3kt2 = ModelParameters.Kt2 + ModelParameters.Lkt2 * inv_L + ModelParameters.Wkt2 * inv_W + ModelParameters.Pkt2 * inv_LW;
+				pParam.BSIM3k3 = ModelParameters.K3 + ModelParameters.Lk3 * inv_L + ModelParameters.Wk3 * inv_W + ModelParameters.Pk3 * inv_LW;
+				pParam.BSIM3k3b = ModelParameters.K3b + ModelParameters.Lk3b * inv_L + ModelParameters.Wk3b * inv_W + ModelParameters.Pk3b * inv_LW;
+				pParam.BSIM3w0 = ModelParameters.W0 + ModelParameters.Lw0 * inv_L + ModelParameters.Ww0 * inv_W + ModelParameters.Pw0 * inv_LW;
+				pParam.BSIM3nlx = ModelParameters.Nlx + ModelParameters.Lnlx * inv_L + ModelParameters.Wnlx * inv_W + ModelParameters.Pnlx * inv_LW;
+				pParam.BSIM3dvt0 = ModelParameters.Dvt0 + ModelParameters.Ldvt0 * inv_L + ModelParameters.Wdvt0 * inv_W + ModelParameters.Pdvt0 * inv_LW;
+				pParam.BSIM3dvt1 = ModelParameters.Dvt1 + ModelParameters.Ldvt1 * inv_L + ModelParameters.Wdvt1 * inv_W + ModelParameters.Pdvt1 * inv_LW;
+				pParam.BSIM3dvt2 = ModelParameters.Dvt2 + ModelParameters.Ldvt2 * inv_L + ModelParameters.Wdvt2 * inv_W + ModelParameters.Pdvt2 * inv_LW;
+				pParam.BSIM3dvt0w = ModelParameters.Dvt0w + ModelParameters.Ldvt0w * inv_L + ModelParameters.Wdvt0w * inv_W + ModelParameters.Pdvt0w * inv_LW;
+				pParam.BSIM3dvt1w = ModelParameters.Dvt1w + ModelParameters.Ldvt1w * inv_L + ModelParameters.Wdvt1w * inv_W + ModelParameters.Pdvt1w * inv_LW;
+				pParam.BSIM3dvt2w = ModelParameters.Dvt2w + ModelParameters.Ldvt2w * inv_L + ModelParameters.Wdvt2w * inv_W + ModelParameters.Pdvt2w * inv_LW;
+				pParam.BSIM3drout = ModelParameters.Drout + ModelParameters.Ldrout * inv_L + ModelParameters.Wdrout * inv_W + ModelParameters.Pdrout * inv_LW;
+				pParam.BSIM3dsub = ModelParameters.Dsub + ModelParameters.Ldsub * inv_L + ModelParameters.Wdsub * inv_W + ModelParameters.Pdsub * inv_LW;
+				pParam.BSIM3vth0 = ModelParameters.Vth0 + ModelParameters.Lvth0 * inv_L + ModelParameters.Wvth0 * inv_W + ModelParameters.Pvth0 * inv_LW;
+				pParam.BSIM3ua = ModelParameters.Ua + ModelParameters.Lua * inv_L + ModelParameters.Wua * inv_W + ModelParameters.Pua * inv_LW;
+				pParam.BSIM3ua1 = ModelParameters.Ua1 + ModelParameters.Lua1 * inv_L + ModelParameters.Wua1 * inv_W + ModelParameters.Pua1 * inv_LW;
+				pParam.BSIM3ub = ModelParameters.Ub + ModelParameters.Lub * inv_L + ModelParameters.Wub * inv_W + ModelParameters.Pub * inv_LW;
+				pParam.BSIM3ub1 = ModelParameters.Ub1 + ModelParameters.Lub1 * inv_L + ModelParameters.Wub1 * inv_W + ModelParameters.Pub1 * inv_LW;
+				pParam.BSIM3uc = ModelParameters.Uc + ModelParameters.Luc * inv_L + ModelParameters.Wuc * inv_W + ModelParameters.Puc * inv_LW;
+				pParam.BSIM3uc1 = ModelParameters.Uc1 + ModelParameters.Luc1 * inv_L + ModelParameters.Wuc1 * inv_W + ModelParameters.Puc1 * inv_LW;
+				pParam.BSIM3u0 = ModelParameters.U0 + ModelParameters.Lu0 * inv_L + ModelParameters.Wu0 * inv_W + ModelParameters.Pu0 * inv_LW;
+				pParam.BSIM3ute = ModelParameters.Ute + ModelParameters.Lute * inv_L + ModelParameters.Wute * inv_W + ModelParameters.Pute * inv_LW;
+				pParam.BSIM3voff = ModelParameters.Voff + ModelParameters.Lvoff * inv_L + ModelParameters.Wvoff * inv_W + ModelParameters.Pvoff * inv_LW;
+				pParam.BSIM3delta = ModelParameters.Delta + ModelParameters.Ldelta * inv_L + ModelParameters.Wdelta * inv_W + ModelParameters.Pdelta * inv_LW;
+				pParam.BSIM3rdsw = ModelParameters.Rdsw + ModelParameters.Lrdsw * inv_L + ModelParameters.Wrdsw * inv_W + ModelParameters.Prdsw * inv_LW;
+				pParam.BSIM3prwg = ModelParameters.Prwg + ModelParameters.Lprwg * inv_L + ModelParameters.Wprwg * inv_W + ModelParameters.Pprwg * inv_LW;
+				pParam.BSIM3prwb = ModelParameters.Prwb + ModelParameters.Lprwb * inv_L + ModelParameters.Wprwb * inv_W + ModelParameters.Pprwb * inv_LW;
+				pParam.BSIM3prt = ModelParameters.Prt + ModelParameters.Lprt * inv_L + ModelParameters.Wprt * inv_W + ModelParameters.Pprt * inv_LW;
+				pParam.BSIM3eta0 = ModelParameters.Eta0 + ModelParameters.Leta0 * inv_L + ModelParameters.Weta0 * inv_W + ModelParameters.Peta0 * inv_LW;
+				pParam.BSIM3etab = ModelParameters.Etab + ModelParameters.Letab * inv_L + ModelParameters.Wetab * inv_W + ModelParameters.Petab * inv_LW;
+				pParam.BSIM3pclm = ModelParameters.Pclm + ModelParameters.Lpclm * inv_L + ModelParameters.Wpclm * inv_W + ModelParameters.Ppclm * inv_LW;
+				pParam.BSIM3pdibl1 = ModelParameters.Pdibl1 + ModelParameters.Lpdibl1 * inv_L + ModelParameters.Wpdibl1 * inv_W + ModelParameters.Ppdibl1 * inv_LW;
+				pParam.BSIM3pdibl2 = ModelParameters.Pdibl2 + ModelParameters.Lpdibl2 * inv_L + ModelParameters.Wpdibl2 * inv_W + ModelParameters.Ppdibl2 * inv_LW;
+				pParam.BSIM3pdiblb = ModelParameters.Pdiblb + ModelParameters.Lpdiblb * inv_L + ModelParameters.Wpdiblb * inv_W + ModelParameters.Ppdiblb * inv_LW;
+				pParam.BSIM3pscbe1 = ModelParameters.Pscbe1 + ModelParameters.Lpscbe1 * inv_L + ModelParameters.Wpscbe1 * inv_W + ModelParameters.Ppscbe1 * inv_LW;
+				pParam.BSIM3pscbe2 = ModelParameters.Pscbe2 + ModelParameters.Lpscbe2 * inv_L + ModelParameters.Wpscbe2 * inv_W + ModelParameters.Ppscbe2 * inv_LW;
+				pParam.BSIM3pvag = ModelParameters.Pvag + ModelParameters.Lpvag * inv_L + ModelParameters.Wpvag * inv_W + ModelParameters.Ppvag * inv_LW;
+				pParam.BSIM3wr = ModelParameters.Wr + ModelParameters.Lwr * inv_L + ModelParameters.Wwr * inv_W + ModelParameters.Pwr * inv_LW;
+				pParam.BSIM3dwg = ModelParameters.Dwg + ModelParameters.Ldwg * inv_L + ModelParameters.Wdwg * inv_W + ModelParameters.Pdwg * inv_LW;
+				pParam.BSIM3dwb = ModelParameters.Dwb + ModelParameters.Ldwb * inv_L + ModelParameters.Wdwb * inv_W + ModelParameters.Pdwb * inv_LW;
+				pParam.BSIM3b0 = ModelParameters.B0 + ModelParameters.Lb0 * inv_L + ModelParameters.Wb0 * inv_W + ModelParameters.Pb0 * inv_LW;
+				pParam.BSIM3b1 = ModelParameters.B1 + ModelParameters.Lb1 * inv_L + ModelParameters.Wb1 * inv_W + ModelParameters.Pb1 * inv_LW;
+				pParam.BSIM3alpha0 = ModelParameters.Alpha0 + ModelParameters.Lalpha0 * inv_L + ModelParameters.Walpha0 * inv_W + ModelParameters.Palpha0 * inv_LW;
+				pParam.BSIM3alpha1 = ModelParameters.Alpha1 + ModelParameters.Lalpha1 * inv_L + ModelParameters.Walpha1 * inv_W + ModelParameters.Palpha1 * inv_LW;
+				pParam.BSIM3beta0 = ModelParameters.Beta0 + ModelParameters.Lbeta0 * inv_L + ModelParameters.Wbeta0 * inv_W + ModelParameters.Pbeta0 * inv_LW;
+				pParam.BSIM3elm = ModelParameters.Elm + ModelParameters.Lelm * inv_L + ModelParameters.Welm * inv_W + ModelParameters.Pelm * inv_LW;
+				pParam.BSIM3cgsl = ModelParameters.Cgsl + ModelParameters.Lcgsl * inv_L + ModelParameters.Wcgsl * inv_W + ModelParameters.Pcgsl * inv_LW;
+				pParam.BSIM3cgdl = ModelParameters.Cgdl + ModelParameters.Lcgdl * inv_L + ModelParameters.Wcgdl * inv_W + ModelParameters.Pcgdl * inv_LW;
+				pParam.BSIM3ckappa = ModelParameters.Ckappa + ModelParameters.Lckappa * inv_L + ModelParameters.Wckappa * inv_W + ModelParameters.Pckappa * inv_LW;
+				pParam.BSIM3cf = ModelParameters.Cf + ModelParameters.Lcf * inv_L + ModelParameters.Wcf * inv_W + ModelParameters.Pcf * inv_LW;
+				pParam.BSIM3clc = ModelParameters.Clc + ModelParameters.Lclc * inv_L + ModelParameters.Wclc * inv_W + ModelParameters.Pclc * inv_LW;
+				pParam.BSIM3cle = ModelParameters.Cle + ModelParameters.Lcle * inv_L + ModelParameters.Wcle * inv_W + ModelParameters.Pcle * inv_LW;
+				pParam.BSIM3vfbcv = ModelParameters.Vfbcv + ModelParameters.Lvfbcv * inv_L + ModelParameters.Wvfbcv * inv_W + ModelParameters.Pvfbcv * inv_LW;
+				pParam.BSIM3acde = ModelParameters.Acde + ModelParameters.Lacde * inv_L + ModelParameters.Wacde * inv_W + ModelParameters.Pacde * inv_LW;
+				pParam.BSIM3moin = ModelParameters.Moin + ModelParameters.Lmoin * inv_L + ModelParameters.Wmoin * inv_W + ModelParameters.Pmoin * inv_LW;
+				pParam.BSIM3noff = ModelParameters.Noff + ModelParameters.Lnoff * inv_L + ModelParameters.Wnoff * inv_W + ModelParameters.Pnoff * inv_LW;
+				pParam.BSIM3voffcv = ModelParameters.Voffcv + ModelParameters.Lvoffcv * inv_L + ModelParameters.Wvoffcv * inv_W + ModelParameters.Pvoffcv * inv_LW;
 				pParam.BSIM3abulkCVfactor = 1.0 + Math.Pow(pParam.BSIM3clc / pParam.BSIM3leffCV, pParam.BSIM3cle);
-				t0 = _modelTemp.TRatio - 1.0;
+				t0 = ModelTemperature.TRatio - 1.0;
 				pParam.BSIM3ua = pParam.BSIM3ua + pParam.BSIM3ua1 * t0;
 				pParam.BSIM3ub = pParam.BSIM3ub + pParam.BSIM3ub1 * t0;
 				pParam.BSIM3uc = pParam.BSIM3uc + pParam.BSIM3uc1 * t0;
 				if (pParam.BSIM3u0 > 1.0)
 					pParam.BSIM3u0 = pParam.BSIM3u0 / 1.0e4;
-				pParam.BSIM3u0temp = pParam.BSIM3u0 * Math.Pow(_modelTemp.TRatio, pParam.BSIM3ute);
+				pParam.BSIM3u0temp = pParam.BSIM3u0 * Math.Pow(ModelTemperature.TRatio, pParam.BSIM3ute);
 				pParam.BSIM3vsattemp = pParam.BSIM3vsat - pParam.BSIM3at * t0;
 				pParam.BSIM3rds0 = (pParam.BSIM3rdsw + pParam.BSIM3prt * t0) / Math.Pow(pParam.BSIM3weff * 1E6, pParam.BSIM3wr);
 				if (Check())
 				{
-					throw new CircuitException("Fatal error(s) detected during BSIM3V3.2 parameter checking for {0} in model {1}".FormatString(_modelTemp.Name, Name));
+					throw new CircuitException("Fatal error(s) detected during BSIM3V3.2 parameter checking for {0} in model {1}".FormatString(ModelTemperature.Name, Name));
 				}
-				pParam.BSIM3cgdo = (_mbp.Cgdo + pParam.BSIM3cf) * pParam.BSIM3weffCV;
-				pParam.BSIM3cgso = (_mbp.Cgso + pParam.BSIM3cf) * pParam.BSIM3weffCV;
-				pParam.BSIM3cgbo = _mbp.Cgbo * pParam.BSIM3leffCV;
+				pParam.BSIM3cgdo = (ModelParameters.Cgdo + pParam.BSIM3cf) * pParam.BSIM3weffCV;
+				pParam.BSIM3cgso = (ModelParameters.Cgso + pParam.BSIM3cf) * pParam.BSIM3weffCV;
+				pParam.BSIM3cgbo = ModelParameters.Cgbo * pParam.BSIM3leffCV;
 				t0 = pParam.BSIM3leffCV * pParam.BSIM3leffCV;
-				pParam.BSIM3tconst = pParam.BSIM3u0temp * pParam.BSIM3elm / (_mbp.Cox * pParam.BSIM3weffCV * pParam.BSIM3leffCV * t0);
-				if (!_mbp.Npeak.Given && _mbp.Gamma1.Given)
+				pParam.BSIM3tconst = pParam.BSIM3u0temp * pParam.BSIM3elm / (ModelParameters.Cox * pParam.BSIM3weffCV * pParam.BSIM3leffCV * t0);
+				if (!ModelParameters.Npeak.Given && ModelParameters.Gamma1.Given)
 				{
-					t0 = pParam.BSIM3gamma1 * _mbp.Cox;
+					t0 = pParam.BSIM3gamma1 * ModelParameters.Cox;
 					pParam.BSIM3npeak = 3.021E22 * t0 * t0;
 				}
-				pParam.BSIM3phi = 2.0 * _modelTemp.Vtm0 * Math.Log(pParam.BSIM3npeak / _modelTemp.Ni);
+				pParam.BSIM3phi = 2.0 * ModelTemperature.Vtm0 * Math.Log(pParam.BSIM3npeak / ModelTemperature.Ni);
 				pParam.BSIM3sqrtPhi = Math.Sqrt(pParam.BSIM3phi);
 				pParam.BSIM3phis3 = pParam.BSIM3sqrtPhi * pParam.BSIM3phi;
 				pParam.BSIM3Xdep0 = Math.Sqrt(2.0 * 1.03594e-10 / (1.60219e-19 * pParam.BSIM3npeak * 1.0e6)) * pParam.BSIM3sqrtPhi;
 				pParam.BSIM3sqrtXdep0 = Math.Sqrt(pParam.BSIM3Xdep0);
-				pParam.BSIM3litl = Math.Sqrt(3.0 * pParam.BSIM3xj * _mbp.Tox);
-				pParam.BSIM3vbi = _modelTemp.Vtm0 * Math.Log(1.0e20 * pParam.BSIM3npeak / (_modelTemp.Ni * _modelTemp.Ni));
+				pParam.BSIM3litl = Math.Sqrt(3.0 * pParam.BSIM3xj * ModelParameters.Tox);
+				pParam.BSIM3vbi = ModelTemperature.Vtm0 * Math.Log(1.0e20 * pParam.BSIM3npeak / (ModelTemperature.Ni * ModelTemperature.Ni));
 				pParam.BSIM3cdep0 = Math.Sqrt(1.60219e-19 * 1.03594e-10 * pParam.BSIM3npeak * 1.0e6 / 2.0 / pParam.BSIM3phi);
-				pParam.BSIM3ldeb = Math.Sqrt(1.03594e-10 * _modelTemp.Vtm0 / (1.60219e-19 * pParam.BSIM3npeak * 1.0e6)) / 3.0;
+				pParam.BSIM3ldeb = Math.Sqrt(1.03594e-10 * ModelTemperature.Vtm0 / (1.60219e-19 * pParam.BSIM3npeak * 1.0e6)) / 3.0;
 				pParam.BSIM3acde *= Math.Pow(pParam.BSIM3npeak / 2.0e16, -0.25);
-				if (_mbp.K1.Given || _mbp.K2.Given)
+				if (ModelParameters.K1.Given || ModelParameters.K2.Given)
 				{
-					if (!_mbp.K1.Given)
+					if (!ModelParameters.K1.Given)
 					{
 					    CircuitWarning.Warning(this, "Warning: k1 should be specified with k2.");
 						pParam.BSIM3k1 = 0.53;
 					}
-					if (!_mbp.K2.Given)
+					if (!ModelParameters.K2.Given)
 					{
 					    CircuitWarning.Warning(this, "Warning: k2 should be specified with k1.");
 						pParam.BSIM3k2 = -0.0186;
 					}
-				    if (_mbp.Nsub.Given)
+				    if (ModelParameters.Nsub.Given)
 				        CircuitWarning.Warning(this, "Warning: nsub is ignored because k1 or k2 is given.");
-				    if (_mbp.Xt.Given)
+				    if (ModelParameters.Xt.Given)
 				        CircuitWarning.Warning(this, "Warning: xt is ignored because k1 or k2 is given.");
-				    if (_mbp.Vbx.Given)
+				    if (ModelParameters.Vbx.Given)
 				        CircuitWarning.Warning(this, "Warning: vbx is ignored because k1 or k2 is given.");
-				    if (_mbp.Gamma1.Given)
+				    if (ModelParameters.Gamma1.Given)
 				        CircuitWarning.Warning(this, "Warning: gamma1 is ignored because k1 or k2 is given.");
-				    if (_mbp.Gamma2.Given)
+				    if (ModelParameters.Gamma2.Given)
 				        CircuitWarning.Warning(this, "Warning: gamma2 is ignored because k1 or k2 is given.");
 				}
 				else
 				{
-					if (!_mbp.Vbx.Given)
+					if (!ModelParameters.Vbx.Given)
 						pParam.BSIM3vbx = pParam.BSIM3phi - 7.7348e-4 * pParam.BSIM3npeak * pParam.BSIM3xt * pParam.BSIM3xt;
 					if (pParam.BSIM3vbx > 0.0)
 						pParam.BSIM3vbx = -pParam.BSIM3vbx;
 					if (pParam.BSIM3vbm > 0.0)
 						pParam.BSIM3vbm = -pParam.BSIM3vbm;
-					if (!_mbp.Gamma1.Given)
-						pParam.BSIM3gamma1 = 5.753e-12 * Math.Sqrt(pParam.BSIM3npeak) / _mbp.Cox;
-					if (!_mbp.Gamma2.Given)
-						pParam.BSIM3gamma2 = 5.753e-12 * Math.Sqrt(pParam.BSIM3nsub) / _mbp.Cox;
+					if (!ModelParameters.Gamma1.Given)
+						pParam.BSIM3gamma1 = 5.753e-12 * Math.Sqrt(pParam.BSIM3npeak) / ModelParameters.Cox;
+					if (!ModelParameters.Gamma2.Given)
+						pParam.BSIM3gamma2 = 5.753e-12 * Math.Sqrt(pParam.BSIM3nsub) / ModelParameters.Cox;
 					t0 = pParam.BSIM3gamma1 - pParam.BSIM3gamma2;
 					t1 = Math.Sqrt(pParam.BSIM3phi - pParam.BSIM3vbx) - pParam.BSIM3sqrtPhi;
 					t2 = Math.Sqrt(pParam.BSIM3phi * (pParam.BSIM3phi - pParam.BSIM3vbm)) - pParam.BSIM3phi;
@@ -288,24 +311,24 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 				}
 				if (pParam.BSIM3vbsc > pParam.BSIM3vbm)
 					pParam.BSIM3vbsc = pParam.BSIM3vbm;
-				if (!_mbp.Vfb.Given)
+				if (!ModelParameters.Vfb.Given)
 				{
-					if (_mbp.Vth0.Given)
+					if (ModelParameters.Vth0.Given)
 					{
-						pParam.BSIM3vfb = _mbp.B3Type * pParam.BSIM3vth0 - pParam.BSIM3phi - pParam.BSIM3k1 * pParam.BSIM3sqrtPhi;
+						pParam.BSIM3vfb = ModelParameters.B3Type * pParam.BSIM3vth0 - pParam.BSIM3phi - pParam.BSIM3k1 * pParam.BSIM3sqrtPhi;
 					}
 					else
 					{
 						pParam.BSIM3vfb = -1.0;
 					}
 				}
-				if (!_mbp.Vth0.Given)
+				if (!ModelParameters.Vth0.Given)
 				{
-					pParam.BSIM3vth0 = _mbp.B3Type * (pParam.BSIM3vfb + pParam.BSIM3phi + pParam.BSIM3k1 * pParam.BSIM3sqrtPhi);
+					pParam.BSIM3vth0 = ModelParameters.B3Type * (pParam.BSIM3vfb + pParam.BSIM3phi + pParam.BSIM3k1 * pParam.BSIM3sqrtPhi);
 				}
-				pParam.BSIM3k1ox = pParam.BSIM3k1 * _mbp.Tox / _mbp.Toxm;
-				pParam.BSIM3k2ox = pParam.BSIM3k2 * _mbp.Tox / _mbp.Toxm;
-				t1 = Math.Sqrt(1.03594e-10 / 3.453133e-11 * _mbp.Tox * pParam.BSIM3Xdep0);
+				pParam.BSIM3k1ox = pParam.BSIM3k1 * ModelParameters.Tox / ModelParameters.Toxm;
+				pParam.BSIM3k2ox = pParam.BSIM3k2 * ModelParameters.Tox / ModelParameters.Toxm;
+				t1 = Math.Sqrt(1.03594e-10 / 3.453133e-11 * ModelParameters.Tox * pParam.BSIM3Xdep0);
 				t0 = Math.Exp(-0.5 * pParam.BSIM3dsub * pParam.BSIM3leff / t1);
 				pParam.BSIM3theta0vb0 = t0 + 2.0 * t0 * t0;
 				t0 = Math.Exp(-0.5 * pParam.BSIM3drout * pParam.BSIM3leff / t1);
@@ -313,7 +336,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 				pParam.BSIM3thetaRout = pParam.BSIM3pdibl1 * t2 + pParam.BSIM3pdibl2;
 				tmp = Math.Sqrt(pParam.BSIM3Xdep0);
 				tmp1 = pParam.BSIM3vbi - pParam.BSIM3phi;
-				tmp2 = _modelTemp.Factor1 * tmp;
+				tmp2 = ModelTemperature.Factor1 * tmp;
 				t0 = -0.5 * pParam.BSIM3dvt1w * pParam.BSIM3weff * pParam.BSIM3leff / tmp2;
 				if (t0 > -34.0)
 				{
@@ -339,49 +362,49 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 					t3 = t1 * (1.0 + 2.0 * t1);
 				}
 				t3 = pParam.BSIM3dvt0 * t3 * tmp1;
-				t4 = _mbp.Tox * pParam.BSIM3phi / (pParam.BSIM3weff + pParam.BSIM3w0);
+				t4 = ModelParameters.Tox * pParam.BSIM3phi / (pParam.BSIM3weff + pParam.BSIM3w0);
 				t0 = Math.Sqrt(1.0 + pParam.BSIM3nlx / pParam.BSIM3leff);
-				t5 = pParam.BSIM3k1ox * (t0 - 1.0) * pParam.BSIM3sqrtPhi + (pParam.BSIM3kt1 + pParam.BSIM3kt1l / pParam.BSIM3leff) * (_modelTemp.TRatio - 1.0);
-				tmp3 = _mbp.B3Type * pParam.BSIM3vth0 - t2 - t3 + pParam.BSIM3k3 * t4 + t5;
+				t5 = pParam.BSIM3k1ox * (t0 - 1.0) * pParam.BSIM3sqrtPhi + (pParam.BSIM3kt1 + pParam.BSIM3kt1l / pParam.BSIM3leff) * (ModelTemperature.TRatio - 1.0);
+				tmp3 = ModelParameters.B3Type * pParam.BSIM3vth0 - t2 - t3 + pParam.BSIM3k3 * t4 + t5;
 				pParam.BSIM3vfbzb = tmp3 - pParam.BSIM3phi - pParam.BSIM3k1 * pParam.BSIM3sqrtPhi;
 			}
-			DrainConductance = _mbp.SheetResistance * _bp.DrainSquares;
+			DrainConductance = ModelParameters.SheetResistance * BaseParameters.DrainSquares;
 			if (DrainConductance > 0.0)
 				DrainConductance = 1.0 / DrainConductance;
 			else
 				DrainConductance = 0.0;
-			SourceConductance = _mbp.SheetResistance * _bp.SourceSquares;
+			SourceConductance = ModelParameters.SheetResistance * BaseParameters.SourceSquares;
 			if (SourceConductance > 0.0)
 				SourceConductance = 1.0 / SourceConductance;
 			else
 				SourceConductance = 0.0;
 			Cgso = pParam.BSIM3cgso;
 			Cgdo = pParam.BSIM3cgdo;
-			nvtm = _modelTemp.Vtm * _mbp.JctEmissionCoeff;
-			if (_bp.SourceArea <= 0.0 && _bp.SourcePerimeter <= 0.0)
+			nvtm = ModelTemperature.Vtm * ModelParameters.JctEmissionCoeff;
+			if (BaseParameters.SourceArea <= 0.0 && BaseParameters.SourcePerimeter <= 0.0)
 			{
 				sourceSatCurrent = 1.0e-14;
 			}
 			else
 			{
-				sourceSatCurrent = _bp.SourceArea * _modelTemp.JctTempSatCurDensity + _bp.SourcePerimeter * _modelTemp.JctSidewallTempSatCurDensity;
+				sourceSatCurrent = BaseParameters.SourceArea * ModelTemperature.JctTempSatCurDensity + BaseParameters.SourcePerimeter * ModelTemperature.JctSidewallTempSatCurDensity;
 			}
-			if (sourceSatCurrent > 0.0 && _mbp.Ijth > 0.0)
+			if (sourceSatCurrent > 0.0 && ModelParameters.Ijth > 0.0)
 			{
-				Vjsm = nvtm * Math.Log(_mbp.Ijth / sourceSatCurrent + 1.0);
+				Vjsm = nvtm * Math.Log(ModelParameters.Ijth / sourceSatCurrent + 1.0);
 				IsEvjsm = sourceSatCurrent * Math.Exp(Vjsm / nvtm);
 			}
-			if (_bp.DrainArea <= 0.0 && _bp.DrainPerimeter <= 0.0)
+			if (BaseParameters.DrainArea <= 0.0 && BaseParameters.DrainPerimeter <= 0.0)
 			{
 				drainSatCurrent = 1.0e-14;
 			}
 			else
 			{
-				drainSatCurrent = _bp.DrainArea * _modelTemp.JctTempSatCurDensity + _bp.DrainPerimeter * _modelTemp.JctSidewallTempSatCurDensity;
+				drainSatCurrent = BaseParameters.DrainArea * ModelTemperature.JctTempSatCurDensity + BaseParameters.DrainPerimeter * ModelTemperature.JctSidewallTempSatCurDensity;
 			}
-			if (drainSatCurrent > 0.0 && _mbp.Ijth > 0.0)
+			if (drainSatCurrent > 0.0 && ModelParameters.Ijth > 0.0)
 			{
-				Vjdm = nvtm * Math.Log(_mbp.Ijth / drainSatCurrent + 1.0);
+				Vjdm = nvtm * Math.Log(ModelParameters.Ijth / drainSatCurrent + 1.0);
 				IsEvjdm = drainSatCurrent * Math.Exp(Vjdm / nvtm);
 			}
 		}
@@ -393,15 +416,15 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 	    private bool Check()
         {
             var fatal = false;
-            using (var sw = new StreamWriter(_mbp.CheckPath))
+            using (var sw = new StreamWriter(ModelParameters.CheckPath))
             {
                 sw.WriteLine("BSIM3v3.2.4 Parameter Checking.");
-                if (_mbp.Version != "3.2.4" && _mbp.Version != "3.24")
+                if (ModelParameters.Version != "3.2.4" && ModelParameters.Version != "3.24")
                 {
                     sw.WriteLine("Warning: This model is BSIM3v3.2.4; you specified a wrong version number.");
                     CircuitWarning.Warning(this, "Warning: This model is BSIM3v3.2.4; you specified a wrong version number.");
                 }
-                sw.WriteLine("Model = {0}".FormatString(_modelTemp.Name));
+                sw.WriteLine("Model = {0}".FormatString(ModelTemperature.Name));
 
                 if (Param.BSIM3nlx < -Param.BSIM3leff)
                 {
@@ -410,17 +433,17 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                     fatal = true;
                 }
 
-                if (_mbp.Tox <= 0.0)
+                if (ModelParameters.Tox <= 0.0)
                 {
-                    sw.WriteLine("Fatal: Tox = {0} is not positive.".FormatString(_mbp.Tox));
-                    CircuitWarning.Warning(this, "Fatal: Tox = {0} is not positive.".FormatString(_mbp.Tox));
+                    sw.WriteLine("Fatal: Tox = {0} is not positive.".FormatString(ModelParameters.Tox));
+                    CircuitWarning.Warning(this, "Fatal: Tox = {0} is not positive.".FormatString(ModelParameters.Tox));
                     fatal = true;
                 }
 
-                if (_mbp.Toxm <= 0.0)
+                if (ModelParameters.Toxm <= 0.0)
                 {
-                    sw.WriteLine("Fatal: Toxm = {0} is not positive.".FormatString(_mbp.Toxm));
-                    CircuitWarning.Warning(this, "Fatal: Toxm = {0} is not positive.".FormatString(_mbp.Toxm));
+                    sw.WriteLine("Fatal: Toxm = {0} is not positive.".FormatString(ModelParameters.Toxm));
+                    CircuitWarning.Warning(this, "Fatal: Toxm = {0} is not positive.".FormatString(ModelParameters.Toxm));
                     fatal = true;
                 }
 
@@ -552,10 +575,10 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                     CircuitWarning.Warning(this, "Warning: Voffcv = {0} is too large.".FormatString(Param.BSIM3voffcv));
                 }
 
-                if (_mbp.Ijth < 0.0)
+                if (ModelParameters.Ijth < 0.0)
                 {
-                    sw.WriteLine("Fatal: Ijth = {0} cannot be negative.".FormatString(_mbp.Ijth));
-                    CircuitWarning.Warning(this, "Fatal: Ijth = {0} cannot be negative.".FormatString(_mbp.Ijth));
+                    sw.WriteLine("Fatal: Ijth = {0} cannot be negative.".FormatString(ModelParameters.Ijth));
+                    CircuitWarning.Warning(this, "Fatal: Ijth = {0} cannot be negative.".FormatString(ModelParameters.Ijth));
                     fatal = true;
                 }
 
@@ -578,7 +601,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                     CircuitWarning.Warning(this, "Warning: Moin = {0} is too large.".FormatString(Param.BSIM3moin));
                 }
 
-                if (_mbp.CapMod == 3)
+                if (ModelParameters.CapMod == 3)
                 {
                     if (Param.BSIM3acde < 0.4)
                     {
@@ -592,7 +615,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                     }
                 }
 
-                if (_mbp.ParamChk == 1)
+                if (ModelParameters.ParamChk == 1)
                 {
                     /* Check L and W parameters */
                     if (Param.BSIM3leff <= 5.0e-8)
@@ -625,10 +648,10 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                         sw.WriteLine("Warning: Nlx = {0} is negative.".FormatString(Param.BSIM3nlx));
                         CircuitWarning.Warning(this, "Warning: Nlx = {0} is negative.".FormatString(Param.BSIM3nlx));
                     }
-                    if (_mbp.Tox < 1.0e-9)
+                    if (ModelParameters.Tox < 1.0e-9)
                     {
-                        sw.WriteLine("Warning: Tox = {0} is less than 10A.".FormatString(_mbp.Tox));
-                        CircuitWarning.Warning(this, "Warning: Tox = {0} is less than 10A.".FormatString(_mbp.Tox));
+                        sw.WriteLine("Warning: Tox = {0} is less than 10A.".FormatString(ModelParameters.Tox));
+                        CircuitWarning.Warning(this, "Warning: Tox = {0} is less than 10A.".FormatString(ModelParameters.Tox));
                     }
 
                     if (Param.BSIM3npeak <= 1.0e15)
@@ -748,23 +771,23 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                         CircuitWarning.Warning(this, "Warning: Pdibl2 = {0} is negative.".FormatString(Param.BSIM3pdibl2));
                     }
                     /* Check overlap capacitance parameters */
-                    if (_mbp.Cgdo < 0.0)
+                    if (ModelParameters.Cgdo < 0.0)
                     {
-                        sw.WriteLine("Warning: cgdo = {0} is negative. Set to zero.".FormatString(_mbp.Cgdo));
-                        CircuitWarning.Warning(this, "Warning: cgdo = {0} is negative. Set to zero.".FormatString(_mbp.Cgdo));
-                        _mbp.Cgdo.RawValue = 0.0;
+                        sw.WriteLine("Warning: cgdo = {0} is negative. Set to zero.".FormatString(ModelParameters.Cgdo));
+                        CircuitWarning.Warning(this, "Warning: cgdo = {0} is negative. Set to zero.".FormatString(ModelParameters.Cgdo));
+                        ModelParameters.Cgdo.RawValue = 0.0;
                     }
-                    if (_mbp.Cgso < 0.0)
+                    if (ModelParameters.Cgso < 0.0)
                     {
-                        sw.WriteLine("Warning: cgso = {0} is negative. Set to zero.".FormatString(_mbp.Cgso));
-                        CircuitWarning.Warning(this, "Warning: cgso = {0} is negative. Set to zero.".FormatString(_mbp.Cgso));
-                        _mbp.Cgso.RawValue = 0.0;
+                        sw.WriteLine("Warning: cgso = {0} is negative. Set to zero.".FormatString(ModelParameters.Cgso));
+                        CircuitWarning.Warning(this, "Warning: cgso = {0} is negative. Set to zero.".FormatString(ModelParameters.Cgso));
+                        ModelParameters.Cgso.RawValue = 0.0;
                     }
-                    if (_mbp.Cgbo < 0.0)
+                    if (ModelParameters.Cgbo < 0.0)
                     {
-                        sw.WriteLine("Warning: cgbo = {0} is negative. Set to zero.".FormatString(_mbp.Cgbo));
-                        CircuitWarning.Warning(this, "Warning: cgbo = {0} is negative. Set to zero.".FormatString(_mbp.Cgbo));
-                        _mbp.Cgbo.RawValue = 0.0;
+                        sw.WriteLine("Warning: cgbo = {0} is negative. Set to zero.".FormatString(ModelParameters.Cgbo));
+                        CircuitWarning.Warning(this, "Warning: cgbo = {0} is negative. Set to zero.".FormatString(ModelParameters.Cgbo));
+                        ModelParameters.Cgbo.RawValue = 0.0;
                     }
 
                 }

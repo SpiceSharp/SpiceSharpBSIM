@@ -2,13 +2,14 @@
 using SpiceSharp.Behaviors;
 using SpiceSharp.Components.NoiseSources;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
     /// <summary>
     /// Noise behavior for a <see cref="BSIM3v24"/>
     /// </summary>
-    public class NoiseBehavior : BaseNoiseBehavior, IConnectedBehavior
+    public class NoiseBehavior : ExportingBehavior, INoiseBehavior, IConnectedBehavior
     {
         private const double N_MINLOG = 1e-38;
 
@@ -17,7 +18,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// </summary>
         private BaseParameters _bp;
         private ModelBaseParameters _mbp;
-        private LoadBehavior _load;
+        private BiasingBehavior _load;
         private TemperatureBehavior _temp;
 
         /// <summary>
@@ -58,7 +59,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>();
-            _load = provider.GetBehavior<LoadBehavior>();
+            _load = provider.GetBehavior<BiasingBehavior>();
         }
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// <summary>
         /// Connect the noise sources
         /// </summary>
-        public override void ConnectNoise()
+        public void ConnectNoise()
         {
             _drainNodePrime = _load.DrainNodePrime;
             _sourceNodePrime = _load.SourceNodePrime;
@@ -87,7 +88,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// Noise behavior
         /// </summary>
         /// <param name="simulation"></param>
-        public override void Noise(Noise simulation)
+        public void Noise(Noise simulation)
         {
             double vds;
             var state = simulation.NoiseState;
@@ -101,7 +102,8 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
             {
                 case 1:
                 case 3:
-                    TransistorNoise.Generators[2].SetCoefficients(2.0 / 3.0 * Math.Abs(_load.Gm + _load.Gds + _load.Gmbs));
+                    TransistorNoise.Generators[2]
+                        .SetCoefficients(2.0 / 3.0 * Math.Abs(_load.Gm + _load.Gds + _load.Gmbs));
                     break;
                 case 2:
                 case 4:
