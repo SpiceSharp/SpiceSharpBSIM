@@ -3,13 +3,14 @@ using System.Numerics;
 using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM2Behaviors
 {
     /// <summary>
     /// Frequency behavior for a <see cref="BSIM2"/>
     /// </summary>
-    public class FrequencyBehavior : BaseFrequencyBehavior, IConnectedBehavior
+    public class FrequencyBehavior : ExportingBehavior, IFrequencyBehavior, IConnectedBehavior
     {
         /// <summary>
         /// Necessary behaviors and parameters
@@ -83,10 +84,18 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         }
 
         /// <summary>
+        /// Initializes the parameters.
+        /// </summary>
+        /// <param name="simulation">The simulation.</param>
+        public void InitializeParameters(FrequencySimulation simulation)
+        {
+        }
+
+        /// <summary>
         /// Get equation pointers
         /// </summary>
         /// <param name="solver">Solver</param>
-        public override void GetEquationPointers(Solver<Complex> solver)
+        public void GetEquationPointers(Solver<Complex> solver)
         {
             _sourceNodePrime = _load.SourceNodePrime;
             _drainNodePrime = _load.DrainNodePrime;
@@ -119,7 +128,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         /// Load frequency behavior
         /// </summary>
         /// <param name="simulation">Simulation</param>
-        public override void Load(FrequencySimulation simulation)
+        public void Load(FrequencySimulation simulation)
         {
             double gdpr;
             double gspr;

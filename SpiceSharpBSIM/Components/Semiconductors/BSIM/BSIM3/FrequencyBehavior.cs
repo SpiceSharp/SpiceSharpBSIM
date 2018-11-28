@@ -3,13 +3,14 @@ using System.Numerics;
 using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3Behaviors
 {
     /// <summary>
     /// Frequency behavior for a <see cref="BSIM3"/>
     /// </summary>
-    public class FrequencyBehavior : BaseFrequencyBehavior, IConnectedBehavior
+    public class FrequencyBehavior : ExportingBehavior, IFrequencyBehavior, IConnectedBehavior
     {
         private const double ScalingFactor = 1.0e-9;
 
@@ -19,12 +20,13 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         private BaseParameters _bp;
         private ModelBaseParameters _mbp;
         private TemperatureBehavior _temp;
-        private LoadBehavior _load;
+        private BiasingBehavior _load;
 
         /// <summary>
         /// Nodes
         /// </summary>
         private int _drainNode, _gateNode, _sourceNode, _bulkNode, _drainNodePrime, _sourceNodePrime, _qNode;
+
         protected MatrixElement<Complex> DdPtr { get; private set; }
         protected MatrixElement<Complex> GgPtr { get; private set; }
         protected MatrixElement<Complex> SsPtr { get; private set; }
@@ -78,7 +80,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>();
-            _load = provider.GetBehavior<LoadBehavior>();
+            _load = provider.GetBehavior<BiasingBehavior>();
         }
 
         /// <summary>
@@ -94,10 +96,18 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         }
 
         /// <summary>
+        /// Initializes the parameters.
+        /// </summary>
+        /// <param name="simulation">The simulation.</param>
+        public void InitializeParameters(FrequencySimulation simulation)
+        {
+        }
+
+        /// <summary>
         /// Get equation pointers
         /// </summary>
         /// <param name="solver">Solver</param>
-        public override void GetEquationPointers(Solver<Complex> solver)
+        public void GetEquationPointers(Solver<Complex> solver)
         {
             _sourceNodePrime = _load.SourceNodePrime;
             _drainNodePrime = _load.DrainNodePrime;
@@ -140,7 +150,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// Load frequency behavior
         /// </summary>
         /// <param name="simulation">Simulation</param>
-        public override void Load(FrequencySimulation simulation)
+        public void Load(FrequencySimulation simulation)
         {
             var state = simulation.ComplexState;
             double xcggb, xcgdb, xcgsb, xcbgb, xcbdb, xcbsb, xcddb, xcssb, xcdgb;
@@ -555,7 +565,6 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                     DPqPtr.Value += 0.0;
                     SPqPtr.Value += 0.0;
                     GqPtr.Value += 0.0;
-
                 }
                 else
                 {

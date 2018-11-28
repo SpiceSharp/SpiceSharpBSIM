@@ -1019,6 +1019,22 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 else
                     OxideTrapDensityC.RawValue = 1.4e-12;
             }
+
+            if (BulkJctPotential < 0.1)
+            {
+                BulkJctPotential.RawValue = 0.1;
+                CircuitWarning.Warning(this, "Given pb is less than 0.1. Pb is set to 0.1.");
+            }
+            if (SidewallJctPotential < 0.1)
+            {
+                SidewallJctPotential.RawValue = 0.1;
+                CircuitWarning.Warning(this, "Given pbsw is less than 0.1. Pbsw is set to 0.1.");
+            }
+            if (GatesidewallJctPotential < 0.1)
+            {
+                GatesidewallJctPotential.RawValue = 0.1;
+                CircuitWarning.Warning(this, "Given pbswg is less than 0.1. Pbswg is set to 0.1.");
+            }
         }
     }
 }

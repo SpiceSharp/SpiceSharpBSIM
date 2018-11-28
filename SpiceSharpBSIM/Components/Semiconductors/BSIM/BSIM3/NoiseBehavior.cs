@@ -2,13 +2,14 @@
 using SpiceSharp.Behaviors;
 using SpiceSharp.Components.NoiseSources;
 using SpiceSharp.Simulations;
+using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3Behaviors
 {
     /// <summary>
     /// Noise behavior for a <see cref="BSIM3"/>
     /// </summary>
-    public class NoiseBehavior : BaseNoiseBehavior, IConnectedBehavior
+    public class NoiseBehavior : ExportingBehavior, INoiseBehavior, IConnectedBehavior
     {
         private const double N_MINLOG = 1e-38;
 
@@ -17,7 +18,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// </summary>
         private BaseParameters _bp;
         private ModelBaseParameters _mbp;
-        private LoadBehavior _load;
+        private BiasingBehavior _load;
         private TemperatureBehavior _temp;
 
         /// <summary>
@@ -33,7 +34,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             new NoiseThermal("rs", 1, 5),
             new NoiseThermal("id", 4, 5),
             new NoiseGain("1overf", 4, 5)
-            );
+        );
 
         /// <summary>
         /// Constructor
@@ -58,7 +59,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             // Get behaviors
             _temp = provider.GetBehavior<TemperatureBehavior>();
-            _load = provider.GetBehavior<LoadBehavior>();
+            _load = provider.GetBehavior<BiasingBehavior>();
         }
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Connect the noise sources
         /// </summary>
-        public override void ConnectNoise()
+        public void ConnectNoise()
         {
             _drainNodePrime = _load.DrainNodePrime;
             _sourceNodePrime = _load.SourceNodePrime;
@@ -87,7 +88,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// Noise behavior
         /// </summary>
         /// <param name="simulation"></param>
-        public override void Noise(Noise simulation)
+        public void Noise(Noise simulation)
         {
             double vds;
             var state = simulation.NoiseState;
