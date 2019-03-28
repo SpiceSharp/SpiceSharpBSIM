@@ -9,32 +9,32 @@ namespace SpiceSharpTest.Models
     [TestFixture]
     public class BSIM2Tests : Framework
     {
-        /// <summary>
-        /// Generate a BSIM1 transistor
-        /// </summary>
-        private BSIM2 Create(string name, string drain, string gate, string source, string bulk, double w, double l, string model, string parameters)
+        private BSIM2 CreateMosfet(string name, string drain, string gate, string source, string bulk, double w, double l, string model)
         {
-            // Create the model
-            var m = new BSIM2Model(model);
-            ApplyParameters(m, parameters);
-
-            // Create the device
             var e = new BSIM2(name, drain, gate, source, bulk);
             e.SetParameter("w", w);
             e.SetParameter("l", l);
-            e.SetModel(m);
+            e.Model = model;
             return e;
+        }
+
+        private BSIM2Model CreateModel(string name, string parameters)
+        {
+            var m = new BSIM2Model(name);
+            ApplyParameters(m, parameters);
+            return m;
         }
 
         [Test]
         public void When_BSIM2DC_Expect_Reference()
         {
-            var ckt = new Circuit();
-            ckt.Entities.Add(
+            var ckt = new Circuit(
                 new VoltageSource("V1", "g", "0", 0.0),
                 new VoltageSource("V2", "d", "0", 0.0),
-                Create("M1", "d", "g", "0", "0", 10e-6, 1e-6, "mod", "vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0"));
-            ckt.Entities["M1"].SetParameter("m", 3.0);
+                CreateMosfet("M1", "d", "g", "0", "0", 10e-6, 1e-6, "mod"),
+                CreateModel("mod", "vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0")
+            );
+            ckt["M1"].SetParameter("m", 3.0);
 
             // Create simulation
             var dc = new DC("dc", new[]
@@ -96,20 +96,20 @@ namespace SpiceSharpTest.Models
             AnalyzeDC(dc, ckt, exports, references);
         }
 
-                [Test]
+        [Test]
         public void When_BSIM2SmallSignal_Expect_Reference()
         {
             // Build the circuit
-            var ckt = new Circuit();
-            ckt.Entities.Add(
+            var ckt = new Circuit(
                 new VoltageSource("Vsupply", "vdd", "0", 5.0),
                 new VoltageSource("V1", "in", "0", 0.0),
                 new Resistor("R1", "vdd", "out", 10),
                 new Resistor("R2", "out", "g", 1.0e6),
                 new Capacitor("C1", "in", "g", 1e-9),
-                Create("M1", "out", "g", "0", "0", 10e-6, 1e-6, "Nch4", "vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0")
+                CreateMosfet("M1", "out", "g", "0", "0", 10e-6, 1e-6, "Nch4"),
+                CreateModel("Nch4", "vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0")
             );
-            ckt.Entities["V1"].SetParameter("acmag", 1.0);
+            ckt["V1"].SetParameter("acmag", 1.0);
 
             // AC simulation
             var ac = new AC("ac 1", new DecadeSweep(0.1, 1.0e9, 20));

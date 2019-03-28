@@ -7,17 +7,21 @@ namespace SpiceSharp.Components
     /// </summary>
     public class BSIM3Model : Model
     {
+        static BSIM3Model()
+        {
+            RegisterBehaviorFactory(typeof(BSIM3Model), new Behaviors.BehaviorFactoryDictionary()
+            {
+                { typeof(ModelTemperatureBehavior), e => new ModelTemperatureBehavior(e.Name) }
+            });
+        }
+
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="name">Name</param>
         public BSIM3Model(string name) : base(name)
         {
-            // Add parameters
             ParameterSets.Add(new ModelBaseParameters());
-
-            // Add behaviors
-            Behaviors.Add(typeof(ModelTemperatureBehavior), () => new ModelTemperatureBehavior(Name));
         }
     }
 }

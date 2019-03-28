@@ -12,29 +12,33 @@ namespace SpiceSharpTest.Models
         /// <summary>
         /// Generate a BSIM1 transistor
         /// </summary>
-        private BSIM1 Create(string name, string drain, string gate, string source, string bulk, double w, double l, string model, string parameters)
+        private BSIM1 CreateMosfet(string name, string drain, string gate, string source, string bulk, double w, double l, string model)
         {
-            // Create the model
-            var m = new BSIM1Model(model);
-            ApplyParameters(m, parameters);
-
             // Create the device
             var e = new BSIM1(name, drain, gate, source, bulk);
             e.SetParameter("w", w);
             e.SetParameter("l", l);
-            e.SetModel(m);
+            e.Model = model;
             return e;
+        }
+
+        private BSIM1Model CreateModel(string name, string parameters)
+        {
+            var m = new BSIM1Model(name);
+            ApplyParameters(m, parameters);
+            return m;
         }
 
         [Test]
         public void When_BSIM1DC_Expect_Reference()
         {
-            var ckt = new Circuit();
-            ckt.Entities.Add(
+            var ckt = new Circuit(
                 new VoltageSource("V1", "g", "0", 0.0),
                 new VoltageSource("V2", "d", "0", 0.0),
-                Create("M1", "d", "g", "0", "0", 100e-6, 100e-6, "mod", "temp=25 muz=600 vdd=5 vfb=-0.3 phi=0.6 k1=0.5 u0=670 x2e=-0.07 mus=1082 n0=0.5 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0"));
-            ckt.Entities["M1"].SetParameter("m", 2.0);
+                CreateMosfet("M1", "d", "g", "0", "0", 100e-6, 100e-6, "mod"),
+                CreateModel("mod", "temp=25 muz=600 vdd=5 vfb=-0.3 phi=0.6 k1=0.5 u0=670 x2e=-0.07 mus=1082 n0=0.5 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0")
+            );
+            ckt["M1"].SetParameter("m", 2.0);
 
             // Create simulation
             var dc = new DC("dc", new[]
@@ -105,14 +109,14 @@ namespace SpiceSharpTest.Models
              */
 
             // Build the circuit
-            var ckt = new Circuit();
-            ckt.Entities.Add(
+            var ckt = new Circuit(
                 new VoltageSource("Vsupply", "vdd", "0", 3.3),
                 new VoltageSource("V1", "in", "0", new Pulse(0, 3.3, 1e-6, 1e-9, 0.5e-6, 2e-6, 6e-6)),
                 new Resistor("R1", "vdd", "out", 10.0e3),
                 new Capacitor("C1", "out", "0", 1e-7),
-                Create("M1", "out", "in", "0", "0", 100e-6, 100e-6, "Nch4", "temp=25 muz=600 vdd=5 vfb=-0.3 phi=0.6 k1=0.5 u0=670 x2e=-0.07 mus=1082 n0=0.5 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=0")
-                );
+                CreateMosfet("M1", "out", "in", "0", "0", 100e-6, 100e-6, "Nch4"),
+                CreateModel("Nch4", "temp=25 muz=600 vdd=5 vfb=-0.3 phi=0.6 k1=0.5 u0=670 x2e=-0.07 mus=1082 n0=0.5 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=0")
+            );
 
             // Create the simulation and exports
             var tran = new Transient("Transient", 1e-9, 9e-6);
@@ -221,9 +225,10 @@ namespace SpiceSharpTest.Models
                 new Resistor("R1", "vdd", "out", 10.0e3),
                 new Resistor("R2", "out", "g", 1.0e6),
                 new Capacitor("C1", "in", "g", 1e-9),
-                Create("M1", "out", "g", "0", "0", 100e-6, 100e-6, "Nch4", "VFB=-7.744e-1 K1=1.112 K2=2.051e-1 ETA=1.185e-2 MUZ=8.052e2 U0=6.757e-2 U1=6.443e-1 X2MZ=3.213e1 X2E=2.670e-3 X3E=1.046e-3 X2U0=1.055e-2 X2U1=-3.186e-2 MUS=1.293e3 X2MS=3.737e1 X3MS=1.374e2 X3U1=1.489e-1 PHI=7.5 TOX=4e-2 VDD=5 DL=0 DW=0 CGDO=3.41e-10 CGSO=3.41e-10 CGBO=5.51e-10")
+                CreateMosfet("M1", "out", "g", "0", "0", 100e-6, 100e-6, "Nch4"),
+                CreateModel("Nch4", "VFB=-7.744e-1 K1=1.112 K2=2.051e-1 ETA=1.185e-2 MUZ=8.052e2 U0=6.757e-2 U1=6.443e-1 X2MZ=3.213e1 X2E=2.670e-3 X3E=1.046e-3 X2U0=1.055e-2 X2U1=-3.186e-2 MUS=1.293e3 X2MS=3.737e1 X3MS=1.374e2 X3U1=1.489e-1 PHI=7.5 TOX=4e-2 VDD=5 DL=0 DW=0 CGDO=3.41e-10 CGSO=3.41e-10 CGBO=5.51e-10")
             );
-            ckt.Entities["V1"].SetParameter("acmag", 1.0);
+            ckt["V1"].SetParameter("acmag", 1.0);
 
             // AC simulation
             var ac = new AC("ac 1", new DecadeSweep(0.1, 1.0e9, 20));

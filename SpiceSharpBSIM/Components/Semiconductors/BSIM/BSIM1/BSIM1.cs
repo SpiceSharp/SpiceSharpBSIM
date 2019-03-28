@@ -8,11 +8,16 @@ namespace SpiceSharp.Components
     /// </summary>
     public class BSIM1 : Component
     {
-        /// <summary>
-        /// Set the model
-        /// </summary>
-        /// <param name="model">Model</param>
-        public void SetModel(BSIM1Model model) => Model = model;
+        static BSIM1()
+        {
+            RegisterBehaviorFactory(typeof(BSIM1), new Behaviors.BehaviorFactoryDictionary()
+            {
+                { typeof(TemperatureBehavior), e => new TemperatureBehavior(e.Name) },
+                { typeof(BiasingBehavior), e => new BiasingBehavior(e.Name) },
+                { typeof(TransientBehavior), e => new TransientBehavior(e.Name) },
+                { typeof(FrequencyBehavior), e => new FrequencyBehavior(e.Name) }
+            });
+        }
 
         /// <summary>
         /// Number of pins
@@ -29,12 +34,6 @@ namespace SpiceSharp.Components
         {
             // Add parameters
             ParameterSets.Add(new BaseParameters());
-
-            // Add behaviors
-            Behaviors.Add(typeof(TemperatureBehavior), () => new TemperatureBehavior(Name));
-            Behaviors.Add(typeof(BiasingBehavior), () => new BiasingBehavior(Name));
-            Behaviors.Add(typeof(TransientBehavior), () => new TransientBehavior(Name));
-            Behaviors.Add(typeof(FrequencyBehavior), () => new FrequencyBehavior(Name));
         }
 
         /// <summary>
@@ -48,15 +47,7 @@ namespace SpiceSharp.Components
         public BSIM1(string name, string drain, string gate, string source, string bulk)
             : base(name, BSIM1PinCount)
         {
-            // Add parameters
             ParameterSets.Add(new BaseParameters());
-
-            // Add behaviors
-            Behaviors.Add(typeof(TemperatureBehavior), () => new TemperatureBehavior(Name));
-            Behaviors.Add(typeof(BiasingBehavior), () => new BiasingBehavior(Name));
-            Behaviors.Add(typeof(TransientBehavior), () => new TransientBehavior(Name));
-            Behaviors.Add(typeof(FrequencyBehavior), () => new FrequencyBehavior(Name));
-
             Connect(drain, gate, source, bulk);
         }
 
@@ -73,18 +64,10 @@ namespace SpiceSharp.Components
         public BSIM1(string name, string drain, string gate, string source, string bulk, double width, double length)
             : base(name, BSIM1PinCount)
         {
-            // Add parameters
             var bp = new BaseParameters();
             ParameterSets.Add(bp);
             bp.Width.Value = width;
             bp.Length.Value = length;
-
-            // Add behaviors
-            Behaviors.Add(typeof(TemperatureBehavior), () => new TemperatureBehavior(Name));
-            Behaviors.Add(typeof(BiasingBehavior), () => new BiasingBehavior(Name));
-            Behaviors.Add(typeof(TransientBehavior), () => new TransientBehavior(Name));
-            Behaviors.Add(typeof(FrequencyBehavior), () => new FrequencyBehavior(Name));
-
             Connect(drain, gate, source, bulk);
         }
     }
