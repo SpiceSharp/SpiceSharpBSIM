@@ -79,7 +79,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
 			tnom = ModelParameters.Tnom;
 			TRatio = temp / tnom;
-			Vcrit = Circuit.Vt0 * Math.Log(Circuit.Vt0 / (Circuit.Root2 * 1.0e-14));
+			Vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * 1.0e-14));
 			Factor1 = Math.Sqrt(1.03594e-10 / 3.453133e-11 * ModelParameters.Tox);
 			Vtm0 = 8.617087e-5 * tnom;
 			eg0 = 1.16 - 7.02e-4 * tnom * tnom / (tnom + 1108.0);

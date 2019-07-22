@@ -170,10 +170,10 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
             }
 
             var effFreq = Math.Pow(freq, _mbp.Ef);
-            var t1 = Circuit.Charge * Circuit.Charge * 8.62e-5 * cd * temp * _load.Ueff;
+            var t1 = Constants.Charge * Constants.Charge * 8.62e-5 * cd * temp * _load.Ueff;
             var t2 = 1.0e8 * effFreq * _load.Abulk * _mbp.Cox;
-            var n0 = _mbp.Cox * _load.Vgsteff / Circuit.Charge;
-            var nl = _mbp.Cox * _load.Vgsteff * (1.0 - _load.AbovVgst2Vtm * _load.Vdseff) / Circuit.Charge;
+            var n0 = _mbp.Cox * _load.Vgsteff / Constants.Charge;
+            var nl = _mbp.Cox * _load.Vgsteff * (1.0 - _load.AbovVgst2Vtm * _load.Vdseff) / Constants.Charge;
 
             var t3 = _mbp.OxideTrapDensityA * Math.Log(Math.Max((n0 + 2.0e14) / (nl + 2.0e14), N_MINLOG));
             var t4 = _mbp.OxideTrapDensityB * (n0 - nl);

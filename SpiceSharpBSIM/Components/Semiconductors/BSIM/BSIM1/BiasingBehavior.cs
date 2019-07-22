@@ -171,133 +171,50 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         public void Load(BaseSimulation simulation)
         {
             var state = simulation.RealState;
-            double DrainSatCurrent = 0.0;
-            double EffectiveLength = 0.0;
-            double GateBulkOverlapCap = 0.0;
-            double GateDrainOverlapCap = 0.0;
-            double GateSourceOverlapCap = 0.0;
-            double SourceSatCurrent = 0.0;
-            double DrainArea = 0.0;
-            double SourceArea = 0.0;
-            double DrainPerimeter = 0.0;
-            double SourcePerimeter = 0.0;
-            double arg = 0.0;
             double capbd = 0.0;
             double capbs = 0.0;
-            double cbd = 0.0;
-            double cbhat = 0.0;
-            double cbs = 0.0;
-            double cd = 0.0;
-            double cdrain = 0.0;
-            double cdhat = 0.0;
-            double cdreq = 0.0;
-            double ceq = 0.0;
-            double ceqbd = 0.0;
-            double ceqbs = 0.0;
-            double ceqqb = 0.0;
-            double ceqqd = 0.0;
-            double ceqqg = 0.0;
-            double czbd = 0.0;
-            double czbdsw = 0.0;
-            double czbs = 0.0;
-            double czbssw = 0.0;
-            double delvbd = 0.0;
-            double delvbs = 0.0;
-            double delvds = 0.0;
-            double delvgd = 0.0;
-            double delvgs = 0.0;
-            double evbd = 0.0;
-            double evbs = 0.0;
-            double gbd = 0.0;
-            double gbs = 0.0;
-            double gcbdb = 0.0;
-            double gcbgb = 0.0;
-            double gcbsb = 0.0;
-            double gcddb = 0.0;
-            double gcdgb = 0.0;
-            double gcdsb = 0.0;
-            double gcgdb = 0.0;
-            double gcggb = 0.0;
-            double gcgsb = 0.0;
-            double gcsdb = 0.0;
-            double gcsgb = 0.0;
-            double gcssb = 0.0;
-            double gds = 0.0;
-            double geq = 0.0;
-            double gm = 0.0;
-            double gmbs = 0.0;
-            double sarg = 0.0;
-            double sargsw = 0.0;
-            double tol = 0.0;
-            double vbd = 0.0;
-            double vbs = 0.0;
-            double vcrit = 0.0;
-            double vds = 0.0;
-            double vdsat = 0.0;
-            double vgb = 0.0;
-            double vgd = 0.0;
-            double vgdo = 0.0;
-            double vgs = 0.0;
-            double von = 0.0;
-            double xfact = 0.0;
-            double xnrm = 0.0;
-            double xrev = 0.0;
-            bool Check = false;
-            double cgdb = 0.0;
-            double cgsb = 0.0;
-            double cbdb = 0.0;
             double cdgb = 0.0;
             double cddb = 0.0;
             double cdsb = 0.0;
-            double cggb = 0.0;
-            double cbgb = 0.0;
-            double cbsb = 0.0;
             double csgb = 0.0;
             double cssb = 0.0;
             double csdb = 0.0;
-            double PhiB = 0.0;
-            double PhiBSW = 0.0;
-            double MJ = 0.0;
-            double MJSW = 0.0;
-            double argsw = 0.0;
-            double qgate = 0.0;
-            double qbulk = 0.0;
             double qdrn = 0.0;
             double qsrc = 0.0;
-            double cqgate = 0.0;
-            double cqbulk = 0.0;
-            double cqdrn = 0.0;
-            double vt0 = 0.0;
             double[] args = new double[8];
-            int ByPass = 0;
-            int error = 0;
             bool chargeComputationsNeeded = TranBehavior != null;
 
-            EffectiveLength = BaseParameters.Length - ModelParameters.DeltaL * 1.0e-6; /* m */
-            DrainArea = BaseParameters.DrainArea;
-            SourceArea = BaseParameters.SourceArea;
-            DrainPerimeter = BaseParameters.DrainPerimeter;
-            SourcePerimeter = BaseParameters.SourcePerimeter;
+            double EffectiveLength = BaseParameters.Length - ModelParameters.DeltaL * 1.0e-6;
+            double DrainArea = BaseParameters.DrainArea;
+            double SourceArea = BaseParameters.SourceArea;
+            double DrainPerimeter = BaseParameters.DrainPerimeter;
+            double SourcePerimeter = BaseParameters.SourcePerimeter;
+            double DrainSatCurrent;
             if ((DrainSatCurrent = DrainArea * ModelParameters.JctSatCurDensity)
                 < 1e-15)
             {
                 DrainSatCurrent = 1.0e-15;
             }
 
+            double SourceSatCurrent;
             if ((SourceSatCurrent = SourceArea * ModelParameters.JctSatCurDensity)
                 < 1.0e-15)
             {
                 SourceSatCurrent = 1.0e-15;
             }
 
-            GateSourceOverlapCap = ModelParameters.GateSourceOverlapCap * BaseParameters.Width;
-            GateDrainOverlapCap = ModelParameters.GateDrainOverlapCap * BaseParameters.Width;
-            GateBulkOverlapCap = ModelParameters.GateBulkOverlapCap * EffectiveLength;
-            von = ModelParameters.Type * base.Von;
-            vdsat = ModelParameters.Type * this.Vdsat;
-            vt0 = ModelParameters.Type * base.Vt0;
-
-            Check = true;
+            double GateSourceOverlapCap = ModelParameters.GateSourceOverlapCap * BaseParameters.Width;
+            double GateDrainOverlapCap = ModelParameters.GateDrainOverlapCap * BaseParameters.Width;
+            double GateBulkOverlapCap = ModelParameters.GateBulkOverlapCap * EffectiveLength;
+            double von = ModelParameters.Type * Von;
+            double vdsat = ModelParameters.Type * Vdsat;
+            double vt0 = ModelParameters.Type * Vt0;
+            bool Check = true;
+            double vbd;
+            double vbs;
+            double vds;
+            double vgd;
+            double vgs;
             if (simulation is FrequencySimulation && !state.UseDc)
             {
                 vbs = this.Vbs;
@@ -330,7 +247,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                 vds = ModelParameters.Type * (state.Solution[DrainNodePrime] - state.Solution[SourceNodePrime]);
                 vbd = vbs - vds;
                 vgd = vgs - vds;
-                vgdo = this.Vgs - this.Vds;
+                double vgdo = this.Vgs - this.Vds;
 
                 von = ModelParameters.Type * base.Von;
                 if (this.Vds >= 0)
@@ -349,16 +266,17 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                 }
 
                 Check = false;
+                double vcrit;
                 if (vds >= 0)
                 {
-                    vcrit = Circuit.Vt0 * Math.Log(Circuit.Vt0 / (Circuit.Root2 * SourceSatCurrent));
-                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Circuit.Vt0, vcrit, ref Check); /* B1 test */
+                    vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * SourceSatCurrent));
+                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Constants.Vt0, vcrit, ref Check); /* B1 test */
                     vbd = vbs - vds;
                 }
                 else
                 {
-                    vcrit = Circuit.Vt0 * Math.Log(Circuit.Vt0 / (Circuit.Root2 * DrainSatCurrent));
-                    vbd = Semiconductor.LimitJunction(vbd, this.Vbd, Circuit.Vt0, vcrit, ref Check); /* B1 test*/
+                    vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * DrainSatCurrent));
+                    vbd = Semiconductor.LimitJunction(vbd, this.Vbd, Constants.Vt0, vcrit, ref Check); /* B1 test*/
                     vbs = vbd + vds;
                 }
             }
@@ -366,30 +284,32 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             /* determine DC current and derivatives */
             vbd = vbs - vds;
             vgd = vgs - vds;
-            vgb = vgs - vbs;
-
-
+            double vgb = vgs - vbs;
+            double cbs;
+            double gbs;
             if (vbs <= 0.0)
             {
-                gbs = SourceSatCurrent / Circuit.Vt0 + BaseConfiguration.Gmin;
+                gbs = SourceSatCurrent / Constants.Vt0 + BaseConfiguration.Gmin;
                 cbs = gbs * vbs;
             }
             else
             {
-                evbs = Math.Exp(vbs / Circuit.Vt0);
-                gbs = SourceSatCurrent * evbs / Circuit.Vt0 + BaseConfiguration.Gmin;
+                double evbs = Math.Exp(vbs / Constants.Vt0);
+                gbs = SourceSatCurrent * evbs / Constants.Vt0 + BaseConfiguration.Gmin;
                 cbs = SourceSatCurrent * (evbs - 1) + BaseConfiguration.Gmin * vbs;
             }
 
+            double cbd;
+            double gbd;
             if (vbd <= 0.0)
             {
-                gbd = DrainSatCurrent / Circuit.Vt0 + BaseConfiguration.Gmin;
+                gbd = DrainSatCurrent / Constants.Vt0 + BaseConfiguration.Gmin;
                 cbd = gbd * vbd;
             }
             else
             {
-                evbd = Math.Exp(vbd / Circuit.Vt0);
-                gbd = DrainSatCurrent * evbd / Circuit.Vt0 + BaseConfiguration.Gmin;
+                double evbd = Math.Exp(vbd / Constants.Vt0);
+                gbd = DrainSatCurrent * evbd / Constants.Vt0 + BaseConfiguration.Gmin;
                 cbd = DrainSatCurrent * (evbd - 1) + BaseConfiguration.Gmin * vbd;
             }
 
@@ -405,6 +325,18 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                 this.Mode = -1;
             }
 
+            double cdrain;
+            double gds;
+            double gm;
+            double gmbs;
+            double cgdb;
+            double cgsb;
+            double cbdb;
+            double cggb;
+            double cbgb;
+            double cbsb;
+            double qgate;
+            double qbulk;
             /* call B1evaluate to calculate drain current and its 
              * derivatives and charge and capacitances related to gate
              * drain, and bulk
@@ -428,30 +360,33 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             this.Vdsat = ModelParameters.Type * vdsat;
 
             /*
-             *  COMPUTE EQUIVALENT DRAIN CURRENT SOURCE
-             */
-            cd = this.Mode * cdrain - cbd;
+ *  COMPUTE EQUIVALENT DRAIN CURRENT SOURCE
+ */
+            double cd = Mode * cdrain - cbd;
             if (chargeComputationsNeeded)
             {
                 /*
-                 *  charge storage elements
-                 *
-                 *   bulk-drain and bulk-source depletion capacitances
-                 *  czbd : zero bias drain junction capacitance
-                 *  czbs : zero bias source junction capacitance
-                 * czbdsw:zero bias drain junction sidewall capacitance
-                 * czbssw:zero bias source junction sidewall capacitance
-                 */
+     *  charge storage elements
+     *
+     *   bulk-drain and bulk-source depletion capacitances
+     *  czbd : zero bias drain junction capacitance
+     *  czbs : zero bias source junction capacitance
+     * czbdsw:zero bias drain junction sidewall capacitance
+     * czbssw:zero bias source junction sidewall capacitance
+     */
 
-                czbd = ModelParameters.UnitAreaJctCap * DrainArea;
-                czbs = ModelParameters.UnitAreaJctCap * SourceArea;
-                czbdsw = ModelParameters.UnitLengthSidewallJctCap * DrainPerimeter;
-                czbssw = ModelParameters.UnitLengthSidewallJctCap * SourcePerimeter;
-                PhiB = ModelParameters.BulkJctPotential;
-                PhiBSW = ModelParameters.SidewallJctPotential;
-                MJ = ModelParameters.BulkJctBotGradingCoeff;
-                MJSW = ModelParameters.BulkJctSideGradingCoeff;
-
+                double czbd = ModelParameters.UnitAreaJctCap * DrainArea;
+                double czbs = ModelParameters.UnitAreaJctCap * SourceArea;
+                double czbdsw = ModelParameters.UnitLengthSidewallJctCap * DrainPerimeter;
+                double czbssw = ModelParameters.UnitLengthSidewallJctCap * SourcePerimeter;
+                double PhiB = ModelParameters.BulkJctPotential;
+                double PhiBSW = ModelParameters.SidewallJctPotential;
+                double MJ = ModelParameters.BulkJctBotGradingCoeff;
+                double MJSW = ModelParameters.BulkJctSideGradingCoeff;
+                double arg;
+                double sarg;
+                double sargsw;
+                double argsw;
                 /* Source Bulk Junction */
                 if (vbs < 0)
                 {
@@ -533,8 +468,19 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             // if (!(ckt->CKTmode & (MODETRAN | MODEAC)) && (!(ckt->CKTmode & MODETRANOP) || !(ckt->CKTmode & MODEUIC)) && !(ckt->CKTmode & MODEINITSMSIG))
             if (!chargeComputationsNeeded)
                 goto line850;
-
-            line755:
+            double gcbdb;
+            double gcbgb;
+            double gcbsb;
+            double gcddb;
+            double gcdgb;
+            double gcdsb;
+            double gcgdb;
+            double gcggb;
+            double gcgsb;
+            double gcsdb;
+            double gcsgb;
+            double gcssb;
+            // line755:
             if (this.Mode > 0)
             {
 
@@ -594,7 +540,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
 
             // store small signal parameters
             // if ((!(ckt->CKTmode & (MODEAC | MODETRAN))) && (ckt->CKTmode & MODETRANOP) && (ckt->CKTmode & MODEUIC))
-                // goto line850;
+            // goto line850;
 
             if (simulation is FrequencySimulation && !state.UseDc)
             {
@@ -627,35 +573,39 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             }
 
             goto line860;
-
-            line850:
+        line850:
             /* initialize to zero charge conductance and current */
+            double ceqqd;
+            double ceqqg;
+            double ceqqb;
             ceqqg = ceqqb = ceqqd = 0.0;
             gcdgb = gcddb = gcdsb = 0.0;
             gcsgb = gcsdb = gcssb = 0.0;
             gcggb = gcgdb = gcgsb = 0.0;
             gcbgb = gcbdb = gcbsb = 0.0;
             goto line900;
-
-            line860:
+        line860:
             /* evaluate equivalent charge current */
-            cqgate = TranBehavior.Qg.Derivative;
-            cqbulk = TranBehavior.Qb.Derivative;
-            cqdrn = TranBehavior.Qd.Derivative;
+            double cqgate = TranBehavior.Qg.Derivative;
+            double cqbulk = TranBehavior.Qb.Derivative;
+            double cqdrn = TranBehavior.Qd.Derivative;
             ceqqg = cqgate - gcggb * vgb + gcgdb * vbd + gcgsb * vbs;
             ceqqb = cqbulk - gcbgb * vgb + gcbdb * vbd + gcbsb * vbs;
             ceqqd = cqdrn - gcdgb * vgb + gcddb * vbd + gcdsb * vbs;
-
-            /*
-             *  load current vector
-             */
-            line900:
+            double ceqbs;
+        /*
+         *  load current vector
+         */
+        line900:
             ceqbs = ModelParameters.Type * (cbs - (gbs - BaseConfiguration.Gmin) * vbs);
-            ceqbd = ModelParameters.Type * (cbd - (gbd - BaseConfiguration.Gmin) * vbd);
+            double ceqbd = ModelParameters.Type * (cbd - (gbd - BaseConfiguration.Gmin) * vbd);
 
             ceqqg = ModelParameters.Type * ceqqg;
             ceqqb = ModelParameters.Type * ceqqb;
             ceqqd = ModelParameters.Type * ceqqd;
+            double cdreq;
+            double xnrm;
+            double xrev;
             if (this.Mode >= 0)
             {
                 xnrm = 1;
@@ -853,10 +803,10 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             n = n0 + nB * vbs + nD * vds;
             if (n < 0.5)
                 n = 0.5;
-            warg1 = Math.Exp(-vds / Circuit.Vt0);
+            warg1 = Math.Exp(-vds / Constants.Vt0);
             wds = 1 - warg1;
-            wgs = Math.Exp(vgs_Vth / (n * Circuit.Vt0));
-            vtsquare = Circuit.Vt0 * Circuit.Vt0;
+            wgs = Math.Exp(vgs_Vth / (n * Constants.Vt0));
+            vtsquare = Constants.Vt0 * Constants.Vt0;
             warg2 = 6.04965 * vtsquare * base.BetaZero;
             ilimit = 4.5 * vtsquare * base.BetaZero;
             iexp = warg2 * wgs * wds;
@@ -865,9 +815,9 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             temp1 = temp1 * temp1;
             temp3 = ilimit / (ilimit + wgs * warg2);
             temp3 = temp3 * temp3 * warg2 * wgs;
-            gm = gm + temp1 * iexp / (n * Circuit.Vt0);
-            gds = gds + temp3 * (-wds / n / Circuit.Vt0 * (dVthdVds + vgs_Vth * nD / n) + warg1 / Circuit.Vt0);
-            gmbs = gmbs - temp1 * iexp * (dVthdVbs + vgs_Vth * nB / n) / (n * Circuit.Vt0);
+            gm = gm + temp1 * iexp / (n * Constants.Vt0);
+            gds = gds + temp3 * (-wds / n / Constants.Vt0 * (dVthdVds + vgs_Vth * nD / n) + warg1 / Constants.Vt0);
+            gmbs = gmbs - temp1 * iexp * (dVthdVbs + vgs_Vth * nB / n) / (n * Constants.Vt0);
             ChargeComputation:
             if (drainCurrent < 0.0)
                 drainCurrent = 0.0;

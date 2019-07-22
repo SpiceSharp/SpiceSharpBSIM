@@ -223,7 +223,6 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// <summary>
         /// Load the behavior
         /// </summary>
-        /// <param name="simulation"></param>
         public void Load(BaseSimulation simulation)
         {
             double SourceSatCurrent, DrainSatCurrent;
@@ -370,12 +369,12 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 
                 if (vds >= 0.0)
                 {
-                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Circuit.Vt0, ModelTemperature.Vcrit, ref check);
+                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Constants.Vt0, ModelTemperature.Vcrit, ref check);
                     vbd = vbs - vds;
                 }
                 else
                 {
-                    vbd = Semiconductor.LimitJunction(vbd, Vbd, Circuit.Vt0, ModelTemperature.Vcrit, ref check);
+                    vbd = Semiconductor.LimitJunction(vbd, Vbd, Constants.Vt0, ModelTemperature.Vcrit, ref check);
                     vbs = vbd + vds;
                 }
             }
@@ -526,7 +525,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 
             Leff = pParam.BSIM3leff;
             Vtm = ModelTemperature.Vtm;
-/* Vth Calculation */
+            /* Vth Calculation */
             T3 = Math.Sqrt(Xdep);
             V0 = pParam.BSIM3vbi - pParam.BSIM3phi;
 
@@ -636,7 +635,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                        + pParam.BSIM3kt2 * TempRatio;
             dVth_dVd = -dDIBL_Sft_dVd;
 
-/* Calculate n */
+            /* Calculate n */
             tmp2 = pParam.BSIM3nfactor * EPSSI / Xdep;
             tmp3 = pParam.BSIM3cdsc + pParam.BSIM3cdscb * Vbseff
                                     + pParam.BSIM3cdscd * Vds;
@@ -659,13 +658,13 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                 dn_dVd = pParam.BSIM3cdscd * Theta0 / ModelParameters.Cox * T0;
             }
 
-/* Poly Gate Si Depletion Effect */
+            /* Poly Gate Si Depletion Effect */
             T0 = pParam.BSIM3vfb + pParam.BSIM3phi;
             if (pParam.BSIM3ngate > 1.0e18 && pParam.BSIM3ngate < 1.0e25
                                            && Vgs > T0)
                 /* added to avoid the problem caused by ngate */
             {
-                T1 = 1.0e6 * Circuit.Charge * EPSSI * pParam.BSIM3ngate
+                T1 = 1.0e6 * Constants.Charge * EPSSI * pParam.BSIM3ngate
                      / (ModelParameters.Cox * ModelParameters.Cox);
                 T4 = Math.Sqrt(1.0 + 2.0 * (Vgs - T0) / T1);
                 T2 = T1 * (T4 - 1.0);
@@ -2536,7 +2535,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
             if (!chargeComputationNeeded)
                 goto line850;
 
-            line755:
+            // line755:
             /* NQS begins */
             if (BaseParameters.NqsMod > 0)
             {

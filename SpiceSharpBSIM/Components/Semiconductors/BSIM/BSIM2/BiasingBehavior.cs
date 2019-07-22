@@ -339,14 +339,14 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	            Check = false;
 	            if (vds >= 0)
 	            {
-	                vcrit = Circuit.Vt0 * Math.Log(Circuit.Vt0 / (Circuit.Root2 * SourceSatCurrent));
-	                vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Circuit.Vt0, vcrit, ref Check); /* B2 test */
+	                vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * SourceSatCurrent));
+	                vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Constants.Vt0, vcrit, ref Check); /* B2 test */
 	                vbd = vbs - vds;
 	            }
 	            else
 	            {
-	                vcrit = Circuit.Vt0 * Math.Log(Circuit.Vt0 / (Circuit.Root2 * DrainSatCurrent));
-	                vbd = Semiconductor.LimitJunction(vbd, this.Vbd, Circuit.Vt0, vcrit, ref Check); /* B2 test*/
+	                vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * DrainSatCurrent));
+	                vbd = Semiconductor.LimitJunction(vbd, this.Vbd, Constants.Vt0, vcrit, ref Check); /* B2 test*/
 	                vbs = vbd + vds;
 	            }
 	        }
@@ -358,25 +358,25 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 
 	        if (vbs <= 0.0)
 	        {
-	            gbs = SourceSatCurrent / Circuit.Vt0 + BaseConfiguration.Gmin;
+	            gbs = SourceSatCurrent / Constants.Vt0 + BaseConfiguration.Gmin;
 	            cbs = gbs * vbs;
 	        }
 	        else
 	        {
-	            evbs = Math.Exp(vbs / Circuit.Vt0);
-	            gbs = SourceSatCurrent * evbs / Circuit.Vt0 + BaseConfiguration.Gmin;
+	            evbs = Math.Exp(vbs / Constants.Vt0);
+	            gbs = SourceSatCurrent * evbs / Constants.Vt0 + BaseConfiguration.Gmin;
 	            cbs = SourceSatCurrent * (evbs - 1) + BaseConfiguration.Gmin * vbs;
 	        }
 
 	        if (vbd <= 0.0)
 	        {
-	            gbd = DrainSatCurrent / Circuit.Vt0 + BaseConfiguration.Gmin;
+	            gbd = DrainSatCurrent / Constants.Vt0 + BaseConfiguration.Gmin;
 	            cbd = gbd * vbd;
 	        }
 	        else
 	        {
-	            evbd = Math.Exp(vbd / Circuit.Vt0);
-	            gbd = DrainSatCurrent * evbd / Circuit.Vt0 + BaseConfiguration.Gmin;
+	            evbd = Math.Exp(vbd / Constants.Vt0);
+	            gbd = DrainSatCurrent * evbd / Constants.Vt0 + BaseConfiguration.Gmin;
 	            cbd = DrainSatCurrent * (evbd - 1) + BaseConfiguration.Gmin * vbd;
 	        }
 
@@ -520,7 +520,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        if (!chargeComputationNeeded)
 	            goto line850;
 
-	        line755:
+	        // line755:
 	        if (this.Mode > 0)
 	        {
 
@@ -964,7 +964,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
                 gmb = 0.0;
             }
 
-            ChargeComputation:
+            // ChargeComputation:
             gds = Math.Max(gds, 1.0e-20);
             if ((ModelParameters.ChannelChargePartitionFlag > 1) || ((!chargeComputationNeeded) && (ModelParameters.ChannelChargePartitionFlag > -5)))
             {

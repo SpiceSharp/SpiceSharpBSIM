@@ -372,12 +372,12 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                 check = false;
                 if (vds >= 0.0)
                 {
-                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Circuit.Vt0, ModelTemperature.Vcrit, ref check);
+                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs, Constants.Vt0, ModelTemperature.Vcrit, ref check);
                     vbd = vbs - vds;
                 }
                 else
                 {
-                    vbd = Semiconductor.LimitJunction(vbd, this.Vbd, Circuit.Vt0, ModelTemperature.Vcrit, ref check);
+                    vbd = Semiconductor.LimitJunction(vbd, this.Vbd, Constants.Vt0, ModelTemperature.Vcrit, ref check);
                     vbs = vbd + vds;
                 }
             }
@@ -666,7 +666,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
                                              && (Vgs > T0))
                 /* added to avoid the problem caused by ngate */
             {
-                T1 = 1.0e6 * Circuit.Charge * EPSSI * pParam.BSIM3ngate
+                T1 = 1.0e6 * Constants.Charge * EPSSI * pParam.BSIM3ngate
                      / (ModelParameters.Cox * ModelParameters.Cox);
                 T4 = Math.Sqrt(1.0 + 2.0 * (Vgs - T0) / T1);
                 T2 = T1 * (T4 - 1.0);
@@ -2569,7 +2569,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             if (!chargeComputationNeeded)
                 goto line850;
 
-            line755:
+            // line755:
             /* NQS begins */
             if ((BaseParameters.NqsMod > 0) || (BaseParameters.AcnqsMod > 0))
             {

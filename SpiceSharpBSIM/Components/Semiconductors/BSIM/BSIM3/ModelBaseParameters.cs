@@ -864,8 +864,8 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         [ParameterName("tnom"), ParameterInfo("Parameter measurement temperature")]
         public double TnomCelsius
         {
-            get => Tnom.Value - Circuit.CelsiusKelvin;
-            set => Tnom.Value = value + Circuit.CelsiusKelvin;
+            get => Tnom.Value - Constants.CelsiusKelvin;
+            set => Tnom.Value = value + Constants.CelsiusKelvin;
         }
         public GivenParameter<double> Tnom { get; } = new GivenParameter<double>(300.15);
 
@@ -884,15 +884,29 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         }
 
         /// <summary>
-        /// Deep clone
+        /// Clone the parameter set.
         /// </summary>
         /// <returns></returns>
-        public override ParameterSet DeepClone()
+	    public override ParameterSet Clone()
         {
-            var clone = (ModelBaseParameters) base.DeepClone();
+            var clone = (ModelBaseParameters)base.Clone();
             clone.B3Type = B3Type;
             clone.Cox = Cox;
             return clone;
+        }
+
+        /// <summary>
+        /// Copy from another parameter set.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        public override void CopyFrom(ParameterSet source)
+        {
+            if (source is ModelBaseParameters mbp)
+            {
+                B3Type = mbp.B3Type;
+                Cox = mbp.Cox;
+                base.CopyFrom(mbp);
+            }
         }
 
         /// <summary>

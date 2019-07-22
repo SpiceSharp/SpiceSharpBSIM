@@ -192,14 +192,27 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         public double Cox { get; private set; }
 
         /// <summary>
-        /// Deep cloning
+        /// Clone the parameter set.
         /// </summary>
         /// <returns></returns>
-        public override ParameterSet DeepClone()
+        public override ParameterSet Clone()
         {
-            var cloned = (ModelBaseParameters) base.DeepClone();
+            var cloned = (ModelBaseParameters) base.Clone();
             cloned.Type = Type;
             return cloned;
+        }
+
+        /// <summary>
+        /// Copy parameters from another parameter set.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        public override void CopyFrom(ParameterSet source)
+        {
+            if (source is ModelBaseParameters mbp)
+            {
+                Type = mbp.Type;
+                base.CopyFrom(source);
+            }
         }
 
         /// <summary>
