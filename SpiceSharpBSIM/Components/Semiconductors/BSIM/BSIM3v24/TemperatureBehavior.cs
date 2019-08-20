@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
@@ -10,7 +9,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 	/// <summary>
 	/// Temperature behavior for a <see cref="BSIM3v24" />
 	/// </summary>
-	public class TemperatureBehavior : ExportingBehavior, ITemperatureBehavior
+	public class TemperatureBehavior : Behavior, ITemperatureBehavior
 	{
 
         /// <summary>
@@ -64,23 +63,22 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
 		/// <summary>
 		/// Setup the behavior
 		/// </summary>
-		public override void Setup(Simulation simulation, SetupDataProvider provider)
+		public override void Bind(Simulation simulation, BindingContext context)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
+            base.Bind(simulation, context);
 
             // Get behaviors
-			ModelTemperature = provider.GetBehavior<ModelTemperatureBehavior>("model");
+			ModelTemperature = context.GetBehavior<ModelTemperatureBehavior>("model");
 
             // Get parameters
-			BaseParameters = provider.GetParameterSet<BaseParameters>("instance");
-			ModelParameters = provider.GetParameterSet<ModelBaseParameters>("model");
+			BaseParameters = context.GetParameterSet<BaseParameters>("instance");
+			ModelParameters = context.GetParameterSet<ModelBaseParameters>("model");
 		}
 		
 		/// <summary>
 		/// Temperature behavior
 		/// </summary>
-		public void Temperature(BaseSimulation simulation)
+		void ITemperatureBehavior.Temperature()
 		{
 			double tmp, tmp1, tmp2, tmp3, t0, t1, t2, t3, t4, t5, ldrn, wdrn, inv_L, inv_W, inv_LW, nvtm, sourceSatCurrent, drainSatCurrent;
 

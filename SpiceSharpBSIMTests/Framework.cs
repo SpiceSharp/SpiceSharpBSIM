@@ -391,8 +391,9 @@ namespace SpiceSharpTest.Models
                     var value = double.Parse(m.Groups["value"].Value);
 
                     // Check the solver
-                    var eltIndex = sim.RealState.Solver.InternalToExternal(new Tuple<int, int>(row, col));
-                    var elt = sim.RealState.Solver.FindMatrixElement(eltIndex.Item1, eltIndex.Item2);
+                    var eltIndex = new SpiceSharp.Algebra.LinearSystemIndices(row, col);
+                    sim.RealState.Solver.InternalToExternal(eltIndex);
+                    var elt = sim.RealState.Solver.FindMatrixElement(eltIndex.Row, eltIndex.Column);
                     Assert.NotNull(elt);
 
                     double tol = Math.Max(Math.Abs(value), Math.Abs(elt.Value)) * RelTol + AbsTol;

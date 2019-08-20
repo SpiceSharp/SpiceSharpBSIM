@@ -1,14 +1,13 @@
 ﻿using System;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM1Behaviors
 {
     /// <summary>
     /// Temperature behavior for a <see cref="BSIM1" />
     /// </summary>
-    public class TemperatureBehavior : ExportingBehavior, ITemperatureBehavior
+    public class TemperatureBehavior : Behavior, ITemperatureBehavior
     {
         /// <summary>
         /// Necessary behaviors and parameters
@@ -58,20 +57,19 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <summary>
         /// Setup the behavior
         /// </summary>
-        public override void Setup(Simulation simulation, SetupDataProvider provider)
+        public override void Bind(Simulation simulation, BindingContext context)
         {
-            if (provider == null)
-                throw new ArgumentNullException(nameof(provider));
+            base.Bind(simulation, context);
 
             // Get parameters
-            BaseParameters = provider.GetParameterSet<BaseParameters>();
-            ModelParameters = provider.GetParameterSet<ModelBaseParameters>("model");
+            BaseParameters = context.GetParameterSet<BaseParameters>();
+            ModelParameters = context.GetParameterSet<ModelBaseParameters>("model");
         }
 
         /// <summary>
         /// Temperature behavior
         /// </summary>
-        public void Temperature(BaseSimulation simulation)
+        void ITemperatureBehavior.Temperature()
         {
             double effChanLength, effChanWidth, coxWoverL, leff, weff;
             if ((effChanLength = BaseParameters.Length - ModelParameters.DeltaL * 1e-6) <= 0)

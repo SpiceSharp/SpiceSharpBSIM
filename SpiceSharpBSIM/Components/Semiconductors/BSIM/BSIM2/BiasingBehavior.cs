@@ -10,7 +10,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	/// <summary>
 	/// Load behavior for a <see cref="BSIM2" />
 	/// </summary>
-	public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior, IConnectedBehavior
+	public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior
 	{
         /// <summary>
         /// Gets the base configuration.
@@ -92,6 +92,8 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		protected VectorElement<double> GateNodePtr { get; private set; }
 		protected VectorElement<double> BulkNodePtr { get; private set; }
 
+        private BaseSimulationState _state;
+
 	    /// <summary>
 	    /// Constructor
 	    /// </summary>
@@ -102,73 +104,65 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		/// <summary>
 		/// Setup the behavior
 		/// </summary>
-		public override void Setup(Simulation simulation, SetupDataProvider provider)
+		public override void Bind(Simulation simulation, BindingContext context)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
-            base.Setup(simulation, provider);
+            base.Bind(simulation, context);
 
             // Get configuration
 		    BaseConfiguration = simulation.Configurations.Get<BaseConfiguration>();
-		}
-		
-		/// <summary>
-		/// Connect
-		/// </summary>
-		public void Connect(params int[] pins)
-		{
-			DrainNode = pins[0];
-			GateNode = pins[1];
-			SourceNode = pins[2];
-			BulkNode = pins[3];
-		}
-		
-		/// <summary>
-		/// Get equation pointers
-		/// </summary>
-		public void GetEquationPointers(VariableSet variables, Solver<double> solver)
-		{
-			if ((ModelParameters.SheetResistance > 0) && (BaseParameters.DrainSquares > 0.0))
-				DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
-			else
-				DrainNodePrime = DrainNode;
-			DrainNodePrimePtr = solver.GetRhsElement(DrainNodePrime);
-			if ((ModelParameters.SheetResistance > 0) && (BaseParameters.SourceSquares > 0.0))
-					SourceNodePrime = variables.Create(Name.Combine("source")).Index;
-			else
-				SourceNodePrime = SourceNode;
 
-			SourceNodePrimePtr = solver.GetRhsElement(SourceNodePrime);
-			DdPtr = solver.GetMatrixElement(DrainNode, DrainNode);
-			GgPtr = solver.GetMatrixElement(GateNode, GateNode);
-			SsPtr = solver.GetMatrixElement(SourceNode, SourceNode);
-			BbPtr = solver.GetMatrixElement(BulkNode, BulkNode);
-			DPdpPtr = solver.GetMatrixElement(DrainNodePrime, DrainNodePrime);
-			SPspPtr = solver.GetMatrixElement(SourceNodePrime, SourceNodePrime);
-			DdpPtr = solver.GetMatrixElement(DrainNode, DrainNodePrime);
-			GbPtr = solver.GetMatrixElement(GateNode, BulkNode);
-			GdpPtr = solver.GetMatrixElement(GateNode, DrainNodePrime);
-			GspPtr = solver.GetMatrixElement(GateNode, SourceNodePrime);
-			SspPtr = solver.GetMatrixElement(SourceNode, SourceNodePrime);
-			BdpPtr = solver.GetMatrixElement(BulkNode, DrainNodePrime);
-			BspPtr = solver.GetMatrixElement(BulkNode, SourceNodePrime);
-			DPspPtr = solver.GetMatrixElement(DrainNodePrime, SourceNodePrime);
-			DPdPtr = solver.GetMatrixElement(DrainNodePrime, DrainNode);
-			BgPtr = solver.GetMatrixElement(BulkNode, GateNode);
-			DPgPtr = solver.GetMatrixElement(DrainNodePrime, GateNode);
-			SPgPtr = solver.GetMatrixElement(SourceNodePrime, GateNode);
-			SPsPtr = solver.GetMatrixElement(SourceNodePrime, SourceNode);
-			DPbPtr = solver.GetMatrixElement(DrainNodePrime, BulkNode);
-			SPbPtr = solver.GetMatrixElement(SourceNodePrime, BulkNode);
-			SPdpPtr = solver.GetMatrixElement(SourceNodePrime, DrainNodePrime);
-			GateNodePtr = solver.GetRhsElement(GateNode);
-			BulkNodePtr = solver.GetRhsElement(BulkNode);
-		}
+            if (context is ComponentBindingContext cc)
+            {
+                DrainNode = cc.Pins[0];
+                GateNode = cc.Pins[1];
+                SourceNode = cc.Pins[2];
+                BulkNode = cc.Pins[3];
+            }
+
+            _state = ((BaseSimulation)simulation).RealState;
+            var solver = _state.Solver;
+            var variables = simulation.Variables;
+            if ((ModelParameters.SheetResistance > 0) && (BaseParameters.DrainSquares > 0.0))
+                DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
+            else
+                DrainNodePrime = DrainNode;
+            DrainNodePrimePtr = solver.GetRhsElement(DrainNodePrime);
+            if ((ModelParameters.SheetResistance > 0) && (BaseParameters.SourceSquares > 0.0))
+                SourceNodePrime = variables.Create(Name.Combine("source")).Index;
+            else
+                SourceNodePrime = SourceNode;
+
+            SourceNodePrimePtr = solver.GetRhsElement(SourceNodePrime);
+            DdPtr = solver.GetMatrixElement(DrainNode, DrainNode);
+            GgPtr = solver.GetMatrixElement(GateNode, GateNode);
+            SsPtr = solver.GetMatrixElement(SourceNode, SourceNode);
+            BbPtr = solver.GetMatrixElement(BulkNode, BulkNode);
+            DPdpPtr = solver.GetMatrixElement(DrainNodePrime, DrainNodePrime);
+            SPspPtr = solver.GetMatrixElement(SourceNodePrime, SourceNodePrime);
+            DdpPtr = solver.GetMatrixElement(DrainNode, DrainNodePrime);
+            GbPtr = solver.GetMatrixElement(GateNode, BulkNode);
+            GdpPtr = solver.GetMatrixElement(GateNode, DrainNodePrime);
+            GspPtr = solver.GetMatrixElement(GateNode, SourceNodePrime);
+            SspPtr = solver.GetMatrixElement(SourceNode, SourceNodePrime);
+            BdpPtr = solver.GetMatrixElement(BulkNode, DrainNodePrime);
+            BspPtr = solver.GetMatrixElement(BulkNode, SourceNodePrime);
+            DPspPtr = solver.GetMatrixElement(DrainNodePrime, SourceNodePrime);
+            DPdPtr = solver.GetMatrixElement(DrainNodePrime, DrainNode);
+            BgPtr = solver.GetMatrixElement(BulkNode, GateNode);
+            DPgPtr = solver.GetMatrixElement(DrainNodePrime, GateNode);
+            SPgPtr = solver.GetMatrixElement(SourceNodePrime, GateNode);
+            SPsPtr = solver.GetMatrixElement(SourceNodePrime, SourceNode);
+            DPbPtr = solver.GetMatrixElement(DrainNodePrime, BulkNode);
+            SPbPtr = solver.GetMatrixElement(SourceNodePrime, BulkNode);
+            SPdpPtr = solver.GetMatrixElement(SourceNodePrime, DrainNodePrime);
+            GateNodePtr = solver.GetRhsElement(GateNode);
+            BulkNodePtr = solver.GetRhsElement(BulkNode);
+        }
 
 	    /// <summary>
 	    /// Temperature behavior
 	    /// </summary>
-	    public void Load(BaseSimulation simulation)
+	    void IBiasingBehavior.Load()
 	    {
 	        double DrainSatCurrent;
 	        double EffectiveLength;
@@ -258,7 +252,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        double vt0;
 	        double[] args = new double[8];
 	        var pParam = base.Param;
-	        var state = simulation.RealState;
+	        var state = _state;
 	        bool chargeComputationNeeded = TranBehavior != null;
 
 	        EffectiveLength = BaseParameters.Length - ModelParameters.DeltaL * 1.0e-6; /* m */
@@ -286,7 +280,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        vt0 = ModelParameters.Type * pParam.B2vt0;
 
 	        Check = true;
-	        if (simulation is FrequencySimulation && !state.UseDc)
+	        if (Simulation is FrequencySimulation && !state.UseDc)
 	        {
 	            vbs = this.Vbs;
 	            vgs = this.Vgs;
@@ -573,7 +567,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 	        // if ((!(ckt->CKTmode & (MODEAC | MODETRAN))) && (ckt->CKTmode & MODETRANOP) && (ckt->CKTmode & MODEUIC))
 	        // goto line850;
 
-	        if (simulation is FrequencySimulation && !state.UseDc)
+	        if (Simulation is FrequencySimulation && !state.UseDc)
 	        {
 	            this.Cggb = cggb;
 	            this.Cgdb = cgdb;
@@ -686,7 +680,7 @@ namespace SpiceSharp.Components.BSIM2Behaviors
         /// <returns>
         ///   <c>true</c> if the specified simulation is convergent; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsConvergent(BaseSimulation simulation) => true;
+        bool IBiasingBehavior.IsConvergent() => true;
 
 	    /// <summary>
         /// Helper method Evaluate

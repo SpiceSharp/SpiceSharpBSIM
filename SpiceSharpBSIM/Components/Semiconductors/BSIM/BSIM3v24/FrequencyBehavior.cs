@@ -3,14 +3,13 @@ using System.Numerics;
 using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
     /// <summary>
     /// Frequency behavior for a <see cref="BSIM3v24"/>
     /// </summary>
-    public class FrequencyBehavior : ExportingBehavior, IFrequencyBehavior, IConnectedBehavior
+    public class FrequencyBehavior : Behavior, IFrequencyBehavior
     {
         private const double ScalingFactor = 1.0e-9;
 
@@ -59,6 +58,8 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         protected MatrixElement<Complex> GqPtr { get; private set; }
         protected MatrixElement<Complex> BqPtr { get; private set; }
 
+        private ComplexSimulationState _state;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -70,47 +71,29 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// <summary>
         /// Setup behavior
         /// </summary>
-        /// <param name="provider">Provider</param>
-        public override void Setup(Simulation simulation, SetupDataProvider provider)
+        /// <param name="context">Provider</param>
+        public override void Bind(Simulation simulation, BindingContext context)
         {
-            if (provider == null)
-                throw new ArgumentNullException(nameof(provider));
+            base.Bind(simulation, context);
 
             // Get parameter sets
-            _mbp = provider.GetParameterSet<ModelBaseParameters>("model");
-            _bp = provider.GetParameterSet<BaseParameters>();
+            _mbp = context.GetParameterSet<ModelBaseParameters>("model");
+            _bp = context.GetParameterSet<BaseParameters>();
 
             // Get behaviors
-            _load = provider.GetBehavior<BiasingBehavior>();
-            _temp = provider.GetBehavior<TemperatureBehavior>();
-        }
+            _load = context.GetBehavior<BiasingBehavior>();
+            _temp = context.GetBehavior<TemperatureBehavior>();
 
-        /// <summary>
-        /// Connect the behavior
-        /// </summary>
-        /// <param name="pins">Pins</param>
-        public void Connect(params int[] pins)
-        {
-            _drainNode = pins[0];
-            _gateNode = pins[1];
-            _sourceNode = pins[2];
-            _bulkNode = pins[3];
-        }
+            if (context is ComponentBindingContext cc)
+            {
+                _drainNode = cc.Pins[0];
+                _gateNode = cc.Pins[1];
+                _sourceNode = cc.Pins[2];
+                _bulkNode = cc.Pins[3];
+            }
 
-        /// <summary>
-        /// Initializes the parameters.
-        /// </summary>
-        /// <param name="simulation">The simulation.</param>
-        public void InitializeParameters(FrequencySimulation simulation)
-        {
-        }
-
-        /// <summary>
-        /// Get equation pointers
-        /// </summary>
-        /// <param name="solver">Solver</param>
-        public void GetEquationPointers(Solver<Complex> solver)
-        {
+            _state = ((FrequencySimulation)simulation).ComplexState;
+            var solver = _state.Solver;
             _drainNodePrime = _load.DrainNodePrime;
             _sourceNodePrime = _load.SourceNodePrime;
             _qNode = _load.QNode;
@@ -149,10 +132,16 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         }
 
         /// <summary>
+        /// Initializes the parameters.
+        /// </summary>
+        void IFrequencyBehavior.InitializeParameters()
+        {
+        }
+
+        /// <summary>
         /// Load frequency behavior
         /// </summary>
-        /// <param name="simulation"></param>
-        public void Load(FrequencySimulation simulation)
+        void IFrequencyBehavior.Load()
         {
             double xcggb, xcgdb, xcgsb, xcbgb, xcbdb, xcbsb, xcddb, xcssb, xcdgb;
             double gdpr, gspr, gds, gbd, gbs, capbd, capbs, xcsgb, xcdsb, xcsdb;
@@ -165,7 +154,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
             double dsxpartDVd, dsxpartDVg, dsxpartDVb, dsxpartDVs;
             double t1, coxWl, qcheq, cdg, cdd, cds, csg, csd, css;
             var pParam = _temp.Param;
-            omega = simulation.ComplexState.Laplace.Imaginary;
+            omega = _state.Laplace.Imaginary;
 
             if (_load.Mode >= 0)
             {

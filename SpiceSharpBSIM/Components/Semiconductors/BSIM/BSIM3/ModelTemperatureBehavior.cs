@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3Behaviors
 {
@@ -10,7 +9,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 	/// <summary>
 	/// Temperature behavior for a <see cref="BSIM3Model" />
 	/// </summary>
-	public class ModelTemperatureBehavior : ExportingBehavior, ITemperatureBehavior
+	public class ModelTemperatureBehavior : Behavior, ITemperatureBehavior
 	{
         /// <summary>
         /// Gets the model parameters.
@@ -53,21 +52,20 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 		/// <summary>
 		/// Setup the behavior
 		/// </summary>
-		public override void Setup(Simulation simulation, SetupDataProvider provider)
+		public override void Bind(Simulation simulation, BindingContext context)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
+            base.Bind(simulation, context);
 
             // Get parameters
-			ModelParameters = provider.GetParameterSet<ModelBaseParameters>();
+			ModelParameters = context.GetParameterSet<ModelBaseParameters>();
 		}
 		
 		/// <summary>
 		/// Temperature behavior
 		/// </summary>
-		public void Temperature(BaseSimulation simulation)
+		void ITemperatureBehavior.Temperature()
 		{
-		    var state = simulation.RealState;
+		    var state = ((BaseSimulation)Simulation).RealState;
 			double eg, eg0, t0, t1, delTemp, temp, tnom;
 
             // Update nominal temperature

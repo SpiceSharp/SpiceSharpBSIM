@@ -1,16 +1,13 @@
-using System;
-using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.IntegrationMethods;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM2Behaviors
 {	
 	/// <summary>
 	/// Transient behavior for a <see cref="BSIM2"/>
 	/// </summary>
-	public class TransientBehavior : ExportingBehavior, ITimeBehavior
+	public class TransientBehavior : Behavior, ITimeBehavior
 	{
 		
 		/// <summary>
@@ -36,45 +33,30 @@ namespace SpiceSharp.Components.BSIM2Behaviors
 		/// <summary>
 		/// Setup the behavior
 		/// </summary>
-		public override void Setup(Simulation simulation, SetupDataProvider provider)
+		public override void Bind(Simulation simulation, BindingContext context)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
-			_load = provider.GetBehavior<BiasingBehavior>();
+            base.Bind(simulation, context);
+			_load = context.GetBehavior<BiasingBehavior>();
 			_load.TranBehavior = this;
-		}
-		
-		/// <summary>
-		/// Create states
-		/// </summary>
-		public void CreateStates(IntegrationMethod method)
-		{
-            if (method == null)
-                throw new ArgumentNullException(nameof(method));
-		    Qb = method.CreateDerivative();
-		    Qg = method.CreateDerivative();
-		    Qd = method.CreateDerivative();
-		}
 
+            var method = ((TimeSimulation)simulation).Method;
+            Qb = method.CreateDerivative();
+            Qg = method.CreateDerivative();
+            Qd = method.CreateDerivative();
+        }
+		
         /// <summary>
         /// Gets the state of the dc.
         /// </summary>
         /// <param name="simulation">The simulation.</param>
-        public void GetDcState(TimeSimulation simulation)
+        void ITimeBehavior.InitializeStates()
 	    {
 	    }
 
-	    /// <summary>
-		/// Get equation pointers
-		/// </summary>
-		public void GetEquationPointers(Solver<double> solver)
-		{	
-		}
-		
 		/// <summary>
 		/// Transient behavior
 		/// </summary>
-		public void Transient(TimeSimulation simulation)
+		void ITimeBehavior.Load()
 		{	
 		}
 	}

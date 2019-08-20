@@ -10,7 +10,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
     /// <summary>
     /// Load behavior for a <see cref="BSIM3" />
     /// </summary>
-    public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior, IConnectedBehavior
+    public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior
     {
         private const double ScalingFactor = 1.0e-9;
         private const double EPSSI = 1.03594e-10;
@@ -132,6 +132,8 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         protected VectorElement<double> GateNodePtr { get; private set; }
         protected VectorElement<double> BulkNodePtr { get; private set; }
 
+        private BaseSimulationState _state;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -142,32 +144,24 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Setup the behavior
         /// </summary>
-        public override void Setup(Simulation simulation, SetupDataProvider provider)
+        public override void Bind(Simulation simulation, BindingContext context)
         {
-            if (provider == null)
-                throw new ArgumentNullException(nameof(provider));
-            base.Setup(simulation, provider);
+            base.Bind(simulation, context);
 
             // Get configuration
             BaseConfiguration = simulation.Configurations.Get<BaseConfiguration>();
-        }
 
-        /// <summary>
-        /// Connect
-        /// </summary>
-        public void Connect(params int[] pins)
-        {
-            _drainNode = pins[0];
-            _gateNode = pins[1];
-            _sourceNode = pins[2];
-            _bulkNode = pins[3];
-        }
+            if (context is ComponentBindingContext cc)
+            {
+                _drainNode = cc.Pins[0];
+                _gateNode = cc.Pins[1];
+                _sourceNode = cc.Pins[2];
+                _bulkNode = cc.Pins[3];
+            }
 
-        /// <summary>
-        /// Get equation pointers
-        /// </summary>
-        public void GetEquationPointers(VariableSet variables, Solver<double> solver)
-        {
+            _state = ((BaseSimulation)simulation).RealState;
+            var solver = _state.Solver;
+            var variables = simulation.Variables;
             if (ModelParameters.SheetResistance > 0.0 && BaseParameters.DrainSquares > 0.0)
                 DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
             else
@@ -226,9 +220,9 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Load behavior
         /// </summary>
-        public void Load(BaseSimulation simulation)
+        void IBiasingBehavior.Load()
         {
-            var state = simulation.RealState;
+            var state = _state;
             var pParam = base.Param;
             double SourceSatCurrent, DrainSatCurrent;
             double ag0, qgd, qgs, qgb, von, VgstNVt, ExpVgst;
@@ -314,7 +308,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 
             chargeComputationNeeded = TranBehavior != null;
             check = true;
-            if (simulation is FrequencySimulation && !state.UseDc)
+            if (Simulation is FrequencySimulation && !state.UseDc)
             {
                 vbs = this.Vbs;
                 vgs = this.Vgs;
@@ -2928,7 +2922,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
             }
 
             /* store small signal parameters */
-            if (simulation is FrequencySimulation && !state.UseDc)
+            if (Simulation is FrequencySimulation && !state.UseDc)
                 goto line1000;
 
             if (!chargeComputationNeeded)
@@ -3138,10 +3132,9 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Determines whether the specified simulation is convergent.
         /// </summary>
-        /// <param name="simulation">The simulation.</param>
         /// <returns>
         ///   <c>true</c> if the specified simulation is convergent; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsConvergent(BaseSimulation simulation) => true;
+        bool IBiasingBehavior.IsConvergent() => true;
     }
 }

@@ -2,14 +2,13 @@
 using SpiceSharp.Behaviors;
 using SpiceSharp.Components.NoiseSources;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3v24Behaviors
 {
     /// <summary>
     /// Noise behavior for a <see cref="BSIM3v24"/>
     /// </summary>
-    public class NoiseBehavior : ExportingBehavior, INoiseBehavior, IConnectedBehavior
+    public class NoiseBehavior : Behavior, INoiseBehavior
     {
         private const double N_MINLOG = 1e-38;
 
@@ -47,40 +46,36 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// <summary>
         /// Setup behavior
         /// </summary>
-        /// <param name="provider"></param>
-        public override void Setup(Simulation simulation, SetupDataProvider provider)
+        /// <param name="context"></param>
+        public override void Bind(Simulation simulation, BindingContext context)
         {
-            if (provider == null)
-                throw new ArgumentNullException(nameof(provider));
+            base.Bind(simulation, context);
 
             // Get parameter sets
-            _bp = provider.GetParameterSet<BaseParameters>();
-            _mbp = provider.GetParameterSet<ModelBaseParameters>();
+            _bp = context.GetParameterSet<BaseParameters>();
+            _mbp = context.GetParameterSet<ModelBaseParameters>();
 
             // Get behaviors
-            _temp = provider.GetBehavior<TemperatureBehavior>();
-            _load = provider.GetBehavior<BiasingBehavior>();
-        }
+            _temp = context.GetBehavior<TemperatureBehavior>();
+            _load = context.GetBehavior<BiasingBehavior>();
 
-        /// <summary>
-        /// Connect the behavior
-        /// </summary>
-        /// <param name="pins">Pins</param>
-        public void Connect(params int[] pins)
-        {
-            _drainNode = pins[0];
-            _gateNode = pins[1];
-            _sourceNode = pins[2];
-            _bulkNode = pins[3];
+            if (context is ComponentBindingContext cc)
+            {
+                _drainNode = cc.Pins[0];
+                _gateNode = cc.Pins[1];
+                _sourceNode = cc.Pins[2];
+                _bulkNode = cc.Pins[3];
+            }
+            _drainNodePrime = _load.DrainNodePrime;
+            _sourceNodePrime = _load.SourceNodePrime;
+
         }
 
         /// <summary>
         /// Connect the noise sources
         /// </summary>
-        public void ConnectNoise()
+        void INoiseBehavior.ConnectNoise()
         {
-            _drainNodePrime = _load.DrainNodePrime;
-            _sourceNodePrime = _load.SourceNodePrime;
             TransistorNoise.Setup(_drainNode, _gateNode, _sourceNode, _bulkNode, _drainNodePrime, _sourceNodePrime);
         }
 
@@ -88,10 +83,10 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
         /// Noise behavior
         /// </summary>
         /// <param name="simulation"></param>
-        public void Noise(Noise simulation)
+        void INoiseBehavior.Noise()
         {
             double vds;
-            var state = simulation.NoiseState;
+            var state = ((Noise)Simulation).NoiseState;
             var pParam = _temp.Param;
             var m = _bp.Multiplier;
 
@@ -131,8 +126,9 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
                     vds = _load.Vds;
                     if (vds < 0.0)
                         vds = -vds;
-                    var ssi = StrongInversionNoiseEval(vds, state.Frequency, simulation.RealState.Temperature);
-                    var t10 = _mbp.OxideTrapDensityA * 8.62e-5 * simulation.RealState.Temperature;
+                    var rstate = ((BaseSimulation)Simulation).RealState;
+                    var ssi = StrongInversionNoiseEval(vds, state.Frequency, rstate.Temperature);
+                    var t10 = _mbp.OxideTrapDensityA * 8.62e-5 * rstate.Temperature;
                     var t11 = pParam.BSIM3weff * pParam.BSIM3leff * Math.Pow(state.Frequency, _mbp.Ef) * 4.0e36;
                     var swi = t10 / t11 * _load.Cd * _load.Cd;
                     var t1 = swi + ssi;
@@ -144,7 +140,7 @@ namespace SpiceSharp.Components.BSIM3v24Behaviors
             }
 
             // Evaluate noise sources
-            TransistorNoise.Evaluate(simulation);
+            TransistorNoise.Evaluate((Noise)Simulation);
         }
 
         /// <summary>

@@ -9,7 +9,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
     /// <summary>
     /// Load behavior for a <see cref="BSIM1" />
     /// </summary>
-    public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior, IConnectedBehavior
+    public class BiasingBehavior : TemperatureBehavior, IBiasingBehavior
     {
         /// <summary>
         /// Necessary behaviors and parameters
@@ -89,43 +89,36 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         protected VectorElement<double> GateNodePtr { get; private set; }
         protected VectorElement<double> BulkNodePtr { get; private set; }
 
+        private BaseSimulationState _state;
+
         /// <summary>
         /// Constructor
         /// </summary>
         public BiasingBehavior(string name) : base(name)
         {
-
         }
 
         /// <summary>
         /// Setup the behavior
         /// </summary>
-        public override void Setup(Simulation simulation, SetupDataProvider provider)
+        public override void Bind(Simulation simulation, BindingContext context)
         {
-            if (provider == null)
-                throw new ArgumentNullException(nameof(provider));
-            base.Setup(simulation, provider);
+            base.Bind(simulation, context);
 
             // Get configurations
             BaseConfiguration = simulation.Configurations.Get<BaseConfiguration>();
-        }
 
-        /// <summary>
-        /// Connect
-        /// </summary>
-        public void Connect(params int[] pins)
-        {
-            DrainNode = pins[0];
-            GateNode = pins[1];
-            SourceNode = pins[2];
-            BulkNode = pins[3];
-        }
+            if (context is ComponentBindingContext cc)
+            {
+                DrainNode = cc.Pins[0];
+                GateNode = cc.Pins[1];
+                SourceNode = cc.Pins[2];
+                BulkNode = cc.Pins[3];
+            }
 
-        /// <summary>
-        /// Get equation pointers
-        /// </summary>
-        public void GetEquationPointers(VariableSet variables, Solver<double> solver)
-        {
+            _state = ((BaseSimulation)simulation).RealState;
+            var solver = _state.Solver;
+            var variables = simulation.Variables;
             if (ModelParameters.SheetResistance > 0 && BaseParameters.DrainSquares > 0.0)
                 DrainNodePrime = variables.Create(Name.Combine("drain")).Index;
             else
@@ -168,9 +161,9 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// Load the behavior
         /// </summary>
         /// <param name="simulation">Simulation</param>
-        public void Load(BaseSimulation simulation)
+        void IBiasingBehavior.Load()
         {
-            var state = simulation.RealState;
+            var state = _state;
             double capbd = 0.0;
             double capbs = 0.0;
             double cdgb = 0.0;
@@ -215,7 +208,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             double vds;
             double vgd;
             double vgs;
-            if (simulation is FrequencySimulation && !state.UseDc)
+            if (Simulation is FrequencySimulation && !state.UseDc)
             {
                 vbs = this.Vbs;
                 vgs = this.Vgs;
@@ -542,7 +535,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
             // if ((!(ckt->CKTmode & (MODEAC | MODETRAN))) && (ckt->CKTmode & MODETRANOP) && (ckt->CKTmode & MODEUIC))
             // goto line850;
 
-            if (simulation is FrequencySimulation && !state.UseDc)
+            if (Simulation is FrequencySimulation && !state.UseDc)
             {
                 this.Cggb = cggb;
                 this.Cgdb = cgdb;
@@ -661,7 +654,7 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <returns>
         ///   <c>true</c> if the specified simulation is convergent; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsConvergent(BaseSimulation simulation) => true;
+        bool IBiasingBehavior.IsConvergent() => true;
 
         /// <summary>
         /// Helper method Evaluate

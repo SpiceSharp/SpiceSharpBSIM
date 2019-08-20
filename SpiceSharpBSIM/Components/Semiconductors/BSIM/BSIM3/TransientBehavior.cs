@@ -3,14 +3,13 @@ using SpiceSharp.Algebra;
 using SpiceSharp.Behaviors;
 using SpiceSharp.IntegrationMethods;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3Behaviors
 {
     /// <summary>
     /// Transient behavior for a <see cref="BSIM3"/>
     /// </summary>
-    public class TransientBehavior : ExportingBehavior, ITimeBehavior
+    public class TransientBehavior : Behavior, ITimeBehavior
     {
         /// <summary>
         /// Necessary behaviors and parameters
@@ -36,45 +35,32 @@ namespace SpiceSharp.Components.BSIM3Behaviors
         /// <summary>
         /// Setup the behavior
         /// </summary>
-        public override void Setup(Simulation simulation, SetupDataProvider provider)
+        public override void Bind(Simulation simulation, BindingContext context)
         {
-            if (provider == null)
-                throw new ArgumentNullException(nameof(provider));
-            this._load = provider.GetBehavior<BiasingBehavior>("instance");
-            _load.TranBehavior = this;
-        }
+            base.Bind(simulation, context);
 
-        /// <summary>
-        /// Create states
-        /// </summary>
-        public void CreateStates(IntegrationMethod method)
-        {
+            this._load = context.GetBehavior<BiasingBehavior>("instance");
+            _load.TranBehavior = this;
+
+            var method = ((TimeSimulation)simulation).Method;
             Qb = method.CreateDerivative();
             Qg = method.CreateDerivative();
             Qd = method.CreateDerivative();
             Qcheq = method.CreateDerivative(false);
             Qcdump = method.CreateDerivative(false);
         }
-
+        
         /// <summary>
-        /// Gets the state of the dc.
+        /// Initialize states.
         /// </summary>
-        /// <param name="simulation">The simulation.</param>
-        public void GetDcState(TimeSimulation simulation)
-        {
-        }
-
-        /// <summary>
-        /// Get equation pointers
-        /// </summary>
-        public void GetEquationPointers(Solver<double> solver)
+        void ITimeBehavior.InitializeStates()
         {
         }
 
         /// <summary>
         /// Transient behavior
         /// </summary>
-        public void Transient(TimeSimulation simulation)
+        void ITimeBehavior.Load()
         {
         }
     }

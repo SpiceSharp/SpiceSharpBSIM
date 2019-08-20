@@ -2,14 +2,13 @@ using System;
 using System.IO;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Simulations;
-using SpiceSharp.Simulations.Behaviors;
 
 namespace SpiceSharp.Components.BSIM3Behaviors
 {
 	/// <summary>
 	/// Temperature behavior for a <see cref="BSIM3" />
 	/// </summary>
-	public class TemperatureBehavior : ExportingBehavior, ITemperatureBehavior
+	public class TemperatureBehavior : Behavior, ITemperatureBehavior
 	{
         /// <summary>
         /// Gets the model temperature behavior.
@@ -67,10 +66,9 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 		/// <summary>
 		/// Setup the behavior
 		/// </summary>
-		public override void Setup(Simulation simulation, SetupDataProvider provider)
+		public override void Bind(Simulation simulation, BindingContext provider)
 		{
-			if (provider == null)
-				throw new ArgumentNullException(nameof(provider));
+            base.Bind(simulation, provider);
 
             // Get behaviors
 			ModelTemperature = provider.GetBehavior<ModelTemperatureBehavior>("model");
@@ -83,7 +81,7 @@ namespace SpiceSharp.Components.BSIM3Behaviors
 		/// <summary>
 		/// Temperature behavior
 		/// </summary>
-		public void Temperature(BaseSimulation simulation)
+		void ITemperatureBehavior.Temperature()
 		{
 			double tmp, tmp1, tmp2, tmp3, t0 = 0.0, t1, t2, t3, t4, t5, ldrn, wdrn, inv_L, inv_W, inv_LW, nvtm, sourceSatCurrent, drainSatCurrent;
 
