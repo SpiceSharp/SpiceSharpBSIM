@@ -5,11 +5,30 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <Compile Remove="Components\Semiconductors\BSIM\BSIM2\**" />
+    <Compile Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
+    <Compile Remove="Components\Semiconductors\BSIM\BSIM3\**" />
+    <Compile Remove="Properties\**" />
+    <EmbeddedResource Remove="Components\Semiconductors\BSIM\BSIM2\**" />
+    <EmbeddedResource Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
+    <EmbeddedResource Remove="Components\Semiconductors\BSIM\BSIM3\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="Components\Semiconductors\BSIM\BSIM2\**" />
+    <None Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
+    <None Remove="Components\Semiconductors\BSIM\BSIM3\**" />
+    <None Remove="Properties\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SpiceSharp" Version="2.8.0" />
+    <Compile Remove="Components\Semiconductors\BSIM\BSIM1Behaviors\TransientBehavior.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SpiceSharp" Version="3.1.5" />
+    <PackageReference Include="SpiceSharpGenerator" Version="1.0.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

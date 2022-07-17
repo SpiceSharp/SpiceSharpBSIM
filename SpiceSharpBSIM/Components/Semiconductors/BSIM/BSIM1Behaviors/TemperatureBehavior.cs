@@ -1,23 +1,34 @@
 ﻿using System;
+using SpiceSharp;
+using SpiceSharp.Attributes;
 using SpiceSharp.Behaviors;
-using SpiceSharp.Simulations;
+using SpiceSharp.Components;
+using SpiceSharp.ParameterSets;
 
-namespace SpiceSharp.Components.BSIM1Behaviors
+namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
 {
     /// <summary>
     /// Temperature behavior for a <see cref="BSIM1" />
     /// </summary>
-    public class TemperatureBehavior : Behavior, ITemperatureBehavior
+    [BehaviorFor(typeof(BSIM1)), AddBehaviorIfNo(typeof(ITemperatureBehavior))]
+    [GeneratedParameters]
+    public partial class TemperatureBehavior : Behavior, ITemperatureBehavior, IParameterized<BaseParameters>
     {
         /// <summary>
-        /// Necessary behaviors and parameters
+        /// Gets the parameters.
         /// </summary>
-        protected BaseParameters BaseParameters { get; private set; }
-        protected ModelBaseParameters ModelParameters { get; private set; }
+        public BaseParameters Parameters { get; }
 
         /// <summary>
-        /// Properties
+        /// Gets the model parameters.
         /// </summary>
+        protected ModelParameters ModelParameters { get; }
+
+        /// <summary>
+        /// Gets the model temperature behavior.
+        /// </summary>
+        protected ModelTemperature ModelTemperature { get; }
+
         public double GDoverlapCap { get; private set; }
         public double GSoverlapCap { get; private set; }
         public double GBoverlapCap { get; private set; }
@@ -49,21 +60,12 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public TemperatureBehavior(string name) : base(name)
+        public TemperatureBehavior(ComponentBindingContext context)
+            : base(context)
         {
-
-        }
-
-        /// <summary>
-        /// Setup the behavior
-        /// </summary>
-        public override void Bind(Simulation simulation, BindingContext context)
-        {
-            base.Bind(simulation, context);
-
-            // Get parameters
-            BaseParameters = context.GetParameterSet<BaseParameters>();
-            ModelParameters = context.GetParameterSet<ModelBaseParameters>("model");
+            Parameters = context.GetParameterSet<BaseParameters>();
+            ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
+            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperature>();
         }
 
         /// <summary>
@@ -72,28 +74,24 @@ namespace SpiceSharp.Components.BSIM1Behaviors
         void ITemperatureBehavior.Temperature()
         {
             double effChanLength, effChanWidth, coxWoverL, leff, weff;
-            if ((effChanLength = BaseParameters.Length - ModelParameters.DeltaL * 1e-6) <= 0)
-            {
-                throw new CircuitException("B1: mosfet {0}: Effective channel length <= 0".FormatString(Name));
-            }
-            if ((effChanWidth = BaseParameters.Width - ModelParameters.DeltaW * 1e-6) <= 0)
-            {
-                throw new CircuitException("B1: mosfet {0}: Effective channel width <= 0".FormatString(Name));
-            }
+            if ((effChanLength = Parameters.Length - ModelParameters.DeltaL * 1e-6) <= 0)
+                throw new SpiceSharpException("B1: mosfet {0}: Effective channel length <= 0".FormatString(Name));
+            if ((effChanWidth = Parameters.Width - ModelParameters.DeltaW * 1e-6) <= 0)
+                throw new SpiceSharpException("B1: mosfet {0}: Effective channel width <= 0".FormatString(Name));
             GDoverlapCap = effChanWidth * ModelParameters.GateDrainOverlapCap;
             GSoverlapCap = effChanWidth * ModelParameters.GateSourceOverlapCap;
-            GBoverlapCap = BaseParameters.Length * ModelParameters.GateBulkOverlapCap;
-            if ((DrainConductance = ModelParameters.SheetResistance * BaseParameters.DrainSquares) != 0.0)
+            GBoverlapCap = Parameters.Length * ModelParameters.GateBulkOverlapCap;
+            if ((DrainConductance = ModelParameters.SheetResistance * Parameters.DrainSquares) != 0.0)
             {
                 DrainConductance = 1.0 / DrainConductance;
             }
-            if ((SourceConductance = ModelParameters.SheetResistance * BaseParameters.SourceSquares) != 0.0)
+            if ((SourceConductance = ModelParameters.SheetResistance * Parameters.SourceSquares) != 0.0)
             {
                 SourceConductance = 1.0 / SourceConductance;
             }
             leff = effChanLength * 1.0e6;
             weff = effChanWidth * 1.0e6;
-            coxWoverL = ModelParameters.Cox * weff / leff;
+            coxWoverL = ModelTemperature.Cox * weff / leff;
             Vfb = ModelParameters.Vfb0 + ModelParameters.VfbL / leff + ModelParameters.VfbW / weff;
             Phi = ModelParameters.Phi0 + ModelParameters.PhiL / leff + ModelParameters.PhiW / weff;
             K1 = ModelParameters.K10 + ModelParameters.K1L / leff + ModelParameters.K1W / weff;
@@ -122,10 +120,10 @@ namespace SpiceSharp.Components.BSIM1Behaviors
                 K2 = 0.0;
             Vt0 = Vfb + Phi + K1 * Math.Sqrt(Phi) - K2 * Phi;
             Von = Vt0;
-            BetaZero = BetaZero * coxWoverL;
-            BetaZeroB = BetaZeroB * coxWoverL;
-            BetaVdd = BetaVdd * coxWoverL;
-            BetaVddB = BetaVddB * coxWoverL;
+            BetaZero *= coxWoverL;
+            BetaZeroB *= coxWoverL;
+            BetaVdd *= coxWoverL;
+            BetaVddB *= coxWoverL;
             BetaVddD = Math.Max(BetaVddD * coxWoverL, 0.0);
         }
     }

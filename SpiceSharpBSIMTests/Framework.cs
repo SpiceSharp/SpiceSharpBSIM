@@ -6,8 +6,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using SpiceSharp;
 using SpiceSharp.Simulations;
-using SpiceSharp.Circuits;
 using NUnit.Framework;
+using SpiceSharp.Entities;
+using SpiceSharp.Algebra;
 
 namespace SpiceSharpTest.Models
 {
@@ -32,7 +33,7 @@ namespace SpiceSharpTest.Models
         /// </summary>
         /// <param name="entity">Entity</param>
         /// <param name="definition">Definition string</param>
-        protected void ApplyParameters(Entity entity, string definition)
+        protected void ApplyParameters(IEntity entity, string definition)
         {
             // Get all assignments
             definition = Regex.Replace(definition, @"\s*\=\s*", "=");
@@ -58,7 +59,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeOp(OP sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<double> references)
+        protected void AnalyzeOp(OP sim, Circuit ckt, IEnumerable<IExport<double>> exports, IEnumerable<double> references)
         {
             if (exports == null)
                 throw new ArgumentNullException(nameof(exports));
@@ -89,7 +90,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeDC(DC sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<double[]> references)
+        protected void AnalyzeDC(DC sim, Circuit ckt, IEnumerable<IExport<double>> exports, IEnumerable<double[]> references)
         {
             if (exports == null)
                 throw new ArgumentNullException(nameof(exports));
@@ -97,73 +98,50 @@ namespace SpiceSharpTest.Models
                 throw new ArgumentNullException(nameof(references));
 
             int index = 0;
-            sim.ExportSimulationData += (sender, data) =>
+            void LogWarnings(object sender, WarningEventArgs e)
             {
-                using (var exportIt = exports.GetEnumerator())
-                using (var referencesIt = references.GetEnumerator())
+                Console.WriteLine(e.Message);
+            }
+            try
+            {
+                SpiceSharpWarning.WarningGenerated += LogWarnings;
+                sim.ExportSimulationData += (sender, data) =>
                 {
-                    while (exportIt.MoveNext() && referencesIt.MoveNext())
+                    using (var exportIt = exports.GetEnumerator())
+                    using (var referencesIt = references.GetEnumerator())
                     {
-                        double actual = exportIt.Current?.Value ?? double.NaN;
-                        double expected = referencesIt.Current?[index] ?? double.NaN;
-                        double tol = Math.Max(Math.Abs(actual), Math.Abs(expected)) * RelTol + AbsTol;
+                        while (exportIt.MoveNext() && referencesIt.MoveNext())
+                        {
+                            double actual = exportIt.Current?.Value ?? double.NaN;
+                            double expected = referencesIt.Current?[index] ?? double.NaN;
+                            double tol = Math.Max(Math.Abs(actual), Math.Abs(expected)) * RelTol + AbsTol;
 
-                        try
-                        {
-                            Assert.AreEqual(expected, actual, tol);
+                            try
+                            {
+                                Assert.AreEqual(expected, actual, tol);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception($"{ex.Message} at {BuildMessage(sim)}", ex);
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            string[] sweeps = new string[sim.Sweeps.Count];
-                            for (int k = 0; k < sim.Sweeps.Count; k++)
-                                sweeps[k] += $"{sim.Sweeps[k].Parameter}={sim.Sweeps[k].CurrentValue}";
-                            string msg = ex.Message + " at " + string.Join(" ", sweeps);
-                            throw new Exception(msg, ex);
-                        }
+
+                        index++;
                     }
-
-                    index++;
-                }
-            };
-            sim.Run(ckt);
+                };
+                sim.Run(ckt);
+            }
+            finally
+            {
+                SpiceSharpWarning.WarningGenerated -= LogWarnings;
+            }
         }
 
-        /// <summary>
-        /// Perform a test for DC analysis
-        /// </summary>
-        /// <param name="sim">Simulation</param>
-        /// <param name="ckt">Circuit</param>
-        /// <param name="exports">Exports</param>
-        /// <param name="references">References</param>
-        protected void AnalyzeDC(DC sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<Func<double, double>> references)
+        private string BuildMessage(DC sim)
         {
-            sim.ExportSimulationData += (sender, data) =>
-            {
-                using (var exportIt = exports.GetEnumerator())
-                using (var referencesIt = references.GetEnumerator())
-                {
-                    while (exportIt.MoveNext() && referencesIt.MoveNext())
-                    {
-                        double actual = exportIt.Current?.Value ?? throw new ArgumentNullException();
-                        double expected = referencesIt.Current?.Invoke(sim.Sweeps[0].CurrentValue) ?? throw new ArgumentNullException();
-                        double tol = Math.Max(Math.Abs(actual), Math.Abs(expected)) * RelTol + AbsTol;
-
-                        try
-                        {
-                            Assert.AreEqual(expected, actual, tol);
-                        }
-                        catch (Exception ex)
-                        {
-                            string[] sweeps = new string[sim.Sweeps.Count];
-                            for (int k = 0; k < sim.Sweeps.Count; k++)
-                                sweeps[k] += $"{sim.Sweeps[k].Parameter}={sim.Sweeps[k].CurrentValue}";
-                            string msg = ex.Message + " at " + string.Join(" ", sweeps);
-                            throw new Exception(msg, ex);
-                        }
-                    }
-                }
-            };
-            sim.Run(ckt);
+            var values = sim.GetCurrentSweepValue();
+            var names = sim.DCParameters.Sweeps.Select(s => s.Name).ToList();
+            return string.Join(" ", names.Zip(values, (name, value) => $"{name} = {value}"));
         }
 
         /// <summary>
@@ -173,7 +151,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeAC(AC sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<double[]> references)
+        protected void AnalyzeAC(AC sim, Circuit ckt, IEnumerable<IExport<double>> exports, IEnumerable<double[]> references)
         {
             int index = 0;
             sim.ExportSimulationData += (sender, data) =>
@@ -212,7 +190,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeAC(AC sim, Circuit ckt, IEnumerable<Export<Complex>> exports, IEnumerable<Complex[]> references)
+        protected void AnalyzeAC(AC sim, Circuit ckt, IEnumerable<IExport<Complex>> exports, IEnumerable<Complex[]> references)
         {
             int index = 0;
             sim.ExportSimulationData += (sender, data) =>
@@ -256,7 +234,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeAC(AC sim, Circuit ckt, IEnumerable<Export<Complex>> exports, IEnumerable<Func<double, Complex>> references)
+        protected void AnalyzeAC(AC sim, Circuit ckt, IEnumerable<IExport<Complex>> exports, IEnumerable<Func<double, Complex>> references)
         {
             sim.ExportSimulationData += (sender, data) =>
             {
@@ -297,7 +275,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeTransient(Transient sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<double[]> references)
+        protected void AnalyzeTransient(Transient sim, Circuit ckt, IEnumerable<IExport<double>> exports, IEnumerable<double[]> references)
         {
             int index = 0;
             sim.ExportSimulationData += (sender, data) =>
@@ -335,7 +313,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeTransient(Transient sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<Func<double, double>> references)
+        protected void AnalyzeTransient(Transient sim, Circuit ckt, IEnumerable<IExport<double>> exports, IEnumerable<Func<double, double>> references)
         {
             sim.ExportSimulationData += (sender, data) =>
             {
@@ -365,53 +343,13 @@ namespace SpiceSharpTest.Models
         }
 
         /// <summary>
-        /// Perform a test for transient analysis where the reference is the solve matrix
-        /// </summary>
-        /// <param name="sim"></param>
-        /// <param name="ckt"></param>
-        /// <param name="path"></param>
-        protected void AnalyzeTransient(Transient sim, Circuit ckt, string path)
-        {
-            // Get all lines
-            var filename = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
-            var lines = System.IO.File.ReadAllText(filename).Split('\n');
-            var regReference = new Regex(@"(?<row>\d+)\s+(?<col>\d+)\s+(?<value>[\+\-]?\d+(\.\d+)?([eE][\+\-]?\d+)?)");
-
-            int index = 0;
-            sim.ExportSimulationData += (sender, data) =>
-            {
-                // Read until the first empty line
-                while (!string.IsNullOrWhiteSpace(lines[index]))
-                {
-                    var m = regReference.Match(lines[index]);
-                    if (!m.Success)
-                        throw new Exception("Could not read reference");
-                    var row = int.Parse(m.Groups["row"].Value);
-                    var col = int.Parse(m.Groups["col"].Value);
-                    var value = double.Parse(m.Groups["value"].Value);
-
-                    // Check the solver
-                    var eltIndex = new SpiceSharp.Algebra.LinearSystemIndices(row, col);
-                    sim.RealState.Solver.InternalToExternal(eltIndex);
-                    var elt = sim.RealState.Solver.FindMatrixElement(eltIndex.Row, eltIndex.Column);
-                    Assert.NotNull(elt);
-
-                    double tol = Math.Max(Math.Abs(value), Math.Abs(elt.Value)) * RelTol + AbsTol;
-                    Assert.AreEqual(value, elt.Value, tol);
-                    index++;
-                }
-            };
-            sim.Run(ckt);
-        }
-
-        /// <summary>
         /// Perform a test for noise analysis
         /// </summary>
         /// <param name="sim">Simulation</param>
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void AnalyzeNoise(Noise sim, Circuit ckt, IEnumerable<Export<double>> exports, IEnumerable<double[]> references)
+        protected void AnalyzeNoise(Noise sim, Circuit ckt, IEnumerable<IExport<double>> exports, IEnumerable<double[]> references)
         {
             int index = 0;
             sim.ExportSimulationData += (sender, data) =>
@@ -450,7 +388,7 @@ namespace SpiceSharpTest.Models
         /// <param name="ckt">Circuit</param>
         /// <param name="exports">Exports</param>
         /// <param name="references">References</param>
-        protected void MatlabTransient(Transient sim, Circuit ckt, IEnumerable<Export<double>> exports,
+        protected void MatlabTransient(Transient sim, Circuit ckt, IEnumerable<IExport<double>> exports,
             IEnumerable<double[]> references)
         {
             var refQuantity = new List<List<double>>();
@@ -491,6 +429,54 @@ namespace SpiceSharpTest.Models
                 Console.WriteLine("v = [" + string.Join(",", vec) + "];");
             foreach (var vec in simQuantity)
                 Console.WriteLine("actual = [" + string.Join(",", vec) + "];");
+        }
+
+        /// <summary>
+        /// Prints the current solver to the output stream. If <c>null</c>, the console output is used instead.
+        /// </summary>
+        /// <param name="state">The biasing simulation state.</param>
+        public string PrintSolver(IBiasingSimulationState state)
+        {
+            var writer = new StringWriter();
+
+            // Make a list of all our variables
+            var variables = new string[state.Solver.Size + 1];
+            var columnWidths = new int[state.Solver.Size + 1];
+            var leadWidth = 0;
+            foreach (var p in state.Map)
+            {
+                if (p.Key.Unit == Units.Volt)
+                    variables[p.Value] = @"V({0})".FormatString(p.Key.Name);
+                else if (p.Key.Unit == Units.Ampere)
+                    variables[p.Value] = @"I({0})".FormatString(p.Key.Name);
+                else
+                    variables[p.Value] = @"?({0})".FormatString(p.Key.Name);
+                columnWidths[p.Value] = Math.Max(variables[p.Value].Length, 6);
+                leadWidth = Math.Max(leadWidth, columnWidths[p.Value]);
+            }
+
+            // Write our columns
+            writer.Write(new string(' ', leadWidth + 1));
+            for (var i = 1; i < variables.Length; i++)
+                writer.Write($"{{0,{columnWidths[i] + 1}}}".FormatString(variables[i]));
+            writer.WriteLine();
+
+            // Write each row in the solver
+            for (var row = 1; row < variables.Length; row++)
+            {
+                writer.Write($"{{0,{leadWidth + 1}}}".FormatString(variables[row]));
+                for (var col = 1; col < variables.Length; col++)
+                {
+                    var elt = state.Solver.FindElement(new MatrixLocation(row, col));
+                    var value = elt?.Value.ToString("g6") ?? ".";
+                    writer.Write($"{{0,{columnWidths[col] + 1}:g}}".FormatString(value));
+                }
+                var rhsElt = state.Solver.FindElement(row);
+                var rhsValue = rhsElt?.Value.ToString("g6") ?? ".";
+                writer.WriteLine("{0,7}".FormatString(rhsValue));
+            }
+
+            return writer.ToString();
         }
     }
 }
