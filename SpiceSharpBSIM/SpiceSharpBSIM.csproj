@@ -5,15 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Components\Semiconductors\BSIM\BSIM2\**" />
     <Compile Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
     <Compile Remove="Components\Semiconductors\BSIM\BSIM3\**" />
     <Compile Remove="Properties\**" />
-    <EmbeddedResource Remove="Components\Semiconductors\BSIM\BSIM2\**" />
     <EmbeddedResource Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
     <EmbeddedResource Remove="Components\Semiconductors\BSIM\BSIM3\**" />
     <EmbeddedResource Remove="Properties\**" />
-    <None Remove="Components\Semiconductors\BSIM\BSIM2\**" />
     <None Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
     <None Remove="Components\Semiconductors\BSIM\BSIM3\**" />
     <None Remove="Properties\**" />
@@ -21,6 +18,7 @@
 
   <ItemGroup>
     <Compile Remove="Components\Semiconductors\BSIM\BSIM1Behaviors\TransientBehavior.cs" />
+    <Compile Remove="Components\Semiconductors\BSIM\BSIM2Behaviors\TransientBehavior.cs" />
   </ItemGroup>
 
   <ItemGroup>

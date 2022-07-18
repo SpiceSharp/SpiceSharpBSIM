@@ -27,11 +27,6 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         protected bool ComputeSmallSignal { get; set; } = false;
 
         /// <summary>
-        /// Gets the simulation biasing parameters.
-        /// </summary>
-        protected BiasingParameters BiasingParameters { get; }
-
-        /// <summary>
         /// Properties
         /// </summary>
         public double Mode { get; private set; }
@@ -67,8 +62,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         public double Qbd { get; private set; }
 
         private readonly IVariable<double> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime;
-        private readonly Element<double> _dpPtr,
-            _spPtr, _gPtr, _bPtr;
+        private readonly Element<double> _dpPtr, _spPtr, _gPtr, _bPtr;
         private readonly Element<double> _ddPtr, _ggPtr, _ssPtr, _bbPtr,
             _dpdpPtr, _spspPtr, _ddpPtr, _gbPtr, _gdpPtr, _gspPtr, _sspPtr, _bdpPtr, _bspPtr,
             _spsPtr, _dpspPtr, _dpdPtr, _bgPtr, _dpgPtr, _spgPtr, _dpbPtr, _spbPtr, _spdpPtr;
@@ -89,11 +83,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
             _source = state.GetSharedVariable(context.Nodes[2]);
             _bulk = state.GetSharedVariable(context.Nodes[3]);
 
-            if (!ModelParameters.SheetResistance.Equals(0.0) && !Parameters.DrainSquares.Equals(0.0))
+            if (!ModelParameters.SheetResistance.Value.Equals(0.0) && !Parameters.DrainSquares.Value.Equals(0.0))
                 _drainPrime = state.CreatePrivateVariable(context.Behaviors.Name.Combine("drain"), Units.Volt);
             else
                 _drainPrime = _drain;
-            if (!ModelParameters.SheetResistance.Equals(0.0) && !Parameters.SourceSquares.Equals(0.0))
+            if (!ModelParameters.SheetResistance.Value.Equals(0.0) && !Parameters.SourceSquares.Value.Equals(0.0))
                 _sourcePrime = state.CreatePrivateVariable(context.Behaviors.Name.Combine("source"), Units.Volt);
             else
                 _sourcePrime = _source;
@@ -463,20 +457,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
                 args[7] = cgsb;
 
                 B1mosCap(vgd, vgs, vgb,
-            args,
-            /*
-			GateDrainOverlapCap,
-			GateSourceOverlapCap,GateBulkOverlapCap,
-			capbd,capbs,
-                        cggb,cgdb,cgsb,
-			*/
-            cbgb, cbdb, cbsb,
-            cdgb, cddb, cdsb,
-                        out gcggb, out gcgdb, out gcgsb,
-            out gcbgb, out gcbdb, out gcbsb,
-            out gcdgb, out gcddb, out gcdsb, out gcsgb, out gcsdb, out gcssb,
-            ref qgate, ref qbulk,
-                        ref qdrn, ref qsrc);
+                    args,
+                    /*
+			        GateDrainOverlapCap,
+			        GateSourceOverlapCap,GateBulkOverlapCap,
+			        capbd,capbs,
+                                cggb,cgdb,cgsb,
+			        */
+                    cbgb, cbdb, cbsb,
+                    cdgb, cddb, cdsb,
+                    out gcggb, out gcgdb, out gcgsb,
+                    out gcbgb, out gcbdb, out gcbsb,
+                    out gcdgb, out gcddb, out gcdsb, out gcsgb, out gcsdb, out gcssb,
+                    ref qgate, ref qbulk, ref qdrn, ref qsrc);
             }
             else
             {
@@ -491,20 +484,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
                 args[7] = cgdb;
 
                 B1mosCap(vgs, vgd, vgb,
-            args,
-            /*
-			GateSourceOverlapCap,
-			GateDrainOverlapCap,GateBulkOverlapCap,
-			capbs,capbd,
-			cggb,cgsb,cgdb,
-			*/
-            cbgb, cbsb, cbdb,
-            csgb, cssb, csdb,
-            out gcggb, out gcgsb, out gcgdb,
-            out gcbgb, out gcbsb, out gcbdb,
-            out gcsgb, out gcssb, out gcsdb, out gcdgb, out gcdsb, out gcddb,
-            ref qgate, ref qbulk,
-            ref qsrc, ref qdrn);
+                    args,
+                    /*
+			        GateSourceOverlapCap,
+			        GateDrainOverlapCap,GateBulkOverlapCap,
+			        capbs,capbd,
+			        cggb,cgsb,cgdb,
+			        */
+                    cbgb, cbsb, cbdb,
+                    csgb, cssb, csdb,
+                    out gcggb, out gcgsb, out gcgdb,
+                    out gcbgb, out gcbsb, out gcbdb,
+                    out gcsgb, out gcssb, out gcsdb, out gcdgb, out gcdsb, out gcddb,
+                    ref qgate, ref qbulk, ref qsrc, ref qdrn);
             }
 
             _qg.Value = qgate;

@@ -46,7 +46,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         public bool Off { get; set; }
 
         [ParameterName("m"), ParameterInfo("Multiplier")]
-        public double Multiplier { get; set; } = 1.0;
+        [Finite, GreaterThanOrEquals(0)]
+        private double _multiplier = 1.0;
 
         [ParameterName("vbs"), ParameterInfo("Initial B-S voltage")]
         [Finite]

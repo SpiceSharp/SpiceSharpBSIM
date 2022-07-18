@@ -285,7 +285,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         private GivenParameter<double> _gateBulkOverlapCap = new GivenParameter<double>();
 
         [ParameterName("xpart"), ParameterInfo("Flag for channel charge partitioning")]
-        [Finite, LowerLimit(0), UpperLimit(1)]
+        [Finite]
         private GivenParameter<double> _channelChargePartitionFlag = new GivenParameter<double>(1.0);
 
         [ParameterName("rsh"), ParameterInfo("Source drain diffusion sheet resistance in ohm per square")]

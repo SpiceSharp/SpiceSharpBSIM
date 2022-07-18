@@ -39,12 +39,12 @@ namespace SpiceSharpTest.Models
             // Create simulation
             var dc = new DC("dc", new[]
             {
-                new SweepConfiguration("V1", 0, 3.3, 0.3),
-                new SweepConfiguration("V2", 0, 3.3, 0.3),
+                new ParameterSweep("V1", new LinearSweep(0, 3.3, 0.3)),
+                new ParameterSweep("V2", new LinearSweep(0, 3.3, 0.3))
             });
 
             // Create exports
-            Export<double>[] exports = {new RealPropertyExport(dc, "V2", "i")};
+            var exports = new IExport<double>[] { new RealPropertyExport(dc, "V2", "i") };
 
             // Create references
             double[][] references =
@@ -115,7 +115,7 @@ namespace SpiceSharpTest.Models
             var ac = new AC("ac 1", new DecadeSweep(0.1, 1.0e9, 20));
 
             // Create exports
-            var exports = new Export<Complex>[] { new ComplexVoltageExport(ac, "out") };
+            var exports = new IExport<Complex>[] { new ComplexVoltageExport(ac, "out") };
 
             // Reference
             var riref = new[]

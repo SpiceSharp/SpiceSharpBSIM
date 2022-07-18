@@ -33,7 +33,7 @@ namespace SpiceSharp.Components
         /// <param name="source">Source</param>
         /// <param name="bulk">Bulk</param>
         public BSIM1(string name, string drain, string gate, string source, string bulk)
-            : base(name, BSIM1PinCount)
+            : this(name)
         {
             Connect(drain, gate, source, bulk);
         }
@@ -49,7 +49,7 @@ namespace SpiceSharp.Components
         /// <param name="width">Transistor width</param>
         /// <param name="length">Transistor length</param>
         public BSIM1(string name, string drain, string gate, string source, string bulk, double width, double length)
-            : base(name, BSIM1PinCount)
+            : this(name)
         {
             Parameters.Width = width;
             Parameters.Length = length;

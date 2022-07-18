@@ -1,4 +1,4 @@
-﻿namespace SpiceSharp.Components.BSIM2Behaviors
+﻿namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
 {
     /// <summary>
     /// Size-dependent parameters

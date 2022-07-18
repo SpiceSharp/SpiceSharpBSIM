@@ -7,12 +7,12 @@ using SpiceSharp.Behaviors;
 using SpiceSharp.Components;
 using SpiceSharp.Simulations;
 
-namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
+namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
 {
     /// <summary>
-    /// Frequency behavior for a <see cref="BSIM1"/>
+    /// Frequency behavior for a <see cref="BSIM2"/>
     /// </summary>
-    [BehaviorFor(typeof(BSIM1)), AddBehaviorIfNo(typeof(IFrequencyBehavior))]
+    [BehaviorFor(typeof(BSIM2)), AddBehaviorIfNo(typeof(IFrequencyBehavior))]
     public class FrequencyBehavior : BiasingBehavior, IFrequencyBehavior
     {
         private readonly IComplexSimulationState _state;
@@ -21,6 +21,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
             _dpdpPtr, _spspPtr, _ddpPtr, _gbPtr, _gdpPtr, _gspPtr, _sspPtr, _bdpPtr, _bspPtr,
             _spsPtr, _dpspPtr, _dpdPtr, _bgPtr, _dpgPtr, _spgPtr, _dpbPtr, _spbPtr, _spdpPtr;
 
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -28,7 +29,6 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         public FrequencyBehavior(ComponentBindingContext context)
             : base(context)
         {
-            ComputeSmallSignal = true;
             _state = context.GetState<IComplexSimulationState>();
             _drain = _state.GetSharedVariable(context.Nodes[0]);
             _gate = _state.GetSharedVariable(context.Nodes[1]);
@@ -91,9 +91,42 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         {
             int xnrm;
             int xrev;
+            double gdpr;
+            double gspr;
+            double gm;
+            double gds;
+            double gmbs;
+            double gbd;
+            double gbs;
+            double capbd;
+            double capbs;
+            double xcggb;
+            double xcgdb;
+            double xcgsb;
+            double xcbgb;
+            double xcbdb;
+            double xcbsb;
+            double xcddb;
+            double xcssb;
+            double xcdgb;
+            double xcsgb;
+            double xcdsb;
+            double xcsdb;
+            double cggb;
+            double cgdb;
+            double cgsb;
+            double cbgb;
+            double cbdb;
+            double cbsb;
+            double cddb;
+            double cdgb;
+            double cdsb;
+            double omega; /* angular fequency of the signal */
 
-            var omega = _state.Laplace.Imaginary;
+            double m;     /* parallel multiplier */
 
+
+            omega = _state.Laplace.Imaginary;
             if (Mode >= 0)
             {
                 xnrm = 1;
@@ -104,69 +137,73 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
                 xnrm = 0;
                 xrev = 1;
             }
-
-            var gdpr = DrainConductance;
-            var gspr = SourceConductance;
-            var gm = Gm;
-            var gds = Gds;
-            var gmbs = Gmbs;
-            var gbd = Gbd;
-            var gbs = Gbs;
-            var capbd = Capbd;
-            var capbs = Capbs;
+            gdpr = DrainConductance;
+            gspr = SourceConductance;
+            gm = Gm;
+            gds = Gds;
+            gmbs = Gmbs;
+            gbd = Gbd;
+            gbs = Gbs;
+            capbd = Capbd;
+            capbs = Capbs;
 
             /*
              *    charge oriented model parameters
              */
-            var cggb = Cggb;
-            var cgsb = Cgsb;
-            var cgdb = Cgdb;
 
-            var cbgb = Cbgb;
-            var cbsb = Cbsb;
-            var cbdb = Cbdb;
+            cggb = Cggb;
+            cgsb = Cgsb;
+            cgdb = Cgdb;
 
-            var cdgb = Cdgb;
-            var cdsb = Cdsb;
-            var cddb = Cddb;
+            cbgb = Cbgb;
+            cbsb = Cbsb;
+            cbdb = Cbdb;
 
-            var xcdgb = (cdgb - GDoverlapCap) * omega;
-            var xcddb = (cddb + capbd + GDoverlapCap) * omega;
-            var xcdsb = cdsb * omega;
-            var xcsgb = -(cggb + cbgb + cdgb + GSoverlapCap) * omega;
-            var xcsdb = -(cgdb + cbdb + cddb) * omega;
-            var xcssb = (capbs + GSoverlapCap - (cgsb + cbsb + cdsb)) * omega;
-            var xcggb = (cggb + GDoverlapCap + GSoverlapCap +
-                            GBoverlapCap) * omega;
-            var xcgdb = (cgdb - GDoverlapCap) * omega;
-            var xcgsb = (cgsb - GSoverlapCap) * omega;
-            var xcbgb = (cbgb - GBoverlapCap) * omega;
-            var xcbdb = (cbdb - capbd) * omega;
-            var xcbsb = (cbsb - capbs) * omega;
+            cdgb = Cdgb;
+            cdsb = Cdsb;
+            cddb = Cddb;
 
-            var m = Parameters.Multiplier;
-            _ggPtr.Value += new Complex(0.0, m * xcggb);
-            _gbPtr.Value += new Complex(0.0, m * (-xcggb - xcgdb - xcgsb));
-            _gdpPtr.Value += new Complex(0.0, m * xcgdb);
-            _gspPtr.Value += new Complex(0.0, m * xcgsb);
-            _bgPtr.Value += new Complex(0.0, m * xcbgb);
-            _ddPtr.Value += m * gdpr;
-            _ssPtr.Value += m * gspr;
+            xcdgb = (cdgb - Param.B2GDoverlapCap) * omega;
+            xcddb = (cddb + capbd + Param.B2GDoverlapCap) * omega;
+            xcdsb = cdsb * omega;
+            xcsgb = -(cggb + cbgb + cdgb + Param.B2GSoverlapCap)
+          * omega;
+            xcsdb = -(cgdb + cbdb + cddb) * omega;
+            xcssb = (capbs + Param.B2GSoverlapCap
+          - (cgsb + cbsb + cdsb)) * omega;
+            xcggb = (cggb + Param.B2GDoverlapCap
+          + Param.B2GSoverlapCap
+          + Param.B2GBoverlapCap) * omega;
+            xcgdb = (cgdb - Param.B2GDoverlapCap) * omega;
+            xcgsb = (cgsb - Param.B2GSoverlapCap) * omega;
+            xcbgb = (cbgb - Param.B2GBoverlapCap) * omega;
+            xcbdb = (cbdb - capbd) * omega;
+            xcbsb = (cbsb - capbs) * omega;
+
+            m = Parameters.Multiplier;
+
+            _ggPtr.Value += new Complex(0, m * (xcggb));
             _bbPtr.Value += new Complex(m * (gbd + gbs), m * (-xcbgb - xcbdb - xcbsb));
-            _dpdpPtr.Value += new Complex(m * (gdpr + gds + gbd + xrev * (gm + gmbs)), m * xcddb);
-            _spspPtr.Value += new Complex(m * (gspr + gds + gbs + xnrm * (gm + gmbs)), m * xcssb);
-            _ddpPtr.Value -= m * gdpr;
-            _sspPtr.Value -= m * gspr;
-            _bdpPtr.Value += new Complex(m * -gbd, m * xcbdb);
-            _bspPtr.Value += new Complex(m * -gbs, m * xcbsb);
-            _dpdPtr.Value -= m * gdpr;
-            _dpgPtr.Value += new Complex(m * (xnrm - xrev) * gm, m * xcdgb);
+            _dpdpPtr.Value += new Complex(m * (gdpr + gds + gbd + xrev * (gm + gmbs)), m * (xcddb));
+            _spspPtr.Value += new Complex(m * (gspr + gds + gbs + xnrm * (gm + gmbs)), m * (xcssb));
+            _gbPtr.Value += new Complex(0, m * (-xcggb - xcgdb - xcgsb));
+            _gdpPtr.Value += new Complex(0, m * (xcgdb));
+            _gspPtr.Value += new Complex(0, m * (xcgsb));
+            _bgPtr.Value += new Complex(0, m * (xcbgb));
+            _bdpPtr.Value += new Complex(-m * (gbd), m * (xcbdb));
+            _bspPtr.Value += new Complex(-m * (gbs), m * (xcbsb));
+            _dpgPtr.Value += new Complex(m * ((xnrm - xrev) * gm), m * (xcdgb));
             _dpbPtr.Value += new Complex(m * (-gbd + (xnrm - xrev) * gmbs), m * (-xcdgb - xcddb - xcdsb));
-            _dpspPtr.Value += new Complex(m * (-gds - xnrm * (gm + gmbs)), m * xcdsb);
-            _spgPtr.Value += new Complex(m * (-(xnrm - xrev) * gm), m * xcsgb);
-            _spsPtr.Value -= m * gspr;
+            _dpspPtr.Value += new Complex(m * (-gds - xnrm * (gm + gmbs)), m * (xcdsb));
+            _spgPtr.Value += new Complex(m * (-(xnrm - xrev) * gm), m * (xcsgb));
             _spbPtr.Value += new Complex(m * (-gbs - (xnrm - xrev) * gmbs), m * (-xcsgb - xcsdb - xcssb));
-            _spdpPtr.Value += new Complex(m * (-gds - xrev * (gm + gmbs)), m * xcsdb);
+            _spdpPtr.Value += new Complex(m * (-gds - xrev * (gm + gmbs)), m * (xcsdb));
+            _ddPtr.Value += m * (gdpr);
+            _ssPtr.Value += m * (gspr);
+            _ddpPtr.Value -= m * (gdpr);
+            _sspPtr.Value -= m * (gspr);
+            _dpdPtr.Value -= m * (gdpr);
+            _spsPtr.Value -= m * (gspr);
         }
     }
 }

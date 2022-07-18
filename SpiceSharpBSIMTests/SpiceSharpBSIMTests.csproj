@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BSIM1\BSIM1Tests.cs" />
+    <Compile Include="BSIM2\BSIM2Tests.cs" />
     <Compile Include="Framework.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
