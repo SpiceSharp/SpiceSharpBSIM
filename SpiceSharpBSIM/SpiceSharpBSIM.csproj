@@ -16,7 +16,6 @@
   <ItemGroup>
     <Compile Remove="Components\Semiconductors\BSIM\BSIM1Behaviors\TransientBehavior.cs" />
     <Compile Remove="Components\Semiconductors\BSIM\BSIM2Behaviors\TransientBehavior.cs" />
-    <Compile Remove="Components\Semiconductors\BSIM\BSIM3Behaviors\NoiseBehavior.cs" />
     <Compile Remove="Components\Semiconductors\BSIM\BSIM3Behaviors\TransientBehavior.cs" />
   </ItemGroup>
 

@@ -27,7 +27,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         /// <summary>
         /// Gets the model temperature behavior.
         /// </summary>
-        protected ModelTemperature ModelTemperature { get; }
+        protected ModelTemperatureBehavior ModelTemperature { get; }
 
         public double GDoverlapCap { get; private set; }
         public double GSoverlapCap { get; private set; }
@@ -65,7 +65,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         {
             Parameters = context.GetParameterSet<BaseParameters>();
             ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
-            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperature>();
+            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
         }
 
         /// <summary>

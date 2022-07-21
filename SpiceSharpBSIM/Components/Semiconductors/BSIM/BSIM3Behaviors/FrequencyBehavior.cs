@@ -13,12 +13,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
     /// Frequency behavior for a <see cref="BSIM3"/>
     /// </summary>
     [BehaviorFor(typeof(BSIM3)), AddBehaviorIfNo(typeof(IFrequencyBehavior))]
-    public class FrequencyBehavior : Biasing, IFrequencyBehavior
+    public class FrequencyBehavior : BiasingBehavior, IFrequencyBehavior
     {
         private readonly IComplexSimulationState _state;
-
-        private IVariable<Complex> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime, _q;
-        private Element<Complex> _ddPtr, _ggPtr, _ssPtr, _bbPtr, _dpdpPtr, _spspPtr, _ddpPtr,
+        protected readonly IVariable<Complex> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime, _q;
+        private readonly Element<Complex> _ddPtr, _ggPtr, _ssPtr, _bbPtr, _dpdpPtr, _spspPtr, _ddpPtr,
             _gbPtr, _gdpPtr, _gspPtr, _sspPtr, _bdpPtr, _bspPtr, _dpspPtr, _dpdPtr, _bgPtr, _dpgPtr,
             _spgPtr, _spsPtr, _dpbPtr, _spbPtr, _spdpPtr, _qqPtr, _qdpPtr, _qspPtr, _qgPtr, _qbPtr,
             _dpqPtr, _spqPtr, _gqPtr; //, _bqPtr;
@@ -128,32 +127,32 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             omega = _state.Laplace.Imaginary;
 
-            Csd = -(this.Cddb + this.Cgdb + this.Cbdb);
-            Csg = -(this.Cdgb + this.Cggb + this.Cbgb);
-            Css = -(this.Cdsb + this.Cgsb + this.Cbsb);
+            Csd = -(this._cddb + this._cgdb + this._cbdb);
+            Csg = -(this._cdgb + this._cggb + this._cbgb);
+            Css = -(this._cdsb + this._cgsb + this._cbsb);
 
             if (Parameters.AcnqsMod.Value != 0)
             {
-                T0 = omega * this.Taunet;
+                T0 = omega * this._taunet;
                 T1 = T0 * T0;
                 T2 = 1.0 / (1.0 + T1);
                 T3 = T0 * T2;
 
-                gmr = this.Gm * T2;
-                gmbsr = this.Gmbs * T2;
-                gds = this.Gds * T2;
+                gmr = this._gm * T2;
+                gmbsr = this._gmbs * T2;
+                gds = this._gds * T2;
 
-                gmi = -this.Gm * T3;
-                gmbsi = -this.Gmbs * T3;
-                gdsi = -this.Gds * T3;
+                gmi = -this._gm * T3;
+                gmbsi = -this._gmbs * T3;
+                gdsi = -this._gds * T3;
 
-                Cddr = this.Cddb * T2;
-                Cdgr = this.Cdgb * T2;
-                Cdsr = this.Cdsb * T2;
+                Cddr = this._cddb * T2;
+                Cdgr = this._cdgb * T2;
+                Cdsr = this._cdsb * T2;
 
-                Cddi = this.Cddb * T3 * omega;
-                Cdgi = this.Cdgb * T3 * omega;
-                Cdsi = this.Cdsb * T3 * omega;
+                Cddi = this._cddb * T3 * omega;
+                Cdgi = this._cdgb * T3 * omega;
+                Cdsi = this._cdsb * T3 * omega;
                 Cdbi = -(Cddi + Cdgi + Cdsi);
 
                 Csdr = Csd * T2;
@@ -165,9 +164,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 Cssi = Css * T3 * omega;
                 Csbi = -(Csdi + Csgi + Cssi);
 
-                Cgdr = -(Cddr + Csdr + this.Cbdb);
-                Cggr = -(Cdgr + Csgr + this.Cbgb);
-                Cgsr = -(Cdsr + Cssr + this.Cbsb);
+                Cgdr = -(Cddr + Csdr + this._cbdb);
+                Cggr = -(Cdgr + Csgr + this._cbgb);
+                Cgsr = -(Cdsr + Cssr + this._cbsb);
 
                 Cgdi = -(Cddi + Csdi);
                 Cggi = -(Cdgi + Csgi);
@@ -176,14 +175,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             }
             else /* QS */
             {
-                gmr = this.Gm;
-                gmbsr = this.Gmbs;
-                gds = this.Gds;
+                gmr = this._gm;
+                gmbsr = this._gmbs;
+                gds = this._gds;
                 gmi = gmbsi = gdsi = 0.0;
 
-                Cddr = this.Cddb;
-                Cdgr = this.Cdgb;
-                Cdsr = this.Cdsb;
+                Cddr = this._cddb;
+                Cdgr = this._cdgb;
+                Cdsr = this._cdsb;
                 Cddi = Cdgi = Cdsi = Cdbi = 0.0;
 
                 Csdr = Csd;
@@ -191,13 +190,13 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 Cssr = Css;
                 Csdi = Csgi = Cssi = Csbi = 0.0;
 
-                Cgdr = this.Cgdb;
-                Cggr = this.Cggb;
-                Cgsr = this.Cgsb;
+                Cgdr = this._cgdb;
+                Cggr = this._cggb;
+                Cgsr = this._cgsb;
                 Cgdi = Cggi = Cgsi = Cgbi = 0.0;
             }
 
-            if (this.Mode >= 0)
+            if (this._mode >= 0)
             {
                 Gm = gmr;
                 Gmbs = gmbsr;
@@ -208,12 +207,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 FwdSumi = Gmi + Gmbsi;
                 RevSumi = 0.0;
 
-                gbbdp = -this.Gbds;
-                gbbsp = this.Gbds + this.Gbgs + this.Gbbs;
+                gbbdp = -this._gbds;
+                gbbsp = this._gbds + this._gbgs + this._gbbs;
 
-                gbdpg = this.Gbgs;
-                gbdpb = this.Gbbs;
-                gbdpdp = this.Gbds;
+                gbdpg = this._gbgs;
+                gbdpb = this._gbbs;
+                gbdpdp = this._gbds;
                 gbdpsp = -(gbdpg + gbdpb + gbdpdp);
 
                 gbspdp = 0.0;
@@ -227,9 +226,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     cgsb = Cgsr;
                     cgdb = Cgdr;
 
-                    cbgb = this.Cbgb;
-                    cbsb = this.Cbsb;
-                    cbdb = this.Cbdb;
+                    cbgb = this._cbgb;
+                    cbsb = this._cbsb;
+                    cbdb = this._cbdb;
 
                     cdgb = Cdgr;
                     cdsb = Cdsr;
@@ -249,19 +248,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     cbgb = cbdb = cbsb = 0.0;
                     cdgb = cddb = cdsb = 0.0;
 
-                    xgtg = this.Gtg;
-                    xgtd = this.Gtd;
-                    xgts = this.Gts;
-                    xgtb = this.Gtb;
+                    xgtg = this._gtg;
+                    xgtd = this._gtd;
+                    xgts = this._gts;
+                    xgtb = this._gtb;
 
-                    xcqgb = this.Cqgb * omega;
-                    xcqdb = this.Cqdb * omega;
-                    xcqsb = this.Cqsb * omega;
-                    xcqbb = this.Cqbb * omega;
+                    xcqgb = this._cqgb * omega;
+                    xcqdb = this._cqdb * omega;
+                    xcqsb = this._cqsb * omega;
+                    xcqbb = this._cqbb * omega;
 
                     CoxWL = ModelTemperature.Cox * Param.BSIM3weffCV
                                   * Param.BSIM3leffCV;
-                    qcheq = -(this.Qgate + this.Qbulk);
+                    qcheq = -(this._qgate + this._qbulk);
                     if (Math.Abs(qcheq) <= 1.0e-5 * CoxWL)
                     {
                         if (ModelParameters.Xpart < 0.5)
@@ -281,19 +280,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     }
                     else
                     {
-                        dxpart = this.Qdrn / qcheq;
-                        Cdd = this.Cddb;
-                        Csd = -(this.Cgdb + this.Cddb
-                        + this.Cbdb);
+                        dxpart = this._qdrn / qcheq;
+                        Cdd = this._cddb;
+                        Csd = -(this._cgdb + this._cddb
+                        + this._cbdb);
                         ddxpart_dVd = (Cdd - dxpart * (Cdd + Csd)) / qcheq;
-                        Cdg = this.Cdgb;
-                        Csg = -(this.Cggb + this.Cdgb
-                        + this.Cbgb);
+                        Cdg = this._cdgb;
+                        Csg = -(this._cggb + this._cdgb
+                        + this._cbgb);
                         ddxpart_dVg = (Cdg - dxpart * (Cdg + Csg)) / qcheq;
 
-                        Cds = this.Cdsb;
-                        Css = -(this.Cgsb + this.Cdsb
-                        + this.Cbsb);
+                        Cds = this._cdsb;
+                        Css = -(this._cgsb + this._cdsb
+                        + this._cbsb);
                         ddxpart_dVs = (Cds - dxpart * (Cds + Css)) / qcheq;
 
                         ddxpart_dVb = -(ddxpart_dVd + ddxpart_dVg
@@ -329,17 +328,17 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 FwdSumi = 0.0;
                 RevSumi = -(Gmi + Gmbsi);
 
-                gbbsp = -this.Gbds;
-                gbbdp = this.Gbds + this.Gbgs + this.Gbbs;
+                gbbsp = -this._gbds;
+                gbbdp = this._gbds + this._gbgs + this._gbbs;
 
                 gbdpg = 0.0;
                 gbdpsp = 0.0;
                 gbdpb = 0.0;
                 gbdpdp = 0.0;
 
-                gbspg = this.Gbgs;
-                gbspsp = this.Gbds;
-                gbspb = this.Gbbs;
+                gbspg = this._gbgs;
+                gbspsp = this._gbds;
+                gbspb = this._gbbs;
                 gbspdp = -(gbspg + gbspsp + gbspb);
 
                 if (Parameters.NqsMod.Value == 0 || Parameters.AcnqsMod.Value == 1)
@@ -348,9 +347,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     cgsb = Cgdr;
                     cgdb = Cgsr;
 
-                    cbgb = this.Cbgb;
-                    cbsb = this.Cbdb;
-                    cbdb = this.Cbsb;
+                    cbgb = this._cbgb;
+                    cbsb = this._cbdb;
+                    cbdb = this._cbsb;
 
                     cdgb = -(Cdgr + cggb + cbgb);
                     cdsb = -(Cddr + cgsb + cbsb);
@@ -370,19 +369,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     cbgb = cbdb = cbsb = 0.0;
                     cdgb = cddb = cdsb = 0.0;
 
-                    xgtg = this.Gtg;
-                    xgtd = this.Gts;
-                    xgts = this.Gtd;
-                    xgtb = this.Gtb;
+                    xgtg = this._gtg;
+                    xgtd = this._gts;
+                    xgts = this._gtd;
+                    xgtb = this._gtb;
 
-                    xcqgb = this.Cqgb * omega;
-                    xcqdb = this.Cqsb * omega;
-                    xcqsb = this.Cqdb * omega;
-                    xcqbb = this.Cqbb * omega;
+                    xcqgb = this._cqgb * omega;
+                    xcqdb = this._cqsb * omega;
+                    xcqsb = this._cqdb * omega;
+                    xcqbb = this._cqbb * omega;
 
                     CoxWL = ModelTemperature.Cox * Param.BSIM3weffCV
                                   * Param.BSIM3leffCV;
-                    qcheq = -(this.Qgate + this.Qbulk);
+                    qcheq = -(this._qgate + this._qbulk);
                     if (Math.Abs(qcheq) <= 1.0e-5 * CoxWL)
                     {
                         if (ModelParameters.Xpart.Value < 0.5)
@@ -402,19 +401,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     }
                     else
                     {
-                        sxpart = this.Qdrn / qcheq;
-                        Css = this.Cddb;
-                        Cds = -(this.Cgdb + this.Cddb
-                        + this.Cbdb);
+                        sxpart = this._qdrn / qcheq;
+                        Css = this._cddb;
+                        Cds = -(this._cgdb + this._cddb
+                        + this._cbdb);
                         dsxpart_dVs = (Css - sxpart * (Css + Cds)) / qcheq;
-                        Csg = this.Cdgb;
-                        Cdg = -(this.Cggb + this.Cdgb
-                        + this.Cbgb);
+                        Csg = this._cdgb;
+                        Cdg = -(this._cggb + this._cdgb
+                        + this._cbgb);
                         dsxpart_dVg = (Csg - sxpart * (Csg + Cdg)) / qcheq;
 
-                        Csd = this.Cdsb;
-                        Cdd = -(this.Cgsb + this.Cdsb
-                        + this.Cbsb);
+                        Csd = this._cdsb;
+                        Cdd = -(this._cgsb + this._cdsb
+                        + this._cbsb);
                         dsxpart_dVd = (Csd - sxpart * (Csd + Cdd)) / qcheq;
 
                         dsxpart_dVb = -(dsxpart_dVd + dsxpart_dVg
@@ -440,13 +439,13 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 xcgbbi = Cgbi;
             }
 
-            T1 = this.Qdef * this.Gtau;
+            T1 = this._qdef * this._gtau;
             gdpr = this.DrainConductance;
             gspr = this.SourceConductance;
-            gbd = this.Gbd;
-            gbs = this.Gbs;
-            capbd = this.Capbd;
-            capbs = this.Capbs;
+            gbd = this._gbd;
+            gbs = this._gbs;
+            capbd = this._capbd;
+            capbs = this._capbs;
 
             GSoverlapCap = this.Cgso;
             GDoverlapCap = this.Cgdo;
@@ -486,7 +485,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             _ddPtr.Value += m * gdpr;
             _ssPtr.Value += m * gspr;
-            _bbPtr.Value += m * (gbd + gbs - this.Gbbs);
+            _bbPtr.Value += m * (gbd + gbs - this._gbbs);
             _dpdpPtr.Value += m * (gdpr + gds + gbd + RevSum + xcddbi
                                   + dxpart * xgtd + T1 * ddxpart_dVd + gbdpdp);
             _spspPtr.Value += m * (gspr + gds + gbs + FwdSum + xcssbi
@@ -495,7 +494,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             _ddpPtr.Value -= m * gdpr;
             _sspPtr.Value -= m * gspr;
 
-            _bgPtr.Value -= m * this.Gbgs;
+            _bgPtr.Value -= m * this._gbgs;
             _bdpPtr.Value -= m * (gbd - gbbdp);
             _bspPtr.Value -= m * (gbs - gbbsp);
 
@@ -543,11 +542,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     _qspPtr.Value -= new Complex(0, m * xcqsb);
                     _qbPtr.Value -= new Complex(0, m * xcqbb);
 
-                    _qqPtr.Value += m * this.Gtau;
+                    _qqPtr.Value += m * this._gtau;
 
-                    _dpqPtr.Value += m * dxpart * this.Gtau;
-                    _spqPtr.Value += m * sxpart * this.Gtau;
-                    _gqPtr.Value -= m * this.Gtau;
+                    _dpqPtr.Value += m * dxpart * this._gtau;
+                    _spqPtr.Value += m * sxpart * this._gtau;
+                    _gqPtr.Value -= m * this._gtau;
 
                     _qgPtr.Value += m * xgtg;
                     _qdpPtr.Value += m * xgtd;

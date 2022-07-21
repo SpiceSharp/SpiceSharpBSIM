@@ -16,7 +16,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
     public class FrequencyBehavior : BiasingBehavior, IFrequencyBehavior
     {
         private readonly IComplexSimulationState _state;
-        private readonly IVariable<Complex> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime;
+        protected readonly IVariable<Complex> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime;
         private readonly Element<Complex> _ddPtr, _ggPtr, _ssPtr, _bbPtr,
             _dpdpPtr, _spspPtr, _ddpPtr, _gbPtr, _gdpPtr, _gspPtr, _sspPtr, _bdpPtr, _bspPtr,
             _spsPtr, _dpspPtr, _dpdPtr, _bgPtr, _dpgPtr, _spgPtr, _dpbPtr, _spbPtr, _spdpPtr;

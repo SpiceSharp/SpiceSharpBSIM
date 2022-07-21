@@ -17,7 +17,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
         /// <inheritdoc />
         public BaseParameters Parameters { get; }
 
-        protected ModelTemperature ModelTemperature { get; }
+        protected ModelTemperatureBehavior ModelTemperature { get; }
         protected ModelParameters ModelParameters { get; }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             : base(context)
         {
             Parameters = context.GetParameterSet<BaseParameters>();
-            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperature>();
+            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
             ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
         }
 

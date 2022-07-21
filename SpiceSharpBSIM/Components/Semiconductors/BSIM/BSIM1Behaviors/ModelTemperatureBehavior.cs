@@ -10,20 +10,18 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
     /// Temperature behavior for a <see cref="BSIM1Model"/>.
     /// </summary>
     [BehaviorFor(typeof(BSIM1Model)), AddBehaviorIfNo(typeof(ITemperatureBehavior))]
-    [GeneratedParameters]
-    public partial class ModelTemperature : Behavior, ITemperatureBehavior, IParameterized<ModelParameters>
+    public class ModelTemperatureBehavior : Behavior, ITemperatureBehavior, IParameterized<ModelParameters>
     {
         /// <inheritdoc />
         public ModelParameters Parameters { get; }
 
-        [ParameterName("cox")]
         public double Cox { get; private set; }
 
         /// <summary>
-        /// Creates a new <see cref="ModelTemperature"/>.
+        /// Creates a new <see cref="ModelTemperatureBehavior"/>.
         /// </summary>
         /// <param name="context">The binding context.</param>
-        public ModelTemperature(IBindingContext context)
+        public ModelTemperatureBehavior(IBindingContext context)
             : base(context)
         {
             Parameters = context.GetParameterSet<ModelParameters>();

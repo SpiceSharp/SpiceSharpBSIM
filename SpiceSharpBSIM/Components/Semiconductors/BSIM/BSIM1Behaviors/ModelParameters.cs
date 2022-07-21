@@ -328,6 +328,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         [Finite, GreaterThan(0)]
         private GivenParameter<double> _deltaLength = new GivenParameter<double>();
 
+        [ParameterName("kf"), ParameterInfo("Flicker noise coefficient")]
+        [Finite]
+        private GivenParameter<double> _fNcoef = new GivenParameter<double>();
+
+        [ParameterName("af"), ParameterInfo("Flicker noise exponent")]
+        [Finite]
+        private GivenParameter<double> _fNexp = new GivenParameter<double>(1.0);
+
         [ParameterName("nmos"), ParameterInfo("Flag to indicate NMOS")]
         public void SetNMOS(bool flag = true)
         {

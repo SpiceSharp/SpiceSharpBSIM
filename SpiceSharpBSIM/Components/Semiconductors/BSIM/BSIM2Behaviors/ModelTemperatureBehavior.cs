@@ -13,7 +13,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
     /// Temperature behavior for a <see cref="BSIM2Model" />
     /// </summary>
     [BehaviorFor(typeof(BSIM2Model)), AddBehaviorIfNo(typeof(ITemperatureBehavior))]
-    public class ModelTemperature : Behavior, ITemperatureBehavior, IParameterized<ModelParameters>
+    public class ModelTemperatureBehavior : Behavior, ITemperatureBehavior, IParameterized<ModelParameters>
     {
         /// <inheritdoc />
         public ModelParameters Parameters { get; }
@@ -32,7 +32,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public ModelTemperature(BindingContext context)
+        public ModelTemperatureBehavior(BindingContext context)
             : base(context)
         {
             Parameters = context.GetParameterSet<ModelParameters>();

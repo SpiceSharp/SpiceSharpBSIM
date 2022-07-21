@@ -14,7 +14,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
     /// Load behavior for a <see cref="BSIM3" />
     /// </summary>
     [BehaviorFor(typeof(BSIM3)), AddBehaviorIfNo(typeof(IBiasingBehavior))]
-    public class Biasing : Temperature, IBiasingBehavior, ITimeBehavior
+    [GeneratedParameters]
+    public partial class BiasingBehavior : TemperatureBehavior, IBiasingBehavior, ITimeBehavior
     {
         public const double ScalingFactor = 1.0e-9;
         public const double DELTA_1 = 0.02;
@@ -27,67 +28,81 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         private readonly ITimeSimulationState _time;
         private readonly IDerivative _qb, _qg, _qd, _qcdump, _qcheq;
 
+        [ParameterName("gmbs"), ParameterInfo("Gmb")]
+        public double Gmbs => _gmbs * Parameters.M;
+        [ParameterName("gm"), ParameterInfo("Gm")]
+        public double Gm => _gm * Parameters.M;
+        [ParameterName("gds"), ParameterInfo("Gds")]
+        public double Gds => _gds * Parameters.M;
+        [ParameterName("vdsat"), ParameterInfo("Vdsat")]
+        public double Vdsat => _vdsat;
+        [ParameterName("vth"), ParameterInfo("Vth")]
+        public double Von => _von;
+        [ParameterName("id"), ParameterInfo("Ids")]
+        public double Id => _cd * Parameters.M;
+        [ParameterName("vbs"), ParameterInfo("Vbs")]
+        public double Vbs => _vbs;
+        [ParameterName("vgs"), ParameterInfo("Vgs")]
+        public double Vgs => _vgs;
+        [ParameterName("vds"), ParameterInfo("Vds")]
+        public double Vds => _vds;
+        [ParameterName("ibd"), ParameterInfo("Ibd")]
+        public double Ibd => _cbd * Parameters.M;
+        [ParameterName("ibs"), ParameterInfo("Ibs")]
+        public double Ibs => _cbs * Parameters.M;
+        [ParameterName("gbd"), ParameterInfo("gbd")]
+        public double Gbd => _gbd * Parameters.M;
+        [ParameterName("gbs"), ParameterInfo("gbs")]
+        public double Gbs => _gbs * Parameters.M;
+        [ParameterName("qb"), ParameterInfo("Qbulk")]
+        public double Qb => _qb.Value * Parameters.M;
+        [ParameterName("cqb"), ParameterInfo("CQbulk")]
+        public double CQb => _qb.Derivative * Parameters.M;
+        [ParameterName("qg"), ParameterInfo("Qgate")]
+        public double Qg => _qg.Value * Parameters.M;
+        [ParameterName("cqg"), ParameterInfo("CQgate")]
+        public double CQg => _qg.Derivative * Parameters.M;
+        [ParameterName("qd"), ParameterInfo("Qdrain")]
+        public double Qd => _qd.Value * Parameters.M;
+        [ParameterName("cqd"), ParameterInfo("CQdrain")]
+        public double CQd => _qd.Derivative * Parameters.M;
+        [ParameterName("cgg"), ParameterInfo("Cggb")]
+        public double Cgg => _cggb * Parameters.M;
+        [ParameterName("cgd"), ParameterInfo("Cgdb")]
+        public double Cgd => _cgdb * Parameters.M;
+        [ParameterName("cgs"), ParameterInfo("Cgsb")]
+        public double Cgs => _cgsb * Parameters.M;
+        [ParameterName("cdg"), ParameterInfo("Cdgb")]
+        public double Cdg => _cdgb * Parameters.M;
+        [ParameterName("cdd"), ParameterInfo("Cddb")]
+        public double Cdd => _cddb * Parameters.M;
+        [ParameterName("cds"), ParameterInfo("Cdsb")]
+        public double Cds => _cdsb * Parameters.M;
+        [ParameterName("cbg"), ParameterInfo("Cbgb")]
+        public double Cbg => _cbgb * Parameters.M;
+        [ParameterName("cbd"), ParameterInfo("Cbdb")]
+        public double Cbdb => _cbdb * Parameters.M;
+        [ParameterName("cbs"), ParameterInfo("Cbsb")]
+        public double Cbs => _cbsb * Parameters.M;
+        [ParameterName("capbd"), ParameterInfo("Capbd")]
+        public double Capbd => _capbd * Parameters.M;
+        [ParameterName("capbs"), ParameterInfo("Capbs")]
+        public double Capbs => _capbs * Parameters.M;
+
         protected bool InitializeSmallSignal { get; set; }
         protected bool InitializeTransient { get; set; }
 
-        public double Gbs { get; private set; }
-        public double Cbs { get; private set; }
-        public double Gbd { get; private set; }
-        public double Cbd { get; private set; }
-        public double Mode { get; private set; }
-        public double Thetavth { get; private set; }
-        public double Von { get; private set; }
-        public double Vgsteff { get; private set; }
-        public double Rds { get; private set; }
-        public double Abulk { get; private set; }
-        public double Ueff { get; private set; }
-        public double AbovVgst2Vtm { get; private set; }
-        public double Vdsat { get; private set; }
-        public double Vdseff { get; private set; }
-        public double Gds { get; private set; }
-        public double Gm { get; private set; }
-        public double Gmbs { get; private set; }
-        public double Gbbs { get; private set; }
-        public double Gbgs { get; private set; }
-        public double Gbds { get; private set; }
-        public double Csub { get; private set; }
-        public double Cggb { get; private set; }
-        public double Cgsb { get; private set; }
-        public double Cgdb { get; private set; }
-        public double Cdgb { get; private set; }
-        public double Cdsb { get; private set; }
-        public double Cddb { get; private set; }
-        public double Cbgb { get; private set; }
-        public double Cbsb { get; private set; }
-        public double Cbdb { get; private set; }
-        public double Cqdb { get; private set; }
-        public double Cqsb { get; private set; }
-        public double Cqgb { get; private set; }
-        public double Cqbb { get; private set; }
-        public double Gtau { get; private set; }
-        public double Qinv { get; private set; }
-        public double Qgate { get; private set; }
-        public double Qbulk { get; private set; }
-        public double Qdrn { get; private set; }
-        public double Cd { get; private set; }
-        public double Capbs { get; private set; }
-        public double Capbd { get; private set; }
-        public double Taunet { get; private set; }
-        public double Gtg { get; private set; }
-        public double Gtd { get; private set; }
-        public double Gts { get; private set; }
-        public double Gtb { get; private set; }
-        public double Vbd { get; set; }
-        public double Vbs { get; set; }
-        public double Vgs { get; set; }
-        public double Vds { get; set; }
-        public double Qdef { get; set; }
-        public double Qbs { get; set; }
-        public double Qbd { get; set; }
-
-        private IVariable<double> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime, _q;
-        private Element<double> _dpPtr, _spPtr, _gPtr, _bPtr, _qPtr;
-        private Element<double> _ddPtr, _ggPtr, _ssPtr, _bbPtr, _dpdpPtr, _spspPtr, _ddpPtr,
+        protected double _gbs, _cbs, _gbd, _cbd, _mode,
+            _thetavth, _von, _vgsteff, _rds, _abulk, _ueff,
+            _abovVgst2Vtm, _vdsat, _vdseff, _gds, _gm, _gmbs,
+            _gbbs, _gbgs, _gbds, _csub, _cggb, _cgsb, _cgdb, _cdgb,
+            _cdsb, _cddb, _cbgb, _cbsb, _cbdb, _cqdb, _cqsb, _cqgb,
+            _cqbb, _gtau, _qinv, _qgate, _qbulk, _qdrn, _cd, _capbs,
+            _capbd, _taunet, _gtg, _gtd, _gts, _gtb, _vbd, _vbs, _vgs,
+            _vds, _qdef, _qbs, _qbd;
+        private readonly IVariable<double> _drain, _gate, _source, _bulk, _drainPrime, _sourcePrime, _q;
+        private readonly Element<double> _dpPtr, _spPtr, _gPtr, _bPtr, _qPtr;
+        private readonly Element<double> _ddPtr, _ggPtr, _ssPtr, _bbPtr, _dpdpPtr, _spspPtr, _ddpPtr,
             _gbPtr, _gdpPtr, _gspPtr, _sspPtr, _bdpPtr, _bspPtr, _dpspPtr, _dpdPtr, _bgPtr, _dpgPtr,
             _spgPtr, _spsPtr, _dpbPtr, _spbPtr, _spdpPtr, _qqPtr, _qdpPtr, _qspPtr, _qgPtr, _qbPtr,
             _dpqPtr, _spqPtr, _gqPtr; //, _bqPtr;
@@ -95,7 +110,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public Biasing(ComponentBindingContext context)
+        public BiasingBehavior(ComponentBindingContext context)
             : base(context)
         {
             _temperature = context.GetState<ITemperatureSimulationState>();
@@ -292,10 +307,10 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             Check = true;
             if (InitializeSmallSignal || InitializeTransient)
             {
-                vbs = this.Vbs;
-                vgs = this.Vgs;
-                vds = this.Vds;
-                qdef = this.Qdef;
+                vbs = this._vbs;
+                vgs = this._vgs;
+                vds = this._vds;
+                qdef = this._qdef;
             }
             else if (_iteration.Mode == IterationModes.Junction && !Parameters.Off)
             {
@@ -324,14 +339,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
                 vbd = vbs - vds;
                 vgd = vgs - vds;
-                vgdo = this.Vgs - this.Vds;
+                vgdo = this._vgs - this._vds;
                 Check = false;
-                von = this.Von;
-                if (this.Vds >= 0.0)
+                von = this._von;
+                if (this._vds >= 0.0)
                 {
-                    vgs = Transistor.LimitFet(vgs, this.Vgs, von);
+                    vgs = Transistor.LimitFet(vgs, this._vgs, von);
                     vds = vgs - vgd;
-                    vds = Transistor.LimitVds(vds, this.Vds);
+                    vds = Transistor.LimitVds(vds, this._vds);
                     vgd = vgs - vds;
 
                 }
@@ -339,20 +354,20 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 {
                     vgd = Transistor.LimitFet(vgd, vgdo, von);
                     vds = vgs - vgd;
-                    vds = -Transistor.LimitVds(-vds, -(this.Vds));
+                    vds = -Transistor.LimitVds(-vds, -(this._vds));
                     vgs = vgd + vds;
                 }
 
                 if (vds >= 0.0)
                 {
-                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs,
+                    vbs = Semiconductor.LimitJunction(vbs, this._vbs,
                                     Constants.Vt0, ModelTemperature.Vcrit, ref Check);
                     vbd = vbs - vds;
 
                 }
                 else
                 {
-                    vbd = Semiconductor.LimitJunction(vbd, this.Vbd,
+                    vbd = Semiconductor.LimitJunction(vbd, this._vbd,
                                     Constants.Vt0, ModelTemperature.Vcrit, ref Check);
                     vbs = vbd + vds;
                 }
@@ -414,16 +429,16 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             if (SourceSatCurrent <= 0.0)
             {
-                this.Gbs = _iteration.Gmin;
-                this.Cbs = this.Gbs * vbs;
+                this._gbs = _iteration.Gmin;
+                this._cbs = this._gbs * vbs;
             }
             else
             {
                 if (ModelParameters.Ijth == 0.0)
                 {
                     evbs = Math.Exp(vbs / Nvtm);
-                    this.Gbs = SourceSatCurrent * evbs / Nvtm + _iteration.Gmin;
-                    this.Cbs = SourceSatCurrent * (evbs - 1.0)
+                    this._gbs = SourceSatCurrent * evbs / Nvtm + _iteration.Gmin;
+                    this._cbs = SourceSatCurrent * (evbs - 1.0)
                                    + _iteration.Gmin * vbs;
                 }
                 else
@@ -431,15 +446,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     if (vbs < this.Vjsm)
                     {
                         evbs = Math.Exp(vbs / Nvtm);
-                        this.Gbs = SourceSatCurrent * evbs / Nvtm + _iteration.Gmin;
-                        this.Cbs = SourceSatCurrent * (evbs - 1.0)
+                        this._gbs = SourceSatCurrent * evbs / Nvtm + _iteration.Gmin;
+                        this._cbs = SourceSatCurrent * (evbs - 1.0)
                                        + _iteration.Gmin * vbs;
                     }
                     else
                     {
                         T0 = this.IsEvjsm / Nvtm;
-                        this.Gbs = T0 + _iteration.Gmin;
-                        this.Cbs = this.IsEvjsm - SourceSatCurrent
+                        this._gbs = T0 + _iteration.Gmin;
+                        this._cbs = this.IsEvjsm - SourceSatCurrent
                                        + T0 * (vbs - this.Vjsm)
                                        + _iteration.Gmin * vbs;
                     }
@@ -448,16 +463,16 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             if (DrainSatCurrent <= 0.0)
             {
-                this.Gbd = _iteration.Gmin;
-                this.Cbd = this.Gbd * vbd;
+                this._gbd = _iteration.Gmin;
+                this._cbd = this._gbd * vbd;
             }
             else
             {
                 if (ModelParameters.Ijth == 0.0)
                 {
                     evbd = Math.Exp(vbd / Nvtm);
-                    this.Gbd = DrainSatCurrent * evbd / Nvtm + _iteration.Gmin;
-                    this.Cbd = DrainSatCurrent * (evbd - 1.0)
+                    this._gbd = DrainSatCurrent * evbd / Nvtm + _iteration.Gmin;
+                    this._cbd = DrainSatCurrent * (evbd - 1.0)
                                    + _iteration.Gmin * vbd;
                 }
                 else
@@ -465,15 +480,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     if (vbd < this.Vjdm)
                     {
                         evbd = Math.Exp(vbd / Nvtm);
-                        this.Gbd = DrainSatCurrent * evbd / Nvtm + _iteration.Gmin;
-                        this.Cbd = DrainSatCurrent * (evbd - 1.0)
+                        this._gbd = DrainSatCurrent * evbd / Nvtm + _iteration.Gmin;
+                        this._cbd = DrainSatCurrent * (evbd - 1.0)
                                        + _iteration.Gmin * vbd;
                     }
                     else
                     {
                         T0 = this.IsEvjdm / Nvtm;
-                        this.Gbd = T0 + _iteration.Gmin;
-                        this.Cbd = this.IsEvjdm - DrainSatCurrent
+                        this._gbd = T0 + _iteration.Gmin;
+                        this._cbd = this.IsEvjdm - DrainSatCurrent
                                        + T0 * (vbd - this.Vjdm)
                                        + _iteration.Gmin * vbd;
                     }
@@ -483,14 +498,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             if (vds >= 0.0)
             {   /* normal mode */
-                this.Mode = 1;
+                this._mode = 1;
                 Vds = vds;
                 Vgs = vgs;
                 Vbs = vbs;
             }
             else
             {   /* inverse mode */
-                this.Mode = -1;
+                this._mode = -1;
                 Vds = -vds;
                 Vgs = vgd;
                 Vbs = vbd;
@@ -575,8 +590,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 dTheta0_dVb = 0.0;
             }
 
-            this.Thetavth = Param.BSIM3dvt0 * Theta0;
-            Delt_vth = this.Thetavth * V0;
+            this._thetavth = Param.BSIM3dvt0 * Theta0;
+            Delt_vth = this._thetavth * V0;
             dDelt_vth_dVb = Param.BSIM3dvt0 * dTheta0_dVb * V0;
 
             T0 = -0.5 * Param.BSIM3dvt1w * Param.BSIM3weff * Leff / ltw;
@@ -625,7 +640,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 - Param.BSIM3k2ox * Vbseff - Delt_vth - T2 + (Param.BSIM3k3
                 + Param.BSIM3k3b * Vbseff) * tmp2 + T1 - DIBL_Sft;
 
-            this.Von = Vth;
+            this._von = Vth;
 
             dVth_dVb = Param.BSIM3k1ox * dsqrtPhis_dVb - Param.BSIM3k2ox
                      - dDelt_vth_dVb - dT2_dVb + Param.BSIM3k3b * tmp2
@@ -728,7 +743,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 dVgsteff_dVd = (T2 * dT1_dVd - T1 * dT2_dVd) / T3;
                 dVgsteff_dVb = (T2 * dT1_dVb - T1 * dT2_dVb) / T3;
             }
-            this.Vgsteff = Vgsteff;
+            this._vgsteff = Vgsteff;
 
             /* Calculate Effective Channel Geometry */
             T9 = sqrtPhis - Param.BSIM3sqrtPhi;
@@ -763,7 +778,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 dRds_dVb = Param.BSIM3rds0 * Param.BSIM3prwb * dsqrtPhis_dVb
                          * T1;
             }
-            this.Rds = Rds; /* Noise Bugfix */
+            this._rds = Rds; /* Noise Bugfix */
 
             /* Calculate Abulk */
             T1 = 0.5 * Param.BSIM3k1ox / sqrtPhis;
@@ -805,7 +820,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 dAbulk_dVb *= T10;
                 dAbulk_dVg *= T10;
             }
-            this.Abulk = Abulk;
+            this._abulk = Abulk;
 
             T2 = Param.BSIM3keta * Vbseff;
             if (T2 >= -0.9)
@@ -876,7 +891,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 dDenomi_dVb *= T9;
             }
 
-            this.Ueff = ueff = this.U0temp / Denomi;
+            this._ueff = ueff = this.U0temp / Denomi;
             T9 = -ueff / Denomi;
             dueff_dVg = T9 * dDenomi_dVg;
             dueff_dVd = T9 * dDenomi_dVd;
@@ -919,7 +934,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             }
 
             Vgst2Vtm = Vgsteff + 2.0 * Vtm;
-            this.AbovVgst2Vtm = Abulk / Vgst2Vtm;
+            this._abovVgst2Vtm = Abulk / Vgst2Vtm;
 
             if (Rds > 0)
             {
@@ -993,7 +1008,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                            - T0 * dT2_dVb) / T3 - Vdsat * dT0_dVb) / T0;
                 dVdsat_dVd = (dT1_dVd - (T1 * dT1_dVd - T0 * dT2_dVd) / T3) / T0;
             }
-            this.Vdsat = Vdsat;
+            this._vdsat = Vdsat;
 
             /* Effective Vds (Vdseff) Calculation */
             T1 = Vdsat - Vds - Param.BSIM3delta;
@@ -1048,7 +1063,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             if (Vdseff > Vds)
                 Vdseff = Vds;
             diffVds = Vds - Vdseff;
-            this.Vdseff = Vdseff;
+            this._vdseff = Vdseff;
 
             /* Calculate VACLM */
             if ((Param.BSIM3pclm > 0.0) && (diffVds > 1.0e-10))
@@ -1295,15 +1310,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             }
 
             cdrain = Ids;
-            this.Gds = Gds;
-            this.Gm = Gm;
-            this.Gmbs = Gmb;
+            this._gds = Gds;
+            this._gm = Gm;
+            this._gmbs = Gmb;
 
-            this.Gbbs = Gbb;
-            this.Gbgs = Gbg;
-            this.Gbds = Gbd;
+            this._gbbs = Gbb;
+            this._gbgs = Gbg;
+            this._gbds = Gbd;
 
-            this.Csub = Isub;
+            this._csub = Isub;
 
             /* BSIM3 thermal noise Qinv calculated from all capMod
              * 0, 1, 2 & 3 stored in this.Qinv 1/1998 */
@@ -1311,12 +1326,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             if ((ModelParameters.Xpart.Value < 0) || (!ChargeComputationNeeded))
             {
                 qgate = qdrn = qsrc = qbulk = 0.0;
-                this.Cggb = this.Cgsb = this.Cgdb = 0.0;
-                this.Cdgb = this.Cdsb = this.Cddb = 0.0;
-                this.Cbgb = this.Cbsb = this.Cbdb = 0.0;
-                this.Cqdb = this.Cqsb = this.Cqgb
-                                = this.Cqbb = 0.0;
-                this.Gtau = 0.0;
+                this._cggb = this._cgsb = this._cgdb = 0.0;
+                this._cdgb = this._cdsb = this._cddb = 0.0;
+                this._cbgb = this._cbsb = this._cbdb = 0.0;
+                this._cqdb = this._cqsb = this._cqgb
+                                = this._cqbb = 0.0;
+                this._gtau = 0.0;
                 goto finished;
             }
             else if (ModelParameters.CapMod.Value == 0)
@@ -1349,18 +1364,18 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     qbulk = -qgate;
                     qdrn = 0.0;
 
-                    this.Cggb = CoxWL * dVgs_eff_dVg;
-                    this.Cgdb = 0.0;
-                    this.Cgsb = CoxWL * (dVbseff_dVb - dVgs_eff_dVg);
+                    this._cggb = CoxWL * dVgs_eff_dVg;
+                    this._cgdb = 0.0;
+                    this._cgsb = CoxWL * (dVbseff_dVb - dVgs_eff_dVg);
 
-                    this.Cdgb = 0.0;
-                    this.Cddb = 0.0;
-                    this.Cdsb = 0.0;
+                    this._cdgb = 0.0;
+                    this._cddb = 0.0;
+                    this._cdsb = 0.0;
 
-                    this.Cbgb = -CoxWL * dVgs_eff_dVg;
-                    this.Cbdb = 0.0;
-                    this.Cbsb = -this.Cgsb;
-                    this.Qinv = 0.0;
+                    this._cbgb = -CoxWL * dVgs_eff_dVg;
+                    this._cbdb = 0.0;
+                    this._cbsb = -this._cgsb;
+                    this._qinv = 0.0;
                 }
                 else if (Vgst <= 0.0)
                 {
@@ -1371,18 +1386,18 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     qdrn = 0.0;
 
                     T0 = CoxWL * T1 / T2;
-                    this.Cggb = T0 * dVgs_eff_dVg;
-                    this.Cgdb = 0.0;
-                    this.Cgsb = T0 * (dVbseff_dVb - dVgs_eff_dVg);
+                    this._cggb = T0 * dVgs_eff_dVg;
+                    this._cgdb = 0.0;
+                    this._cgsb = T0 * (dVbseff_dVb - dVgs_eff_dVg);
 
-                    this.Cdgb = 0.0;
-                    this.Cddb = 0.0;
-                    this.Cdsb = 0.0;
+                    this._cdgb = 0.0;
+                    this._cddb = 0.0;
+                    this._cdsb = 0.0;
 
-                    this.Cbgb = -this.Cggb;
-                    this.Cbdb = 0.0;
-                    this.Cbsb = -this.Cgsb;
-                    this.Qinv = 0.0;
+                    this._cbgb = -this._cggb;
+                    this._cbdb = 0.0;
+                    this._cbsb = -this._cgsb;
+                    this._qinv = 0.0;
                 }
                 else
                 {
@@ -1406,22 +1421,22 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             qbulk = -(qgate + T2);
                             qdrn = 0.0;
 
-                            this.Cggb = One_Third_CoxWL * (3.0
+                            this._cggb = One_Third_CoxWL * (3.0
                                             - dVdsat_dVg) * dVgs_eff_dVg;
                             T2 = -One_Third_CoxWL * dVdsat_dVb;
-                            this.Cgsb = -(this.Cggb + T2);
-                            this.Cgdb = 0.0;
+                            this._cgsb = -(this._cggb + T2);
+                            this._cgdb = 0.0;
 
-                            this.Cdgb = 0.0;
-                            this.Cddb = 0.0;
-                            this.Cdsb = 0.0;
+                            this._cdgb = 0.0;
+                            this._cddb = 0.0;
+                            this._cdsb = 0.0;
 
-                            this.Cbgb = -(this.Cggb
+                            this._cbgb = -(this._cggb
                                             - Two_Third_CoxWL * dVgs_eff_dVg);
                             T3 = -(T2 + Two_Third_CoxWL * dVth_dVb);
-                            this.Cbsb = -(this.Cbgb + T3);
-                            this.Cbdb = 0.0;
-                            this.Qinv = -(qgate + qbulk);
+                            this._cbsb = -(this._cbgb + T3);
+                            this._cbdb = 0.0;
+                            this._qinv = -(qgate + qbulk);
                         }
                         else
                         {   /* linear region */
@@ -1440,24 +1455,24 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             qbulk = -(qgate + qdrn + T10);
 
                             T5 = T3 / T1;
-                            this.Cggb = CoxWL * (1.0 - T5 * dVdsat_dVg)
+                            this._cggb = CoxWL * (1.0 - T5 * dVdsat_dVg)
                                             * dVgs_eff_dVg;
                             T11 = -CoxWL * T5 * dVdsat_dVb;
-                            this.Cgdb = CoxWL * (T2 - 0.5 + 0.5 * T5);
-                            this.Cgsb = -(this.Cggb + T11
-                                            + this.Cgdb);
+                            this._cgdb = CoxWL * (T2 - 0.5 + 0.5 * T5);
+                            this._cgsb = -(this._cggb + T11
+                                            + this._cgdb);
                             T6 = 1.0 / Vdsat;
                             dAlphaz_dVg = T6 * (1.0 - Alphaz * dVdsat_dVg);
                             dAlphaz_dVb = -T6 * (dVth_dVb + Alphaz * dVdsat_dVb);
                             T7 = T9 * T7;
                             T8 = T9 * T8;
                             T9 = 2.0 * T4 * (1.0 - 3.0 * T5);
-                            this.Cdgb = (T7 * dAlphaz_dVg - T9
+                            this._cdgb = (T7 * dAlphaz_dVg - T9
                                             * dVdsat_dVg) * dVgs_eff_dVg;
                             T12 = T7 * dAlphaz_dVb - T9 * dVdsat_dVb;
-                            this.Cddb = T4 * (3.0 - 6.0 * T2 - 3.0 * T5);
-                            this.Cdsb = -(this.Cdgb + T12
-                                            + this.Cddb);
+                            this._cddb = T4 * (3.0 - 6.0 * T2 - 3.0 * T5);
+                            this._cdsb = -(this._cdgb + T12
+                                            + this._cddb);
 
                             T9 = 2.0 * T4 * (1.0 + T5);
                             T10 = (T8 * dAlphaz_dVg - T9 * dVdsat_dVg)
@@ -1466,13 +1481,13 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             T12 = T4 * (2.0 * T2 + T5 - 1.0);
                             T0 = -(T10 + T11 + T12);
 
-                            this.Cbgb = -(this.Cggb
-                                            + this.Cdgb + T10);
-                            this.Cbdb = -(this.Cgdb
-                                            + this.Cddb + T12);
-                            this.Cbsb = -(this.Cgsb
-                                            + this.Cdsb + T0);
-                            this.Qinv = -(qgate + qbulk);
+                            this._cbgb = -(this._cggb
+                                            + this._cdgb + T10);
+                            this._cbdb = -(this._cgdb
+                                            + this._cddb + T12);
+                            this._cbsb = -(this._cgsb
+                                            + this._cdsb + T0);
+                            this._qinv = -(qgate + qbulk);
                         }
                     }
                     else if (ModelParameters.Xpart.Value < 0.5)
@@ -1486,24 +1501,24 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             qbulk = -(qgate + T2);
                             qdrn = 0.4 * T2;
 
-                            this.Cggb = One_Third_CoxWL * (3.0
+                            this._cggb = One_Third_CoxWL * (3.0
                                             - dVdsat_dVg) * dVgs_eff_dVg;
                             T2 = -One_Third_CoxWL * dVdsat_dVb;
-                            this.Cgsb = -(this.Cggb + T2);
-                            this.Cgdb = 0.0;
+                            this._cgsb = -(this._cggb + T2);
+                            this._cgdb = 0.0;
 
                             T3 = 0.4 * Two_Third_CoxWL;
-                            this.Cdgb = -T3 * dVgs_eff_dVg;
-                            this.Cddb = 0.0;
+                            this._cdgb = -T3 * dVgs_eff_dVg;
+                            this._cddb = 0.0;
                             T4 = T3 * dVth_dVb;
-                            this.Cdsb = -(T4 + this.Cdgb);
+                            this._cdsb = -(T4 + this._cdgb);
 
-                            this.Cbgb = -(this.Cggb
+                            this._cbgb = -(this._cggb
                                             - Two_Third_CoxWL * dVgs_eff_dVg);
                             T3 = -(T2 + Two_Third_CoxWL * dVth_dVb);
-                            this.Cbsb = -(this.Cbgb + T3);
-                            this.Cbdb = 0.0;
-                            this.Qinv = -(qgate + qbulk);
+                            this._cbsb = -(this._cbgb + T3);
+                            this._cbdb = 0.0;
+                            this._qinv = -(qgate + qbulk);
                         }
                         else
                         {   /* linear region  */
@@ -1517,12 +1532,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                                   - 0.5 * (Vds - T3));
 
                             T5 = T3 / T1;
-                            this.Cggb = CoxWL * (1.0 - T5 * dVdsat_dVg)
+                            this._cggb = CoxWL * (1.0 - T5 * dVdsat_dVg)
                                             * dVgs_eff_dVg;
                             tmp = -CoxWL * T5 * dVdsat_dVb;
-                            this.Cgdb = CoxWL * (T2 - 0.5 + 0.5 * T5);
-                            this.Cgsb = -(this.Cggb
-                                            + this.Cgdb + tmp);
+                            this._cgdb = CoxWL * (T2 - 0.5 + 0.5 * T5);
+                            this._cgsb = -(this._cggb
+                                            + this._cgdb + tmp);
 
                             T6 = 1.0 / Vdsat;
                             dAlphaz_dVg = T6 * (1.0 - Alphaz * dVdsat_dVg);
@@ -1538,33 +1553,33 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             tmp1 = T4 * (2.0 - 4.0 * tmp * T6
                                  + T8 * (16.0 * Vdsat - 6.0 * Vds));
 
-                            this.Cdgb = (T7 * dAlphaz_dVg - tmp1
+                            this._cdgb = (T7 * dAlphaz_dVg - tmp1
                                             * dVdsat_dVg) * dVgs_eff_dVg;
                             T10 = T7 * dAlphaz_dVb - tmp1 * dVdsat_dVb;
-                            this.Cddb = T4 * (2.0 - (1.0 / (3.0 * T1
+                            this._cddb = T4 * (2.0 - (1.0 / (3.0 * T1
                                             * T1) + 2.0 * tmp) * T6 + T8
                                             * (6.0 * Vdsat - 2.4 * Vds));
-                            this.Cdsb = -(this.Cdgb
-                                            + T10 + this.Cddb);
+                            this._cdsb = -(this._cdgb
+                                            + T10 + this._cddb);
 
                             T7 = 2.0 * (T1 + T3);
                             qbulk = -(qgate - T4 * T7);
                             T7 *= T9;
                             T0 = 4.0 * T4 * (1.0 - T5);
-                            T12 = (-T7 * dAlphaz_dVg - this.Cdgb
+                            T12 = (-T7 * dAlphaz_dVg - this._cdgb
                                 - T0 * dVdsat_dVg) * dVgs_eff_dVg;
                             T11 = -T7 * dAlphaz_dVb - T10 - T0 * dVdsat_dVb;
                             T10 = -4.0 * T4 * (T2 - 0.5 + 0.5 * T5)
-                                - this.Cddb;
+                                - this._cddb;
                             tmp = -(T10 + T11 + T12);
 
-                            this.Cbgb = -(this.Cggb
-                                            + this.Cdgb + T12);
-                            this.Cbdb = -(this.Cgdb
-                                            + this.Cddb + T10); /* bug fix */
-                            this.Cbsb = -(this.Cgsb
-                                            + this.Cdsb + tmp);
-                            this.Qinv = -(qgate + qbulk);
+                            this._cbgb = -(this._cggb
+                                            + this._cdgb + T12);
+                            this._cbdb = -(this._cgdb
+                                            + this._cddb + T10); /* bug fix */
+                            this._cbsb = -(this._cgsb
+                                            + this._cdsb + tmp);
+                            this._qinv = -(qgate + qbulk);
                         }
                     }
                     else
@@ -1578,23 +1593,23 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             qbulk = -(qgate + T2);
                             qdrn = 0.5 * T2;
 
-                            this.Cggb = One_Third_CoxWL * (3.0
+                            this._cggb = One_Third_CoxWL * (3.0
                                             - dVdsat_dVg) * dVgs_eff_dVg;
                             T2 = -One_Third_CoxWL * dVdsat_dVb;
-                            this.Cgsb = -(this.Cggb + T2);
-                            this.Cgdb = 0.0;
+                            this._cgsb = -(this._cggb + T2);
+                            this._cgdb = 0.0;
 
-                            this.Cdgb = -One_Third_CoxWL * dVgs_eff_dVg;
-                            this.Cddb = 0.0;
+                            this._cdgb = -One_Third_CoxWL * dVgs_eff_dVg;
+                            this._cddb = 0.0;
                             T4 = One_Third_CoxWL * dVth_dVb;
-                            this.Cdsb = -(T4 + this.Cdgb);
+                            this._cdsb = -(T4 + this._cdgb);
 
-                            this.Cbgb = -(this.Cggb
+                            this._cbgb = -(this._cggb
                                             - Two_Third_CoxWL * dVgs_eff_dVg);
                             T3 = -(T2 + Two_Third_CoxWL * dVth_dVb);
-                            this.Cbsb = -(this.Cbgb + T3);
-                            this.Cbdb = 0.0;
-                            this.Qinv = -(qgate + qbulk);
+                            this._cbsb = -(this._cbgb + T3);
+                            this._cbdb = 0.0;
+                            this._qinv = -(qgate + qbulk);
                         }
                         else
                         {   /* linear region */
@@ -1608,12 +1623,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                                   - 0.5 * (Vds - T3));
 
                             T5 = T3 / T1;
-                            this.Cggb = CoxWL * (1.0 - T5 * dVdsat_dVg)
+                            this._cggb = CoxWL * (1.0 - T5 * dVdsat_dVg)
                                             * dVgs_eff_dVg;
                             tmp = -CoxWL * T5 * dVdsat_dVb;
-                            this.Cgdb = CoxWL * (T2 - 0.5 + 0.5 * T5);
-                            this.Cgsb = -(this.Cggb
-                                            + this.Cgdb + tmp);
+                            this._cgdb = CoxWL * (T2 - 0.5 + 0.5 * T5);
+                            this._cgsb = -(this._cggb
+                                            + this._cgdb + tmp);
 
                             T6 = 1.0 / Vdsat;
                             dAlphaz_dVg = T6 * (1.0 - Alphaz * dVdsat_dVg);
@@ -1625,20 +1640,20 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             T7 *= T9;
                             T0 = T4 * (2.0 * T5 - 2.0);
 
-                            this.Cdgb = (T0 * dVdsat_dVg - T7
+                            this._cdgb = (T0 * dVdsat_dVg - T7
                                             * dAlphaz_dVg) * dVgs_eff_dVg;
                             T12 = T0 * dVdsat_dVb - T7 * dAlphaz_dVb;
-                            this.Cddb = T4 * (1.0 - 2.0 * T2 - T5);
-                            this.Cdsb = -(this.Cdgb + T12
-                                            + this.Cddb);
+                            this._cddb = T4 * (1.0 - 2.0 * T2 - T5);
+                            this._cdsb = -(this._cdgb + T12
+                                            + this._cddb);
 
-                            this.Cbgb = -(this.Cggb
-                                            + 2.0 * this.Cdgb);
-                            this.Cbdb = -(this.Cgdb
-                                            + 2.0 * this.Cddb);
-                            this.Cbsb = -(this.Cgsb
-                                            + 2.0 * this.Cdsb);
-                            this.Qinv = -(qgate + qbulk);
+                            this._cbgb = -(this._cggb
+                                            + 2.0 * this._cdgb);
+                            this._cbdb = -(this._cgdb
+                                            + 2.0 * this._cddb);
+                            this._cbsb = -(this._cgsb
+                                            + 2.0 * this._cdsb);
+                            this._qinv = -(qgate + qbulk);
                         }
                     }
                 }
@@ -1848,17 +1863,17 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                         Csb *= dVbseff_dVb;
                     }
                     qdrn = -(qgate + qbulk + qsrc);
-                    this.Cggb = Cgg;
-                    this.Cgsb = -(Cgg + Cgd + Cgb);
-                    this.Cgdb = Cgd;
-                    this.Cdgb = -(Cgg + Cbg + Csg);
-                    this.Cdsb = (Cgg + Cgd + Cgb + Cbg + Cbd + Cbb
+                    this._cggb = Cgg;
+                    this._cgsb = -(Cgg + Cgd + Cgb);
+                    this._cgdb = Cgd;
+                    this._cdgb = -(Cgg + Cbg + Csg);
+                    this._cdsb = (Cgg + Cgd + Cgb + Cbg + Cbd + Cbb
                                     + Csg + Csd + Csb);
-                    this.Cddb = -(Cgd + Cbd + Csd);
-                    this.Cbgb = Cbg;
-                    this.Cbsb = -(Cbg + Cbd + Cbb);
-                    this.Cbdb = Cbd;
-                    this.Qinv = -(qgate + qbulk);
+                    this._cddb = -(Cgd + Cbd + Csd);
+                    this._cbgb = Cbg;
+                    this._cbsb = -(Cbg + Cbd + Cbb);
+                    this._cbdb = Cbd;
+                    this._qinv = -(qgate + qbulk);
                 }
 
                 else if (ModelParameters.CapMod.Value == 2)
@@ -2018,17 +2033,17 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     Cbb *= dVbseff_dVb;
                     Csb *= dVbseff_dVb;
 
-                    this.Cggb = Cgg;
-                    this.Cgsb = -(Cgg + Cgd + Cgb);
-                    this.Cgdb = Cgd;
-                    this.Cdgb = -(Cgg + Cbg + Csg);
-                    this.Cdsb = (Cgg + Cgd + Cgb + Cbg + Cbd + Cbb
+                    this._cggb = Cgg;
+                    this._cgsb = -(Cgg + Cgd + Cgb);
+                    this._cgdb = Cgd;
+                    this._cdgb = -(Cgg + Cbg + Csg);
+                    this._cdsb = (Cgg + Cgd + Cgb + Cbg + Cbd + Cbb
                                     + Csg + Csd + Csb);
-                    this.Cddb = -(Cgd + Cbd + Csd);
-                    this.Cbgb = Cbg;
-                    this.Cbsb = -(Cbg + Cbd + Cbb);
-                    this.Cbdb = Cbd;
-                    this.Qinv = qinoi;
+                    this._cddb = -(Cgd + Cbd + Csd);
+                    this._cbgb = Cbg;
+                    this._cbsb = -(Cbg + Cbd + Cbb);
+                    this._cbdb = Cbd;
+                    this._qinv = qinoi;
                 }
 
                 /* New Charge-Thickness capMod (CTM) begins */
@@ -2321,17 +2336,17 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     Cbb *= dVbseff_dVb;
                     Csb *= dVbseff_dVb;
 
-                    this.Cggb = Cgg;
-                    this.Cgsb = -(Cgg + Cgd + Cgb);
-                    this.Cgdb = Cgd;
-                    this.Cdgb = -(Cgg + Cbg + Csg);
-                    this.Cdsb = (Cgg + Cgd + Cgb + Cbg + Cbd + Cbb
+                    this._cggb = Cgg;
+                    this._cgsb = -(Cgg + Cgd + Cgb);
+                    this._cgdb = Cgd;
+                    this._cdgb = -(Cgg + Cbg + Csg);
+                    this._cdsb = (Cgg + Cgd + Cgb + Cbg + Cbd + Cbb
                                     + Csg + Csd + Csb);
-                    this.Cddb = -(Cgd + Cbd + Csd);
-                    this.Cbgb = Cbg;
-                    this.Cbsb = -(Cbg + Cbd + Cbb);
-                    this.Cbdb = Cbd;
-                    this.Qinv = -qinoi;
+                    this._cddb = -(Cgd + Cbd + Csd);
+                    this._cbgb = Cbg;
+                    this._cbsb = -(Cbg + Cbd + Cbb);
+                    this._cbdb = Cbd;
+                    this._qinv = -qinoi;
                 }  /* End of CTM */
             }
 
@@ -2341,10 +2356,10 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
              *  COMPUTE EQUIVALENT DRAIN CURRENT SOURCE
              */
 
-            this.Qgate = qgate;
-            this.Qbulk = qbulk;
-            this.Qdrn = qdrn;
-            this.Cd = cdrain;
+            this._qgate = qgate;
+            this._qbulk = qbulk;
+            this._qdrn = qdrn;
+            this._cd = cdrain;
 
             if (ChargeComputationNeeded)
             {   /*  charge storage elements
@@ -2425,8 +2440,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 /* Source Bulk Junction */
                 if (vbs == 0.0)
                 {
-                    this.Qbs = 0.0;
-                    this.Capbs = czbs + czbssw + czbsswg;
+                    this._qbs = 0.0;
+                    this._capbs = czbs + czbssw + czbsswg;
                 }
                 else if (vbs < 0.0)
                 {
@@ -2437,14 +2452,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             sarg = 1.0 / Math.Sqrt(arg);
                         else
                             sarg = Math.Exp(-MJ * Math.Log(arg));
-                        this.Qbs = ModelTemperature.PhiB * czbs
+                        this._qbs = ModelTemperature.PhiB * czbs
                                          * (1.0 - arg * sarg) / (1.0 - MJ);
-                        this.Capbs = czbs * sarg;
+                        this._capbs = czbs * sarg;
                     }
                     else
                     {
-                        this.Qbs = 0.0;
-                        this.Capbs = 0.0;
+                        this._qbs = 0.0;
+                        this._capbs = 0.0;
                     }
                     if (czbssw > 0.0)
                     {
@@ -2453,9 +2468,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             sarg = 1.0 / Math.Sqrt(arg);
                         else
                             sarg = Math.Exp(-MJSW * Math.Log(arg));
-                        this.Qbs += ModelTemperature.PhiBSW * czbssw
+                        this._qbs += ModelTemperature.PhiBSW * czbssw
                                          * (1.0 - arg * sarg) / (1.0 - MJSW);
-                        this.Capbs += czbssw * sarg;
+                        this._capbs += czbssw * sarg;
                     }
                     if (czbsswg > 0.0)
                     {
@@ -2464,9 +2479,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             sarg = 1.0 / Math.Sqrt(arg);
                         else
                             sarg = Math.Exp(-MJSWG * Math.Log(arg));
-                        this.Qbs += ModelTemperature.PhiBSWG * czbsswg
+                        this._qbs += ModelTemperature.PhiBSWG * czbsswg
                                          * (1.0 - arg * sarg) / (1.0 - MJSWG);
-                        this.Capbs += czbsswg * sarg;
+                        this._capbs += czbsswg * sarg;
                     }
 
                 }
@@ -2475,15 +2490,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     T0 = czbs + czbssw + czbsswg;
                     T1 = vbs * (czbs * MJ / ModelTemperature.PhiB + czbssw * MJSW
                        / ModelTemperature.PhiBSW + czbsswg * MJSWG / ModelTemperature.PhiBSWG);
-                    this.Qbs = vbs * (T0 + 0.5 * T1);
-                    this.Capbs = T0 + T1;
+                    this._qbs = vbs * (T0 + 0.5 * T1);
+                    this._capbs = T0 + T1;
                 }
 
                 /* Drain Bulk Junction */
                 if (vbd == 0.0)
                 {
-                    this.Qbd = 0.0;
-                    this.Capbd = czbd + czbdsw + czbdswg;
+                    this._qbd = 0.0;
+                    this._capbd = czbd + czbdsw + czbdswg;
                 }
                 else if (vbd < 0.0)
                 {
@@ -2494,14 +2509,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             sarg = 1.0 / Math.Sqrt(arg);
                         else
                             sarg = Math.Exp(-MJ * Math.Log(arg));
-                        this.Qbd = ModelTemperature.PhiB * czbd
+                        this._qbd = ModelTemperature.PhiB * czbd
                                          * (1.0 - arg * sarg) / (1.0 - MJ);
-                        this.Capbd = czbd * sarg;
+                        this._capbd = czbd * sarg;
                     }
                     else
                     {
-                        this.Qbd = 0.0;
-                        this.Capbd = 0.0;
+                        this._qbd = 0.0;
+                        this._capbd = 0.0;
                     }
                     if (czbdsw > 0.0)
                     {
@@ -2510,9 +2525,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             sarg = 1.0 / Math.Sqrt(arg);
                         else
                             sarg = Math.Exp(-MJSW * Math.Log(arg));
-                        this.Qbd += ModelTemperature.PhiBSW * czbdsw
+                        this._qbd += ModelTemperature.PhiBSW * czbdsw
                                          * (1.0 - arg * sarg) / (1.0 - MJSW);
-                        this.Capbd += czbdsw * sarg;
+                        this._capbd += czbdsw * sarg;
                     }
                     if (czbdswg > 0.0)
                     {
@@ -2521,9 +2536,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                             sarg = 1.0 / Math.Sqrt(arg);
                         else
                             sarg = Math.Exp(-MJSWG * Math.Log(arg));
-                        this.Qbd += ModelTemperature.PhiBSWG * czbdswg
+                        this._qbd += ModelTemperature.PhiBSWG * czbdswg
                                          * (1.0 - arg * sarg) / (1.0 - MJSWG);
-                        this.Capbd += czbdswg * sarg;
+                        this._capbd += czbdswg * sarg;
                     }
                 }
                 else
@@ -2531,8 +2546,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     T0 = czbd + czbdsw + czbdswg;
                     T1 = vbd * (czbd * MJ / ModelTemperature.PhiB + czbdsw * MJSW
                        / ModelTemperature.PhiBSW + czbdswg * MJSWG / ModelTemperature.PhiBSWG);
-                    this.Qbd = vbd * (T0 + 0.5 * T1);
-                    this.Capbd = T0 + T1;
+                    this._qbd = vbd * (T0 + 0.5 * T1);
+                    this._capbd = T0 + T1;
                 }
             }
 
@@ -2544,11 +2559,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 if (Check)
                     _iteration.IsConvergent = false;
             }
-            this.Vbs = vbs;
-            this.Vbd = vbd;
-            this.Vgs = vgs;
-            this.Vds = vds;
-            this.Qdef = qdef;
+            this._vbs = vbs;
+            this._vbd = vbd;
+            this._vgs = vgs;
+            this._vds = vds;
+            this._qdef = qdef;
 
             /* bulk and channel charge plus overlaps */
 
@@ -2560,19 +2575,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             {
                 qcheq = -(qbulk + qgate);
 
-                this.Cqgb = -(this.Cggb + this.Cbgb);
-                this.Cqdb = -(this.Cgdb + this.Cbdb);
-                this.Cqsb = -(this.Cgsb + this.Cbsb);
-                this.Cqbb = -(this.Cqgb + this.Cqdb
-                                + this.Cqsb);
+                this._cqgb = -(this._cggb + this._cbgb);
+                this._cqdb = -(this._cgdb + this._cbdb);
+                this._cqsb = -(this._cgsb + this._cbsb);
+                this._cqbb = -(this._cqgb + this._cqdb
+                                + this._cqsb);
 
                 gtau_drift = Math.Abs(this.Tconst * qcheq) * ScalingFactor;
                 T0 = Param.BSIM3leffCV * Param.BSIM3leffCV;
                 gtau_diff = 16.0 * this.U0temp * ModelTemperature.Vtm / T0
                           * ScalingFactor;
-                this.Gtau = gtau_drift + gtau_diff;
+                this._gtau = gtau_drift + gtau_diff;
                 if (Parameters.AcnqsMod.Value != 0)
-                    this.Taunet = ScalingFactor / this.Gtau;
+                    this._taunet = ScalingFactor / this._gtau;
 
             }
 
@@ -2648,29 +2663,29 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 ag0 = _method.Slope;
             else
                 ag0 = 0;
-            if (this.Mode > 0)
+            if (this._mode > 0)
             {
                 if (Parameters.NqsMod.Value == 0)
                 {
-                    gcggb = (this.Cggb + cgdo + cgso
+                    gcggb = (this._cggb + cgdo + cgso
                           + Param.BSIM3cgbo) * ag0;
-                    gcgdb = (this.Cgdb - cgdo) * ag0;
-                    gcgsb = (this.Cgsb - cgso) * ag0;
+                    gcgdb = (this._cgdb - cgdo) * ag0;
+                    gcgsb = (this._cgsb - cgso) * ag0;
 
-                    gcdgb = (this.Cdgb - cgdo) * ag0;
-                    gcddb = (this.Cddb + this.Capbd + cgdo) * ag0;
-                    gcdsb = this.Cdsb * ag0;
+                    gcdgb = (this._cdgb - cgdo) * ag0;
+                    gcddb = (this._cddb + this._capbd + cgdo) * ag0;
+                    gcdsb = this._cdsb * ag0;
 
-                    gcsgb = -(this.Cggb + this.Cbgb
-                          + this.Cdgb + cgso) * ag0;
-                    gcsdb = -(this.Cgdb + this.Cbdb
-                          + this.Cddb) * ag0;
-                    gcssb = (this.Capbs + cgso - (this.Cgsb
-                          + this.Cbsb + this.Cdsb)) * ag0;
+                    gcsgb = -(this._cggb + this._cbgb
+                          + this._cdgb + cgso) * ag0;
+                    gcsdb = -(this._cgdb + this._cbdb
+                          + this._cddb) * ag0;
+                    gcssb = (this._capbs + cgso - (this._cgsb
+                          + this._cbsb + this._cdsb)) * ag0;
 
-                    gcbgb = (this.Cbgb - Param.BSIM3cgbo) * ag0;
-                    gcbdb = (this.Cbdb - this.Capbd) * ag0;
-                    gcbsb = (this.Cbsb - this.Capbs) * ag0;
+                    gcbgb = (this._cbgb - Param.BSIM3cgbo) * ag0;
+                    gcbdb = (this._cbdb - this._capbd) * ag0;
+                    gcbsb = (this._cbsb - this._capbs) * ag0;
 
                     qgd = qgdo;
                     qgs = qgso;
@@ -2692,32 +2707,32 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                         T0 = this.Tconst * qdef * ScalingFactor;
                     else
                         T0 = -this.Tconst * qdef * ScalingFactor;
-                    ggtg = this.Gtg = T0 * this.Cqgb;
-                    ggtd = this.Gtd = T0 * this.Cqdb;
-                    ggts = this.Gts = T0 * this.Cqsb;
-                    ggtb = this.Gtb = T0 * this.Cqbb;
+                    ggtg = this._gtg = T0 * this._cqgb;
+                    ggtd = this._gtd = T0 * this._cqdb;
+                    ggts = this._gts = T0 * this._cqsb;
+                    ggtb = this._gtb = T0 * this._cqbb;
                     gqdef = ScalingFactor * ag0;
 
-                    gcqgb = this.Cqgb * ag0;
-                    gcqdb = this.Cqdb * ag0;
-                    gcqsb = this.Cqsb * ag0;
-                    gcqbb = this.Cqbb * ag0;
+                    gcqgb = this._cqgb * ag0;
+                    gcqdb = this._cqdb * ag0;
+                    gcqsb = this._cqsb * ag0;
+                    gcqbb = this._cqbb * ag0;
 
                     gcggb = (cgdo + cgso + Param.BSIM3cgbo) * ag0;
                     gcgdb = -cgdo * ag0;
                     gcgsb = -cgso * ag0;
 
                     gcdgb = -cgdo * ag0;
-                    gcddb = (this.Capbd + cgdo) * ag0;
+                    gcddb = (this._capbd + cgdo) * ag0;
                     gcdsb = 0.0;
 
                     gcsgb = -cgso * ag0;
                     gcsdb = 0.0;
-                    gcssb = (this.Capbs + cgso) * ag0;
+                    gcssb = (this._capbs + cgso) * ag0;
 
                     gcbgb = -Param.BSIM3cgbo * ag0;
-                    gcbdb = -this.Capbd * ag0;
-                    gcbsb = -this.Capbs * ag0;
+                    gcbdb = -this._capbd * ag0;
+                    gcbsb = -this._capbs * ag0;
 
                     CoxWL = ModelTemperature.Cox * Param.BSIM3weffCV
                           * Param.BSIM3leffCV;
@@ -2741,18 +2756,18 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     else
                     {
                         dxpart = qdrn / qcheq;
-                        Cdd = this.Cddb;
-                        Csd = -(this.Cgdb + this.Cddb
-                            + this.Cbdb);
+                        Cdd = this._cddb;
+                        Csd = -(this._cgdb + this._cddb
+                            + this._cbdb);
                         ddxpart_dVd = (Cdd - dxpart * (Cdd + Csd)) / qcheq;
-                        Cdg = this.Cdgb;
-                        Csg = -(this.Cggb + this.Cdgb
-                            + this.Cbgb);
+                        Cdg = this._cdgb;
+                        Csg = -(this._cggb + this._cdgb
+                            + this._cbgb);
                         ddxpart_dVg = (Cdg - dxpart * (Cdg + Csg)) / qcheq;
 
-                        Cds = this.Cdsb;
-                        Css = -(this.Cgsb + this.Cdsb
-                            + this.Cbsb);
+                        Cds = this._cdsb;
+                        Css = -(this._cgsb + this._cdsb
+                            + this._cbsb);
                         ddxpart_dVs = (Cds - dxpart * (Cds + Css)) / qcheq;
 
                         ddxpart_dVb = -(ddxpart_dVd + ddxpart_dVg + ddxpart_dVs);
@@ -2776,25 +2791,25 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             {
                 if (Parameters.NqsMod.Value == 0)
                 {
-                    gcggb = (this.Cggb + cgdo + cgso
+                    gcggb = (this._cggb + cgdo + cgso
                           + Param.BSIM3cgbo) * ag0;
-                    gcgdb = (this.Cgsb - cgdo) * ag0;
-                    gcgsb = (this.Cgdb - cgso) * ag0;
+                    gcgdb = (this._cgsb - cgdo) * ag0;
+                    gcgsb = (this._cgdb - cgso) * ag0;
 
-                    gcdgb = -(this.Cggb + this.Cbgb
-                          + this.Cdgb + cgdo) * ag0;
-                    gcddb = (this.Capbd + cgdo - (this.Cgsb
-                          + this.Cbsb + this.Cdsb)) * ag0;
-                    gcdsb = -(this.Cgdb + this.Cbdb
-                          + this.Cddb) * ag0;
+                    gcdgb = -(this._cggb + this._cbgb
+                          + this._cdgb + cgdo) * ag0;
+                    gcddb = (this._capbd + cgdo - (this._cgsb
+                          + this._cbsb + this._cdsb)) * ag0;
+                    gcdsb = -(this._cgdb + this._cbdb
+                          + this._cddb) * ag0;
 
-                    gcsgb = (this.Cdgb - cgso) * ag0;
-                    gcsdb = this.Cdsb * ag0;
-                    gcssb = (this.Cddb + this.Capbs + cgso) * ag0;
+                    gcsgb = (this._cdgb - cgso) * ag0;
+                    gcsdb = this._cdsb * ag0;
+                    gcssb = (this._cddb + this._capbs + cgso) * ag0;
 
-                    gcbgb = (this.Cbgb - Param.BSIM3cgbo) * ag0;
-                    gcbdb = (this.Cbsb - this.Capbd) * ag0;
-                    gcbsb = (this.Cbdb - this.Capbs) * ag0;
+                    gcbgb = (this._cbgb - Param.BSIM3cgbo) * ag0;
+                    gcbdb = (this._cbsb - this._capbd) * ag0;
+                    gcbsb = (this._cbdb - this._capbs) * ag0;
 
                     qgd = qgdo;
                     qgs = qgso;
@@ -2816,32 +2831,32 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                         T0 = this.Tconst * qdef * ScalingFactor;
                     else
                         T0 = -this.Tconst * qdef * ScalingFactor;
-                    ggtg = this.Gtg = T0 * this.Cqgb;
-                    ggts = this.Gtd = T0 * this.Cqdb;
-                    ggtd = this.Gts = T0 * this.Cqsb;
-                    ggtb = this.Gtb = T0 * this.Cqbb;
+                    ggtg = this._gtg = T0 * this._cqgb;
+                    ggts = this._gtd = T0 * this._cqdb;
+                    ggtd = this._gts = T0 * this._cqsb;
+                    ggtb = this._gtb = T0 * this._cqbb;
                     gqdef = ScalingFactor * ag0;
 
-                    gcqgb = this.Cqgb * ag0;
-                    gcqdb = this.Cqsb * ag0;
-                    gcqsb = this.Cqdb * ag0;
-                    gcqbb = this.Cqbb * ag0;
+                    gcqgb = this._cqgb * ag0;
+                    gcqdb = this._cqsb * ag0;
+                    gcqsb = this._cqdb * ag0;
+                    gcqbb = this._cqbb * ag0;
 
                     gcggb = (cgdo + cgso + Param.BSIM3cgbo) * ag0;
                     gcgdb = -cgdo * ag0;
                     gcgsb = -cgso * ag0;
 
                     gcdgb = -cgdo * ag0;
-                    gcddb = (this.Capbd + cgdo) * ag0;
+                    gcddb = (this._capbd + cgdo) * ag0;
                     gcdsb = 0.0;
 
                     gcsgb = -cgso * ag0;
                     gcsdb = 0.0;
-                    gcssb = (this.Capbs + cgso) * ag0;
+                    gcssb = (this._capbs + cgso) * ag0;
 
                     gcbgb = -Param.BSIM3cgbo * ag0;
-                    gcbdb = -this.Capbd * ag0;
-                    gcbsb = -this.Capbs * ag0;
+                    gcbdb = -this._capbd * ag0;
+                    gcbsb = -this._capbs * ag0;
 
                     CoxWL = ModelTemperature.Cox * Param.BSIM3weffCV
                           * Param.BSIM3leffCV;
@@ -2865,18 +2880,18 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     else
                     {
                         sxpart = qdrn / qcheq;
-                        Css = this.Cddb;
-                        Cds = -(this.Cgdb + this.Cddb
-                            + this.Cbdb);
+                        Css = this._cddb;
+                        Cds = -(this._cgdb + this._cddb
+                            + this._cbdb);
                         dsxpart_dVs = (Css - sxpart * (Css + Cds)) / qcheq;
-                        Csg = this.Cdgb;
-                        Cdg = -(this.Cggb + this.Cdgb
-                            + this.Cbgb);
+                        Csg = this._cdgb;
+                        Cdg = -(this._cggb + this._cdgb
+                            + this._cbgb);
                         dsxpart_dVg = (Csg - sxpart * (Csg + Cdg)) / qcheq;
 
-                        Csd = this.Cdsb;
-                        Cdd = -(this.Cgsb + this.Cdsb
-                            + this.Cbsb);
+                        Csd = this._cdsb;
+                        Cdd = -(this._cgsb + this._cdsb
+                            + this._cbsb);
                         dsxpart_dVd = (Csd - sxpart * (Csd + Cdd)) / qcheq;
 
                         dsxpart_dVb = -(dsxpart_dVd + dsxpart_dVg + dsxpart_dVs);
@@ -2900,8 +2915,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             cqdef = cqcheq = 0.0;
 
             _qg.Value = qgate;
-            _qd.Value = qdrn - this.Qbd;
-            _qb.Value = qbulk + this.Qbd + this.Qbs;
+            _qd.Value = qdrn - this._qbd;
+            _qb.Value = qbulk + this._qbd + this._qbs;
 
             if (Parameters.NqsMod.Value != 0)
             {
@@ -2938,16 +2953,16 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             gqdef = gcqgb = gcqdb = gcqsb = gcqbb = 0.0;
             ggtg = ggtd = ggtb = ggts = 0.0;
-            sxpart = (1.0 - (dxpart = (this.Mode > 0) ? 0.4 : 0.6));
+            sxpart = (1.0 - (dxpart = (this._mode > 0) ? 0.4 : 0.6));
             ddxpart_dVd = ddxpart_dVg = ddxpart_dVb = ddxpart_dVs = 0.0;
             dsxpart_dVd = dsxpart_dVg = dsxpart_dVb = dsxpart_dVs = 0.0;
 
             if (Parameters.NqsMod.Value != 0)
-                this.Gtau = 16.0 * this.U0temp * ModelTemperature.Vtm
+                this._gtau = 16.0 * this.U0temp * ModelTemperature.Vtm
                                 / Param.BSIM3leffCV / Param.BSIM3leffCV
                                 * ScalingFactor;
             else
-                this.Gtau = 0.0;
+                this._gtau = 0.0;
 
             goto line900;
 
@@ -2966,7 +2981,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             {
                 T0 = ggtg * vgb - ggtd * vbd - ggts * vbs;
                 ceqqg += T0;
-                T1 = qdef * this.Gtau;
+                T1 = qdef * this._gtau;
                 ceqqd -= dxpart * T0 + T1 * (ddxpart_dVg * vgb - ddxpart_dVd
                       * vbd - ddxpart_dVs * vbs);
                 cqdef = _qcdump.Derivative - gqdef * qdef;
@@ -2978,26 +2993,26 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
          */
         line900:
 
-            if (this.Mode >= 0)
+            if (this._mode >= 0)
             {
-                Gm = this.Gm;
-                Gmbs = this.Gmbs;
+                Gm = this._gm;
+                Gmbs = this._gmbs;
                 FwdSum = Gm + Gmbs;
                 RevSum = 0.0;
-                cdreq = ModelParameters.B3Type * (cdrain - this.Gds * vds
+                cdreq = ModelParameters.B3Type * (cdrain - this._gds * vds
                       - Gm * vgs - Gmbs * vbs);
 
-                ceqbd = -ModelParameters.B3Type * (this.Csub
-                      - this.Gbds * vds - this.Gbgs * vgs
-                      - this.Gbbs * vbs);
+                ceqbd = -ModelParameters.B3Type * (this._csub
+                      - this._gbds * vds - this._gbgs * vgs
+                      - this._gbbs * vbs);
                 ceqbs = 0.0;
 
-                gbbdp = -this.Gbds;
-                gbbsp = (this.Gbds + this.Gbgs + this.Gbbs);
+                gbbdp = -this._gbds;
+                gbbsp = (this._gbds + this._gbgs + this._gbbs);
 
-                gbdpg = this.Gbgs;
-                gbdpdp = this.Gbds;
-                gbdpb = this.Gbbs;
+                gbdpg = this._gbgs;
+                gbdpdp = this._gbds;
+                gbdpb = this._gbbs;
                 gbdpsp = -(gbdpg + gbdpdp + gbdpb);
 
                 gbspg = 0.0;
@@ -3007,36 +3022,36 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             }
             else
             {
-                Gm = -this.Gm;
-                Gmbs = -this.Gmbs;
+                Gm = -this._gm;
+                Gmbs = -this._gmbs;
                 FwdSum = 0.0;
                 RevSum = -(Gm + Gmbs);
-                cdreq = -ModelParameters.B3Type * (cdrain + this.Gds * vds
+                cdreq = -ModelParameters.B3Type * (cdrain + this._gds * vds
                       + Gm * vgd + Gmbs * vbd);
 
-                ceqbs = -ModelParameters.B3Type * (this.Csub
-                      + this.Gbds * vds - this.Gbgs * vgd
-                      - this.Gbbs * vbd);
+                ceqbs = -ModelParameters.B3Type * (this._csub
+                      + this._gbds * vds - this._gbgs * vgd
+                      - this._gbbs * vbd);
                 ceqbd = 0.0;
 
-                gbbsp = -this.Gbds;
-                gbbdp = (this.Gbds + this.Gbgs + this.Gbbs);
+                gbbsp = -this._gbds;
+                gbbdp = (this._gbds + this._gbgs + this._gbbs);
 
                 gbdpg = 0.0;
                 gbdpsp = 0.0;
                 gbdpb = 0.0;
                 gbdpdp = 0.0;
 
-                gbspg = this.Gbgs;
-                gbspsp = this.Gbds;
-                gbspb = this.Gbbs;
+                gbspg = this._gbgs;
+                gbspsp = this._gbds;
+                gbspb = this._gbbs;
                 gbspdp = -(gbspg + gbspsp + gbspb);
             }
 
             if (ModelParameters.B3Type > 0)
             {
-                ceqbs += (this.Cbs - this.Gbs * vbs);
-                ceqbd += (this.Cbd - this.Gbd * vbd);
+                ceqbs += (this._cbs - this._gbs * vbs);
+                ceqbd += (this._cbd - this._gbd * vbd);
                 /*
                 ceqqg = ceqqg;
                 ceqqb = ceqqb;
@@ -3047,8 +3062,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             }
             else
             {
-                ceqbs -= (this.Cbs - this.Gbs * vbs);
-                ceqbd -= (this.Cbd - this.Gbd * vbd);
+                ceqbs -= (this._cbs - this._gbs * vbs);
+                ceqbd -= (this._cbd - this._gbd * vbd);
                 ceqqg = -ceqqg;
                 ceqqb = -ceqqb;
                 ceqqd = -ceqqd;
@@ -3070,19 +3085,19 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
              *  load y matrix
              */
 
-            T1 = qdef * this.Gtau;
+            T1 = qdef * this._gtau;
 
             _ddPtr.Value += m * this.DrainConductance;
             _ggPtr.Value += m * (gcggb - ggtg);
             _ssPtr.Value += m * this.SourceConductance;
-            _bbPtr.Value += m * (this.Gbd + this.Gbs
-                                 - gcbgb - gcbdb - gcbsb - this.Gbbs);
+            _bbPtr.Value += m * (this._gbd + this._gbs
+                                 - gcbgb - gcbdb - gcbsb - this._gbbs);
             _dpdpPtr.Value += m * (this.DrainConductance
-                                   + this.Gds + this.Gbd
+                                   + this._gds + this._gbd
                                    + RevSum + gcddb + dxpart * ggtd
                                    + T1 * ddxpart_dVd + gbdpdp);
             _spspPtr.Value += m * (this.SourceConductance
-                                   + this.Gds + this.Gbs
+                                   + this._gds + this._gbs
                                    + FwdSum + gcssb + sxpart * ggts
                                    + T1 * dsxpart_dVs + gbspsp);
             _ddpPtr.Value -= m * this.DrainConductance;
@@ -3090,33 +3105,33 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             _gdpPtr.Value += m * (gcgdb - ggtd);
             _gspPtr.Value += m * (gcgsb - ggts);
             _sspPtr.Value -= m * this.SourceConductance;
-            _bgPtr.Value += m * (gcbgb - this.Gbgs);
-            _bdpPtr.Value += m * (gcbdb - this.Gbd + gbbdp);
-            _bspPtr.Value += m * (gcbsb - this.Gbs + gbbsp);
+            _bgPtr.Value += m * (gcbgb - this._gbgs);
+            _bdpPtr.Value += m * (gcbdb - this._gbd + gbbdp);
+            _bspPtr.Value += m * (gcbsb - this._gbs + gbbsp);
             _dpdPtr.Value -= m * this.DrainConductance;
             _dpgPtr.Value += m * (Gm + gcdgb + dxpart * ggtg
                                  + T1 * ddxpart_dVg + gbdpg);
-            _dpbPtr.Value -= m * (this.Gbd - Gmbs + gcdgb + gcddb
+            _dpbPtr.Value -= m * (this._gbd - Gmbs + gcdgb + gcddb
                                   + gcdsb - dxpart * ggtb
                                   - T1 * ddxpart_dVb - gbdpb);
-            _dpspPtr.Value -= m * (this.Gds + FwdSum - gcdsb
+            _dpspPtr.Value -= m * (this._gds + FwdSum - gcdsb
                                    - dxpart * ggts - T1 * ddxpart_dVs - gbdpsp);
             _spgPtr.Value += m * (gcsgb - Gm + sxpart * ggtg
                                   + T1 * dsxpart_dVg + gbspg);
             _spsPtr.Value -= m * this.SourceConductance;
-            _spbPtr.Value -= m * (this.Gbs + Gmbs + gcsgb + gcsdb
+            _spbPtr.Value -= m * (this._gbs + Gmbs + gcsgb + gcsdb
                                   + gcssb - sxpart * ggtb
                                   - T1 * dsxpart_dVb - gbspb);
-            _spdpPtr.Value -= m * (this.Gds + RevSum - gcsdb
+            _spdpPtr.Value -= m * (this._gds + RevSum - gcsdb
                                    - sxpart * ggtd - T1 * dsxpart_dVd - gbspdp);
 
             if (Parameters.NqsMod.Value != 0)
             {
-                _qqPtr.Value += m * (gqdef + this.Gtau);
+                _qqPtr.Value += m * (gqdef + this._gtau);
 
-                _dpqPtr.Value += m * (dxpart * this.Gtau);
-                _spqPtr.Value += m * (sxpart * this.Gtau);
-                _gqPtr.Value -= m * this.Gtau;
+                _dpqPtr.Value += m * (dxpart * this._gtau);
+                _spqPtr.Value += m * (sxpart * this._gtau);
+                _gqPtr.Value -= m * this._gtau;
 
                 _qgPtr.Value += m * (ggtg - gcqgb);
                 _qdpPtr.Value += m * (ggtd - gcqdb);

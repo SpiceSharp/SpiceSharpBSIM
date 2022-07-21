@@ -14,10 +14,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
     /// Temperature behavior for a <see cref="BSIM3" />
     /// </summary>
     [BehaviorFor(typeof(BSIM3)), AddBehaviorIfNo(typeof(ITemperatureBehavior))]
-    public class Temperature : Behavior, ITemperatureBehavior, IParameterized<BaseParameters>
+    public class TemperatureBehavior : Behavior, ITemperatureBehavior, IParameterized<BaseParameters>
     {
-        private readonly ITemperatureSimulationState _temperature;
-
         public const double Kb = 1.3806226e-23;
         public const double KboQ = 8.617087e-5;
         public const double EPSSI = 1.03594e-10;
@@ -30,7 +28,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// <inheritdoc />
         public BaseParameters Parameters { get; }
 
-        protected ModelTemperature ModelTemperature { get; }
+        protected ModelTemperatureBehavior ModelTemperature { get; }
         protected ModelParameters ModelParameters { get; }
 
         /// <summary>
@@ -58,13 +56,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public Temperature(ComponentBindingContext context)
+        public TemperatureBehavior(ComponentBindingContext context)
             : base(context)
         {
-            _temperature = context.GetState<ITemperatureSimulationState>();
             Parameters = context.GetParameterSet<BaseParameters>();
             ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
-            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperature>();
+            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
         }
 
         /// <summary>

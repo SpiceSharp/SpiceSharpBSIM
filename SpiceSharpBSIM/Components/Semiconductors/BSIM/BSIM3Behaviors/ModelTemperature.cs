@@ -14,7 +14,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
     /// Temperature behavior for a <see cref="BSIM3Model" />
     /// </summary>
     [BehaviorFor(typeof(BSIM3Model)), AddBehaviorIfNo(typeof(ITemperatureBehavior))]
-    public class ModelTemperature : Behavior, ITemperatureBehavior, IParameterized<ModelParameters>
+    public class ModelTemperatureBehavior : Behavior, ITemperatureBehavior, IParameterized<ModelParameters>
     {
         private readonly ITemperatureSimulationState _temperature;
 
@@ -55,7 +55,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// <summary>
         /// Constructor
         /// </summary>
-        public ModelTemperature(BindingContext context)
+        public ModelTemperatureBehavior(BindingContext context)
             : base(context)
         {
             _temperature = context.GetState<ITemperatureSimulationState>();
