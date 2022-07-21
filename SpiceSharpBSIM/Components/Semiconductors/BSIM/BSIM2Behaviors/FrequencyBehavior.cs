@@ -79,8 +79,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
         /// </summary>
         void IFrequencyBehavior.InitializeParameters()
         {
-            ComputeSmallSignal = true;
+            InitializeSmallSignal = true;
             ((IBiasingBehavior)this).Load();
+            InitializeSmallSignal = false;
         }
 
         /// <summary>

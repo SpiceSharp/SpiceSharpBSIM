@@ -21,10 +21,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
         private readonly ITimeSimulationState _time;
         private readonly IDerivative _qg, _qb, _qd;
 
-        /// <summary>
-        /// Gets or sets whether the small-signal parameters need to be computed.
-        /// </summary>
-        protected bool ComputeSmallSignal { get; set; } = false;
+        protected bool InitializeSmallSignal { get; set; } = false;
+        protected bool InitializeTransient { get; set; } = false;
 
         /// <summary>
         /// Properties
@@ -83,11 +81,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             _bulk = state.GetSharedVariable(context.Nodes[3]);
 
             if (!ModelParameters.SheetResistance.Value.Equals(0.0) && !Parameters.DrainSquares.Value.Equals(0.0))
-                _drainPrime = state.CreatePrivateVariable(context.Behaviors.Name.Combine("drain"), Units.Volt);
+                _drainPrime = state.CreatePrivateVariable(Name.Combine("drain"), Units.Volt);
             else
                 _drainPrime = _drain;
             if (!ModelParameters.SheetResistance.Value.Equals(0.0) && !Parameters.SourceSquares.Value.Equals(0.0))
-                _sourcePrime = state.CreatePrivateVariable(context.Behaviors.Name.Combine("source"), Units.Volt);
+                _sourcePrime = state.CreatePrivateVariable(Name.Combine("source"), Units.Volt);
             else
                 _sourcePrime = _source;
 
@@ -129,19 +127,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             _qb = _method?.CreateDerivative() ?? new SimpleDerivative();
         }
 
-
         /// <inheritdoc />
         public void InitializeStates()
         {
-            ComputeSmallSignal = true;
-
-            // This doesn't do much except calculate the small-signal stuff again
-            Load();
+            InitializeTransient = true;
+            ((IBiasingBehavior)this).Load();
+            InitializeTransient = false;
         }
 
-        /// <summary>
-        /// Temperature behavior
-        /// </summary>
+        /// <inheritdoc />
         public void Load()
         {
             double DrainSatCurrent;
@@ -208,15 +202,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             double cgdb;
             double cgsb;
             double cbdb;
-            double cdgb = 0;
-            double cddb = 0;
-            double cdsb = 0;
-            double cggb = 0;
-            double cbgb = 0;
-            double cbsb = 0;
-            double csgb = 0;
-            double cssb = 0;
-            double csdb = 0;
+            double cdgb = 0.0;
+            double cddb = 0.0;
+            double cdsb = 0.0;
+            double cggb;
+            double cbgb;
+            double cbsb;
+            double csgb = 0.0;
+            double cssb = 0.0;
+            double csdb = 0.0;
             double PhiB;
             double PhiBSW;
             double MJ;
@@ -233,17 +227,21 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             double[] args = new double[8];
 
             double m;
-
-            EffectiveLength = Parameters.Length - ModelParameters.DeltaL * 1.0e-6; /* m */
+            EffectiveLength = Parameters.Length - ModelParameters.DeltaL * 1.0e-6;/* m */
             DrainArea = Parameters.DrainArea;
             SourceArea = Parameters.SourceArea;
             DrainPerimeter = Parameters.DrainPerimeter;
             SourcePerimeter = Parameters.SourcePerimeter;
-            if ((DrainSatCurrent = DrainArea * ModelParameters.JctSatCurDensity) < 1e-15)
+            if ((DrainSatCurrent = DrainArea * ModelParameters.JctSatCurDensity)
+                    < 1e-15)
+            {
                 DrainSatCurrent = 1.0e-15;
-            if ((SourceSatCurrent = SourceArea * ModelParameters.JctSatCurDensity) < 1.0e-15)
+            }
+            if ((SourceSatCurrent = SourceArea * ModelParameters.JctSatCurDensity)
+                    < 1.0e-15)
+            {
                 SourceSatCurrent = 1.0e-15;
-
+            }
             GateSourceOverlapCap = ModelParameters.GateSourceOverlapCap * Parameters.Width;
             GateDrainOverlapCap = ModelParameters.GateDrainOverlapCap * Parameters.Width;
             GateBulkOverlapCap = ModelParameters.GateBulkOverlapCap * EffectiveLength;
@@ -252,70 +250,69 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             vt0 = ModelParameters.Type * Param.B2vt0;
 
             Check = true;
-
-            if (_iteration.Mode == IterationModes.Float || (_time != null && !_time.UseDc && _method != null && _method.BaseTime.Equals(0.0)) ||
-                _iteration.Mode == IterationModes.Fix && !Parameters.Off)
+            if (InitializeSmallSignal || InitializeTransient)
+            {
+                vbs = this.Vbs;
+                vgs = this.Vgs;
+                vds = this.Vds;
+            }
+            else if (_iteration.Mode == IterationModes.Junction && !Parameters.Off)
+            {
+                vds = ModelParameters.Type * Parameters.IcVDS;
+                vgs = ModelParameters.Type * Parameters.IcVGS;
+                vbs = ModelParameters.Type * Parameters.IcVBS;
+                if (vds.Equals(0.0) && vgs.Equals(0.0) && vbs.Equals(0.0))
+                {
+                    vbs = -1;
+                    vgs = vt0;
+                    vds = 0;
+                }
+            }
+            else if ((_iteration.Mode == IterationModes.Junction || _iteration.Mode == IterationModes.Fix) && Parameters.Off)
+            {
+                vbs = vgs = vds = 0;
+            }
+            else
             {
                 vbs = ModelParameters.Type * (_bulk.Value - _sourcePrime.Value);
                 vgs = ModelParameters.Type * (_gate.Value - _sourcePrime.Value);
                 vds = ModelParameters.Type * (_drainPrime.Value - _sourcePrime.Value);
-
                 vbd = vbs - vds;
                 vgd = vgs - vds;
-                vgdo = Vgs - Vds;
+                vgdo = this.Vgs - this.Vds;
 
                 von = ModelParameters.Type * this.Von;
-                if (Vds >= 0)
+                Check = false;
+                if (this.Vds >= 0)
                 {
-                    vgs = Transistor.LimitFet(vgs, Vgs, von);
+                    vgs = Transistor.LimitFet(vgs, this.Vgs, von);
                     vds = vgs - vgd;
-                    vds = Transistor.LimitVds(vds, Vds);
+                    vds = Transistor.LimitVds(vds, this.Vds);
                     vgd = vgs - vds;
                 }
                 else
                 {
                     vgd = Transistor.LimitFet(vgd, vgdo, von);
                     vds = vgs - vgd;
-                    vds = -Transistor.LimitVds(-vds, -Vds);
+                    vds = -Transistor.LimitVds(-vds, -this.Vds);
                     vgs = vgd + vds;
                 }
-
-                Check = false;
                 if (vds >= 0)
                 {
                     vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * SourceSatCurrent));
-                    vbs = Semiconductor.LimitJunction(vbs, Vbs, Constants.Vt0, vcrit, ref Check); /* B1 test */
+                    vbs = Semiconductor.LimitJunction(vbs, this.Vbs,
+                            Constants.Vt0, vcrit, ref Check); /* B2 test */
                     vbd = vbs - vds;
                 }
                 else
                 {
                     vcrit = Constants.Vt0 * Math.Log(Constants.Vt0 / (Constants.Root2 * DrainSatCurrent));
-                    vbd = Semiconductor.LimitJunction(vbd, Vbd, Constants.Vt0, vcrit, ref Check); /* B1 test*/
+                    vbd = Semiconductor.LimitJunction(vbd, this.Vbd,
+                            Constants.Vt0, vcrit, ref Check); /* B2 test*/
                     vbs = vbd + vds;
                 }
             }
-            else
-            {
-                if (_iteration.Mode == IterationModes.Junction && !Parameters.Off)
-                {
-                    vds = ModelParameters.Type * Parameters.IcVDS;
-                    vgs = ModelParameters.Type * Parameters.IcVGS;
-                    vbs = ModelParameters.Type * Parameters.IcVBS;
 
-                    // TODO: At some point, check what this is supposed to do
-                    if (vds.Equals(0) && vgs.Equals(0) && vbs.Equals(0) && (_time == null || _time.UseDc || !_time.UseIc))
-                    {
-                        vbs = -1;
-                        vgs = vt0;
-                        vds = 0;
-                    }
-                }
-                else
-                {
-                    vbs = vgs = vds = 0;
-                }
-            }
-            
             /* determine DC current and derivatives */
             vbd = vbs - vds;
             vgd = vgs - vds;
@@ -381,7 +378,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
              *  COMPUTE EQUIVALENT DRAIN CURRENT SOURCE
              */
             cd = this.Mode * cdrain - cbd;
-            if (_method != null || ComputeSmallSignal)
+            if (_time != null || InitializeSmallSignal || InitializeTransient)
             {
                 /*
                  *  charge storage elements
@@ -409,14 +406,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
                     argsw = 1 - vbs / PhiBSW;
                     sarg = Math.Exp(-MJ * Math.Log(arg));
                     sargsw = Math.Exp(-MJSW * Math.Log(argsw));
-                    Qbs =
+                    this.Qbs =
                         PhiB * czbs * (1 - arg * sarg) / (1 - MJ) + PhiBSW *
                     czbssw * (1 - argsw * sargsw) / (1 - MJSW);
                     capbs = czbs * sarg + czbssw * sargsw;
                 }
                 else
                 {
-                    Qbs =
+                    this.Qbs =
                         vbs * (czbs + czbssw) + vbs * vbs * (czbs * MJ * 0.5 / PhiB
                         + czbssw * MJSW * 0.5 / PhiBSW);
                     capbs = czbs + czbssw + vbs * (czbs * MJ / PhiB +
@@ -430,14 +427,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
                     argsw = 1 - vbd / PhiBSW;
                     sarg = Math.Exp(-MJ * Math.Log(arg));
                     sargsw = Math.Exp(-MJSW * Math.Log(argsw));
-                    Qbd =
+                    this.Qbd =
                         PhiB * czbd * (1 - arg * sarg) / (1 - MJ) + PhiBSW *
                     czbdsw * (1 - argsw * sargsw) / (1 - MJSW);
                     capbd = czbd * sarg + czbdsw * sargsw;
                 }
                 else
                 {
-                    Qbd =
+                    this.Qbd =
                         vbd * (czbd + czbdsw) + vbd * vbd * (czbd * MJ * 0.5 / PhiB
                         + czbdsw * MJSW * 0.5 / PhiBSW);
                     capbd = czbd + czbdsw + vbd * (czbd * MJ / PhiB +
@@ -469,27 +466,22 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             this.Gmbs = gmbs;
             this.Gbd = gbd;
             this.Gbs = gbs;
-
             this.Cggb = cggb;
             this.Cgdb = cgdb;
             this.Cgsb = cgsb;
-
             this.Cbgb = cbgb;
             this.Cbdb = cbdb;
             this.Cbsb = cbsb;
-
             this.Cdgb = cdgb;
             this.Cddb = cddb;
             this.Cdsb = cdsb;
-
             this.Capbs = capbs;
             this.Capbd = capbd;
 
             /* bulk and channel charge plus overlaps */
 
-            if (_method == null && (_time != null && !_time.UseIc))
+            if (_time == null && !InitializeSmallSignal && !InitializeTransient)
                 goto line850;
-
             if (this.Mode > 0)
             {
 
@@ -503,16 +495,16 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
                 args[7] = cgsb;
 
                 B2mosCap(vgd, vgs, vgb,
-                    args,
-                    /*
-		            GateDrainOverlapCap,
-		            GateSourceOverlapCap,GateBulkOverlapCap,
-		            capbd,capbs,cggb,cgdb,cgsb,
-		            */
-                    cbgb, cbdb, cbsb, cdgb, cddb, cdsb,
-                    out gcggb, out gcgdb, out gcgsb, out gcbgb, out gcbdb, out gcbsb, out gcdgb,
-                    out gcddb, out gcdsb, out gcsgb, out gcsdb, out gcssb, ref qgate, ref qbulk,
-                    ref qdrn, ref qsrc);
+            args,
+            /*
+            GateDrainOverlapCap,
+            GateSourceOverlapCap,GateBulkOverlapCap,
+            capbd,capbs,cggb,cgdb,cgsb,
+            */
+            cbgb, cbdb, cbsb, cdgb, cddb, cdsb
+            , out gcggb, out gcgdb, out gcgsb, out gcbgb, out gcbdb, out gcbsb, out gcdgb
+            , out gcddb, out gcdsb, out gcsgb, out gcsdb, out gcssb, ref qgate, ref qbulk
+            , ref qdrn, ref qsrc);
             }
             else
             {
@@ -527,24 +519,37 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
                 args[7] = cgdb;
 
                 B2mosCap(vgs, vgd, vgb, args,
-                    /*
-		            GateSourceOverlapCap,
-                            GateDrainOverlapCap,GateBulkOverlapCap,
-		            capbs,capbd,cggb,cgsb,cgdb,
-		            */
-                    cbgb, cbsb, cbdb, csgb, cssb, csdb,
-                    out gcggb, out gcgsb, out gcgdb, out gcbgb, out gcbsb, out gcbdb, out gcsgb,
-                    out gcssb, out gcsdb, out gcdgb, out gcdsb, out gcddb, ref qgate, ref qbulk,
-                    ref qsrc, ref qdrn);
+            /*
+            GateSourceOverlapCap,
+                    GateDrainOverlapCap,GateBulkOverlapCap,
+            capbs,capbd,cggb,cgsb,cgdb,
+            */
+            cbgb, cbsb, cbdb, csgb, cssb, csdb
+                    , out gcggb, out gcgsb, out gcgdb, out gcbgb, out gcbsb, out gcbdb, out gcsgb
+                    , out gcssb, out gcsdb, out gcdgb, out gcdsb, out gcddb, ref qgate, ref qbulk
+                    , ref qsrc, ref qdrn);
             }
 
             _qg.Value = qgate;
-            _qd.Value = qdrn - Qbd;
-            _qb.Value = qbulk + Qbd + Qbs;
+            _qd.Value = qdrn - this.Qbd;
+            _qb.Value = qbulk + this.Qbd + this.Qbs;
 
             /* store small signal parameters */
-            if (_method == null)
-                goto line850;
+            if (InitializeSmallSignal)
+            {
+                this.Cggb = cggb;
+                this.Cgdb = cgdb;
+                this.Cgsb = cgsb;
+                this.Cbgb = cbgb;
+                this.Cbdb = cbdb;
+                this.Cbsb = cbsb;
+                this.Cdgb = cdgb;
+                this.Cddb = cddb;
+                this.Cdsb = cdsb;
+                this.Capbd = capbd;
+                this.Capbs = capbs;
+                return;
+            }
 
             _qb.Derive();
             _qg.Derive();
@@ -603,12 +608,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             /*
              *  load y matrix
              */
+
             _ddPtr.Value += m * (this.DrainConductance);
             _ggPtr.Value += m * (gcggb);
             _ssPtr.Value += m * (this.SourceConductance);
             _bbPtr.Value += m * (gbd + gbs - gcbgb - gcbdb - gcbsb);
-            _dpdpPtr.Value += m * (this.DrainConductance + gds + gbd + xrev * (gm + gmbs) + gcddb);
-            _spspPtr.Value += m * (this.SourceConductance + gds + gbs + xnrm * (gm + gmbs) + gcssb);
+            _dpdpPtr.Value +=
+                m * (this.DrainConductance + gds + gbd + xrev * (gm + gmbs) + gcddb);
+            _spspPtr.Value +=
+                m * (this.SourceConductance + gds + gbs + xnrm * (gm + gmbs) + gcssb);
             _ddpPtr.Value += m * (-this.DrainConductance);
             _gbPtr.Value += m * (-gcggb - gcgdb - gcgsb);
             _gdpPtr.Value += m * (gcgdb);
@@ -657,7 +665,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
             bool ChargeComputationNeeded;
             int valuetypeflag;          /* added  3/19/90 JSD   */
 
-            if (_method != null || ComputeSmallSignal)
+            if (_method != null || InitializeSmallSignal)
                 ChargeComputationNeeded = true;
             else
                 ChargeComputationNeeded = false;

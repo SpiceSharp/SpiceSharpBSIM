@@ -28,7 +28,6 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         public FrequencyBehavior(ComponentBindingContext context)
             : base(context)
         {
-            ComputeSmallSignal = true;
             _state = context.GetState<IComplexSimulationState>();
             _drain = _state.GetSharedVariable(context.Nodes[0]);
             _gate = _state.GetSharedVariable(context.Nodes[1]);
@@ -79,8 +78,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
         /// </summary>
         void IFrequencyBehavior.InitializeParameters()
         {
-            ComputeSmallSignal = true;
+            InitializeSmallSignal = true;
             ((IBiasingBehavior)this).Load();
+            InitializeSmallSignal = false;
         }
 
         /// <summary>
