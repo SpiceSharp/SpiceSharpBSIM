@@ -3,11 +3,10 @@
     /// <summary>
     /// Size-dependent parameters
     /// </summary>
-    public class BSIM3SizeDependParams
+    public class SizeDependParams
     {
         public double Width { get; set; }
         public double Length { get; set; }
-
         public double BSIM3cdsc { get; set; }
         public double BSIM3cdscb { get; set; }
         public double BSIM3cdscd { get; set; }

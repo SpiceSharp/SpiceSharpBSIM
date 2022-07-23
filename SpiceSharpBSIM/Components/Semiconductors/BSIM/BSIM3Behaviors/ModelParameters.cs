@@ -140,7 +140,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             set
             {
                 Utility.Finite(value, nameof(Ngate));
-                if (value > 1e20)
+                if (value > 1.000001e24)
                     _ngate = value * 1e-6;
                 else
                     _ngate = value;
@@ -564,7 +564,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             set
             {
                 Utility.Finite(value, nameof(Lngate));
-                if (value > 1e20)
+                if (value > 1.0e23)
                     _lngate = value * 1e-6;
                 else
                     _lngate = value;
@@ -920,7 +920,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             set
             {
                 Utility.Finite(value, nameof(Wngate));
-                if (value > 1e20)
+                if (value > 1e23)
                     _wngate= value * 1e-6;
                 else
                     _wngate= value;
@@ -1276,7 +1276,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             set
             {
                 Utility.Finite(value, nameof(Pngate));
-                if (value > 1e20)
+                if (value > 1e23)
                     _pngate = value * 1e-6;
                 else
                     _pngate = value;
@@ -1796,10 +1796,10 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 		[Finite]
         private GivenParameter<double> _vbdrMax = new GivenParameter<double>(1e+99);
 
-
+        /// <summary>
+        /// Gets the mosfet type (1 for NMOS, -1 for PMOS).
+        /// </summary>
         public double B3Type { get; private set; } = 1.0;
-
-        public double Cox { get; private set; }
 
         [ParameterName("tnom"), ParameterInfo("Parameter measurement temperature")]
 		[DerivedProperty, Finite, GreaterThan(-Constants.CelsiusKelvin)]
@@ -1807,12 +1807,10 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         {
             get => Tnom - Constants.CelsiusKelvin;
             set => Tnom = value + Constants.CelsiusKelvin;
-
         }
 
         [GreaterThan(0), Finite]
         private GivenParameter<double> _tnom = new GivenParameter<double>(300.15);
-
 
         [ParameterName("nmos"), ParameterInfo("Flag to indicate NMOS")]
         public void SetNmos(bool flag = true)

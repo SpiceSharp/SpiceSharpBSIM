@@ -61,6 +61,7 @@
     <Compile Include="BSIM1\BSIM1Tests.cs" />
     <Compile Include="BSIM2\BSIM2Tests.cs" />
     <Compile Include="BSIM3\BSIM3Tests.cs" />
+    <Compile Include="BSIM3\BSIM3v2Tests.cs" />
     <Compile Include="Framework.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

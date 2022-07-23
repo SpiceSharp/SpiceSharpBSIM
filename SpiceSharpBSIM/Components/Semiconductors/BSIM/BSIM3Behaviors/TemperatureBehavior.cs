@@ -34,7 +34,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// <summary>
         /// Size dependent parameters
         /// </summary>
-	    protected BSIM3SizeDependParams Param { get; private set; }
+	    protected SizeDependParams Param { get; private set; }
 
         /// <summary>
         /// Properties
@@ -115,7 +115,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 Param = param;
             else
             {
-                Param = new BSIM3SizeDependParams();
+                Param = new SizeDependParams();
                 ModelTemperature.SizeDependParams.Add(key, Param);
 
                 Ldrn = Parameters.Length;
@@ -144,25 +144,25 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 Param.BSIM3leff = Parameters.Length + ModelParameters.Xl - 2.0 * Param.BSIM3dl;
                 if (Param.BSIM3leff <= 0.0)
                 {
-                    throw new SpiceSharpException("BSIM3: mosfet %s, model %s: Effective channel length <= 0".FormatString(Name, ModelTemperature.Name));
+                    throw new SpiceSharpException("BSIM3: mosfet {0}, model {1}: Effective channel length <= 0".FormatString(Name, ModelTemperature.Name));
                 }
 
                 Param.BSIM3weff = Parameters.Width + ModelParameters.Xw - 2.0 * Param.BSIM3dw;
                 if (Param.BSIM3weff <= 0.0)
                 {
-                    throw new SpiceSharpException("BSIM3: mosfet %s, model %s: Effective channel width <= 0".FormatString(Name, ModelTemperature.Name));
+                    throw new SpiceSharpException("BSIM3: mosfet {0}, model {1}: Effective channel width <= 0".FormatString(Name, ModelTemperature.Name));
                 }
 
                 Param.BSIM3leffCV = Parameters.Length + ModelParameters.Xl - 2.0 * Param.BSIM3dlc;
                 if (Param.BSIM3leffCV <= 0.0)
                 {
-                    throw new SpiceSharpException("BSIM3: mosfet %s, model %s: Effective channel length for C-V <= 0".FormatString(Name, ModelTemperature.Name));
+                    throw new SpiceSharpException("BSIM3: mosfet {0}, model {1}: Effective channel length for C-V <= 0".FormatString(Name, ModelTemperature.Name));
                 }
 
                 Param.BSIM3weffCV = Parameters.Width + ModelParameters.Xw - 2.0 * Param.BSIM3dwc;
                 if (Param.BSIM3weffCV <= 0.0)
                 {
-                    throw new SpiceSharpException("BSIM3: mosfet %s, model %s: Effective channel width for C-V <= 0".FormatString(Name, ModelTemperature.Name));
+                    throw new SpiceSharpException("BSIM3: mosfet {0}, model {1}: Effective channel width for C-V <= 0".FormatString(Name, ModelTemperature.Name));
                 }
 
 
@@ -538,7 +538,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
                 if (BSIM3checkModel())
                 {
-                    throw new SpiceSharpException("Fatal error(s) detected during BSIM3V3.3 parameter checking for %s in model %s".FormatString(Name, ModelTemperature.Name));
+                    throw new SpiceSharpException("Fatal error(s) detected during BSIM3V3.3 parameter checking for {0} in model {1}".FormatString(Name, ModelTemperature.Name));
                 }
 
                 Param.BSIM3cgdo = (ModelParameters.Cgdo + Param.BSIM3cf)
@@ -584,35 +584,24 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 {
                     if (!ModelParameters.K1.Given)
                     {
-                        /*
-                        if ((!ckt->CKTcurJob) || (ckt->CKTcurJob->JOBtype < 9)) // don't print in sensitivity
-                            fprintf(stdout, "Warning: k1 should be specified with k2.");
-                        */
+                        SpiceSharpWarning.Warning(this, "Warning: k1 should be specified with k2.");
                         Param.BSIM3k1 = 0.53;
                     }
                     if (!ModelParameters.K2.Given)
                     {
-                        /*
-                        if ((!ckt->CKTcurJob) || (ckt->CKTcurJob->JOBtype < 9)) // don't print in sensitivity
-                            fprintf(stdout, "Warning: k2 should be specified with k1.");
-                        */
+                        SpiceSharpWarning.Warning(this, "Warning: k2 should be specified with k1.");
                         Param.BSIM3k2 = -0.0186;
                     }
-                    /*
-                    if ((!ckt->CKTcurJob) || (ckt->CKTcurJob->JOBtype < 9))
-                    { // don't print in sensitivity
-                        if (model->BSIM3nsubGiven)
-                            fprintf(stdout, "Warning: nsub is ignored because k1 or k2 is given.");
-                        if (model->BSIM3xtGiven)
-                            fprintf(stdout, "Warning: xt is ignored because k1 or k2 is given.");
-                        if (model->BSIM3vbxGiven)
-                            fprintf(stdout, "Warning: vbx is ignored because k1 or k2 is given.");
-                        if (model->BSIM3gamma1Given)
-                            fprintf(stdout, "Warning: gamma1 is ignored because k1 or k2 is given.");
-                        if (model->BSIM3gamma2Given)
-                            fprintf(stdout, "Warning: gamma2 is ignored because k1 or k2 is given.");
-                    }
-                    */
+                    if (ModelParameters.Nsub.Given)
+                        SpiceSharpWarning.Warning(this, "Warning: nsub is ignored because k1 or k2 is given.");
+                    if (ModelParameters.Xt.Given)
+                        SpiceSharpWarning.Warning(this, "Warning: xt is ignored because k1 or k2 is given.");
+                    if (ModelParameters.Vbx.Given)
+                        SpiceSharpWarning.Warning(this, "Warning: vbx is ignored because k1 or k2 is given.");
+                    if (ModelParameters.Gamma1.Given)
+                        SpiceSharpWarning.Warning(this, "Warning: gamma1 is ignored because k1 or k2 is given.");
+                    if (ModelParameters.Gamma2.Given)
+                        SpiceSharpWarning.Warning(this, "Warning: gamma2 is ignored because k1 or k2 is given.");
                 }
                 else
                 {
@@ -755,7 +744,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
 
             /* process source/drain series resistance */
             /* ACM model */
-            if (ModelParameters.AcmMod == 0)
+            if (ModelParameters.AcmMod.Value == 0)
             {
                 DrainConductance = ModelParameters.SheetResistance
                                                 * Parameters.DrainSquares;
@@ -978,7 +967,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             }
 
             /* ACM model */
-            if (ModelParameters.AcmMod == 0)
+            if (ModelParameters.AcmMod.Value == 0)
             {
                 if (ModelParameters.UnitLengthSidewallJctCap > 0.0 ||
                       ModelParameters.UnitLengthGateSidewallJctCap > 0.0)
@@ -996,7 +985,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 }
             }
 
-            if ((ModelParameters.Calcacm > 0) && (ModelParameters.AcmMod != 12))
+            if ((ModelParameters.Calcacm.Value > 0) && (ModelParameters.AcmMod.Value != 12))
             {
                 words.Add(string.Format("Warning: CALCACM = {0} is wrong. Set back to 0.",
                     ModelParameters.Calcacm));
@@ -1050,7 +1039,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                         Param.BSIM3moin));
             }
 
-            if (ModelParameters.CapMod == 3)
+            if (ModelParameters.CapMod.Value == 3)
             {
                 if (Param.BSIM3acde < 0.4)
                 {
@@ -1064,7 +1053,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 }
             }
 
-            if (ModelParameters.ParamChk == 1)
+            if (ModelParameters.ParamChk.Value == 1)
             {
                 /* Check L and W parameters */
                 if (Param.BSIM3leff <= 5.0e-8)

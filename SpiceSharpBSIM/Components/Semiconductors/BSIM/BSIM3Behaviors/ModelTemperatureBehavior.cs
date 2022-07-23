@@ -29,7 +29,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// <summary>
         /// Size-dependent parameters cache
         /// </summary>
-        public Dictionary<Tuple<double, double>, BSIM3SizeDependParams> SizeDependParams { get; } = new Dictionary<Tuple<double, double>, BSIM3SizeDependParams>();
+        public Dictionary<Tuple<double, double>, SizeDependParams> SizeDependParams { get; } = new Dictionary<Tuple<double, double>, SizeDependParams>();
 
         /// <summary>
         /// Properties
@@ -48,7 +48,6 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         public double PhiBSWG { get; private set; }
         public double Ni { get; private set; }
         public double TRatio { get; private set; }
-        public double Eg0 { get; private set; }
         public double Cox { get; private set; }
         public double T0 { get; private set; }
 
@@ -67,7 +66,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         /// </summary>
         void ITemperatureBehavior.Temperature()
         {
-            double T1, Tnom, delTemp, Eg;
+            double T1, Tnom, delTemp, Eg, Eg0;
             SizeDependParams.Clear();
 
             // Things done during setup that we need to put here
@@ -97,9 +96,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 Parameters.Vth0 = new GivenParameter<double>(Parameters.B3Type > 0 ? 0.7 : -0.7, false);
 
             if (!Parameters.Uc.Given)
-                Parameters.Uc = new GivenParameter<double>((Parameters.MobMod == 3) ? -0.0465 : -0.0465e-9, false);
+                Parameters.Uc = new GivenParameter<double>((Parameters.MobMod.Value == 3) ? -0.0465 : -0.0465e-9, false);
             if (!Parameters.Uc1.Given)
-                Parameters.Uc1 = new GivenParameter<double>((Parameters.MobMod == 3) ? -0.056 : -0.056e-9, false);
+                Parameters.Uc1 = new GivenParameter<double>((Parameters.MobMod.Value == 3) ? -0.056 : -0.056e-9, false);
             if (!Parameters.U0.Given)
                 Parameters.U0 = new GivenParameter<double>((Parameters.B3Type > 0) ? 0.067 : 0.025, false);
 
@@ -129,8 +128,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 Parameters.Dlc = new GivenParameter<double>(Parameters.Lint, false);
 
             if (!Parameters.Cf.Given)
-                Parameters.Cf = 2.0 * EPSOX / Math.PI
-                               * Math.Log(1.0 + 0.4e-6 / Parameters.Tox);
+                Parameters.Cf = new GivenParameter<double>(2.0 * EPSOX / Math.PI
+                               * Math.Log(1.0 + 0.4e-6 / Parameters.Tox), false);
             if (!Parameters.Cgdo.Given)
             {
                 if (Parameters.Dlc.Given && (Parameters.Dlc > 0.0))
