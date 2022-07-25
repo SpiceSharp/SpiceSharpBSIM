@@ -11,16 +11,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
     [GeneratedParameters]
     public partial class ModelParameters : ParameterSet<ModelParameters>
     {
-        /// <summary>
-        /// Gets or sets the path for parameter checking
-        /// </summary>
-        [ParameterName("path"), ParameterInfo("File path for used to log parameter checks")]
-		[Finite]
-        public string CheckPath { get; set; } = "b3v33check.log";
+        [ParameterName("path"), ParameterInfo("Filename for used to log parameter checks")]
+        public string CheckPath { get; set; } = "b3v3check.log";
 
-        /// <summary>
-        /// Properties
-        /// </summary>
         [ParameterName("mobmod"), ParameterInfo("Mobility model selector")]
         private GivenParameter<int> _mobMod = new GivenParameter<int>(1);
 

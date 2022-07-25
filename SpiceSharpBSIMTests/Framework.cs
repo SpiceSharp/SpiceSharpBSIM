@@ -9,6 +9,7 @@ using SpiceSharp.Simulations;
 using NUnit.Framework;
 using SpiceSharp.Entities;
 using SpiceSharp.Algebra;
+using SpiceSharp.Diagnostics;
 
 namespace SpiceSharpTest.Models
 {
@@ -48,7 +49,8 @@ namespace SpiceSharpTest.Models
                 double value = double.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture);
 
                 // Set the entity parameter
-                entity.SetParameter(name, value);
+                if (!entity.TrySetParameter(name, value) && !entity.TrySetParameter(name, (int)value))
+                    throw new ArgumentException("Could not find parameter " + name);
             }
         }
 

@@ -25,12 +25,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM1Behaviors
             : base(context)
         {
             Parameters = context.GetParameterSet<ModelParameters>();
+            Cox = 3.453e-13 / (Parameters.OxideThickness * 1.0e-4);
         }
 
         /// <inheritdoc />
         public void Temperature()
         {
-            Cox = 3.453e-13 / (Parameters.OxideThickness * 1.0e-4);
         }
     }
 }

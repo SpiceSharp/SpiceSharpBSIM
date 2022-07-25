@@ -62,16 +62,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
         {
             _temperature = context.GetState<ITemperatureSimulationState>();
             Parameters = context.GetParameterSet<ModelParameters>();
+            Setup();
         }
 
-        /// <inheritdoc />
-        void ITemperatureBehavior.Temperature()
+        private void Setup()
         {
-            double Eg, Eg0, T0, T1;
-            double delTemp, Temp, Tnom;
-            SizeDependParams.Clear();
-
-            /* Default value Processing for BSIM3v32 MOSFET Models */
             if (!Parameters.NqsMod.Given)
                 Parameters.NqsMod = 0;
             else if ((Parameters.NqsMod != 0) && (Parameters.NqsMod != 1))
@@ -200,6 +195,14 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
                 else
                     Parameters.OxideTrapDensityC = 1.4e-12;
             }
+        }
+
+        /// <inheritdoc />
+        void ITemperatureBehavior.Temperature()
+        {
+            double Eg, Eg0, T0, T1;
+            double delTemp, Temp, Tnom;
+            SizeDependParams.Clear();
 
             Temp = _temperature.Temperature;
             Tnom = Parameters.Tnom;

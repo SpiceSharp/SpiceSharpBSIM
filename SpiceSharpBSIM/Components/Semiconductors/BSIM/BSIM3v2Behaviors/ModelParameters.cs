@@ -13,8 +13,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
     [GeneratedParameters]
     public partial class ModelParameters : ParameterSet<ModelParameters>
     {
-        [ParameterName("checkpath"), ParameterInfo("The path where the log output is written to when checking the model")]
-        public string CheckPath { get; set; } = "bsim3v2_check.log";
+        [ParameterName("path"), ParameterInfo("Filename for used to log parameter checks")]
+        public string CheckPath { get; set; } = "b3v2check.log";
 
         [ParameterName("capmod"), ParameterInfo("Capacitance model selector")]
         private GivenParameter<int> _capMod = new GivenParameter<int>(3);

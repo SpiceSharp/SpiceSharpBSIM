@@ -62,23 +62,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             Parameters = context.GetParameterSet<BaseParameters>();
             ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
             ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
+            Setup();
         }
 
-        /// <summary>
-        /// Temperature behavior
-        /// </summary>
-        void ITemperatureBehavior.Temperature()
+        private void Setup()
         {
-            double tmp, tmp1, tmp2, tmp3, ni, T0, T1, T2, T3, T4, T5, Ldrn, Wdrn;
-            double TRatio, Inv_L, Inv_W, Inv_LW, Vtm0;
-            double Nvtm, SourceSatCurrent, DrainSatCurrent;
-
-            TRatio = ModelTemperature.TRatio;
-            Vtm0 = ModelTemperature.Vtm0;
-            ni = ModelTemperature.Ni;
-            T0 = ModelTemperature.T0; // Why is temporary variable even needed?
-
-            // Parameter defaulting in setup
             if (!Parameters.DrainSquares.Given)
             {
                 if (ModelParameters.AcmMod.Value == 0)
@@ -109,6 +97,21 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                 SpiceSharpWarning.Warning(this, string.Format("Warning: acnqsMod has been set to its global value %d.\n",
                     ModelParameters.AcnqsMod));
             }
+        }
+
+        /// <summary>
+        /// Temperature behavior
+        /// </summary>
+        void ITemperatureBehavior.Temperature()
+        {
+            double tmp, tmp1, tmp2, tmp3, ni, T0, T1, T2, T3, T4, T5, Ldrn, Wdrn;
+            double TRatio, Inv_L, Inv_W, Inv_LW, Vtm0;
+            double Nvtm, SourceSatCurrent, DrainSatCurrent;
+
+            TRatio = ModelTemperature.TRatio;
+            Vtm0 = ModelTemperature.Vtm0;
+            ni = ModelTemperature.Ni;
+            T0 = ModelTemperature.T0; // Why is temporary variable even needed?
 
             var key = Tuple.Create(Parameters.Width.Value, Parameters.Length.Value);
             if (ModelTemperature.SizeDependParams.TryGetValue(key, out var param))
@@ -1225,7 +1228,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             {
                 string path = ModelParameters.CheckPath;
                 if (string.IsNullOrWhiteSpace(path))
-                    path = "b3v33check.log";
+                    path = "b3v3check.log";
                 using (var writer = new StreamWriter(path))
                 {
                     foreach (string line in words)

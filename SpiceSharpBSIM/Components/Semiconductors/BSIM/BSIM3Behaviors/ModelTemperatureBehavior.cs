@@ -59,17 +59,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         {
             _temperature = context.GetState<ITemperatureSimulationState>();
             Parameters = context.GetParameterSet<ModelParameters>();
+            Setup();
         }
 
-        /// <summary>
-        /// Temperature behavior
-        /// </summary>
-        void ITemperatureBehavior.Temperature()
+        private void Setup()
         {
-            double T1, Tnom, delTemp, Eg, Eg0;
-            SizeDependParams.Clear();
-
-            // Things done during setup that we need to put here
             if (Parameters.NqsMod.Given)
             {
                 if (Parameters.NqsMod != 0 && Parameters.NqsMod != 1)
@@ -155,7 +149,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             {
                 Parameters.Cgbo = 2.0 * Parameters.Dwc * Cox;
             }
-            
+
             if (!Parameters.UnitLengthGateSidewallJctCap.Given)
                 Parameters.UnitLengthGateSidewallJctCap = new GivenParameter<double>(Parameters.UnitLengthSidewallJctCap, false);
             if (!Parameters.GatesidewallJctPotential.Given)
@@ -185,6 +179,15 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
                     Parameters.OxideTrapDensityC = 1.4e-12;
 
             }
+        }
+
+        /// <summary>
+        /// Temperature behavior
+        /// </summary>
+        void ITemperatureBehavior.Temperature()
+        {
+            double T1, Tnom, delTemp, Eg, Eg0;
+            SizeDependParams.Clear();
 
             // Original temperature behavior
             Tnom = Parameters.Tnom;

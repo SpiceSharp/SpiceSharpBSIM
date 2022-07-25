@@ -55,20 +55,11 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
             Parameters = context.GetParameterSet<BaseParameters>();
             ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
             ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
+            Setup();
         }
 
-        /// <inheritdoc />
-        void ITemperatureBehavior.Temperature()
+        private void Setup()
         {
-            double tmp, tmp1, tmp2, tmp3, ni, T0, T1, T2, T3, T4, T5, Ldrn, Wdrn;
-            double TRatio, Inv_L, Inv_W, Inv_LW, Vtm0;
-            double Nvtm, SourceSatCurrent, DrainSatCurrent;
-
-            TRatio = ModelTemperature.TRatio;
-            Vtm0 = ModelTemperature.Vtm0;
-            ni = ModelTemperature.Ni;
-            T0 = ModelTemperature.T0;
-
             /* perform the parameter defaulting */
             if (!Parameters.DrainSquares.Given)
             {
@@ -94,8 +85,22 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
 
             /* Channel length scaling with lmlt model parameter */
 
+            // TODO: This is dangerous... Running behaviors multiple times will keep scaling up the original parameters...
             if (ModelParameters.Lmlt.Given)
                 Parameters.L *= ModelParameters.Lmlt;
+        }
+
+        /// <inheritdoc />
+        void ITemperatureBehavior.Temperature()
+        {
+            double tmp, tmp1, tmp2, tmp3, ni, T0, T1, T2, T3, T4, T5, Ldrn, Wdrn;
+            double TRatio, Inv_L, Inv_W, Inv_LW, Vtm0;
+            double Nvtm, SourceSatCurrent, DrainSatCurrent;
+
+            TRatio = ModelTemperature.TRatio;
+            Vtm0 = ModelTemperature.Vtm0;
+            ni = ModelTemperature.Ni;
+            T0 = ModelTemperature.T0;
 
             var key = Tuple.Create(Parameters.W.Value, Parameters.L.Value);
             if (ModelTemperature.SizeDependParams.TryGetValue(key, out var param))
