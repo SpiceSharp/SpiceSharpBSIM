@@ -94,9 +94,7 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
             // _bqPtr = _state.Solver.GetElement(new MatrixLocation(bulk, q));
         }
 
-        /// <summary>
-        /// Initializes the parameters.
-        /// </summary>
+        /// <inheritdoc />
         void IFrequencyBehavior.InitializeParameters()
         {
             InitializeSmallSignal = true;
