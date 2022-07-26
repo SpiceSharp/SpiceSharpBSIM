@@ -49,6 +49,16 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v0Behaviors
             ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
         }
 
+        /// <summary>
+        /// Set up the device.
+        /// </summary>
+        private void Setup()
+        {
+            if (!Parameters.NqsMod.Given)
+                Parameters.NqsMod = new GivenParameter<int>(ModelParameters.NqsMod, false);
+        }
+
+        /// <inheritdoc />
         void ITemperatureBehavior.Temperature()
         {
             double tmp1, tmp2, Eg, ni, T0, T1, T2, T3, Ldrn, Wdrn;

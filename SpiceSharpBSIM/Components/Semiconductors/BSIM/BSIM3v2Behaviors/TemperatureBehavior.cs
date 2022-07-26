@@ -868,6 +868,8 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
             int Fatal_Flag = 0;
             List<string> words = new List<string>();
 
+            words.Add("Checking parameters for BSIM 3.2 model {0}".FormatString(ModelTemperature.Name));
+
             if (ModelParameters.Version != "3.2.4" && ModelParameters.Version != "3.24" &&
                         ModelParameters.Version != "3.2.3" && ModelParameters.Version != "3.23" &&
                         ModelParameters.Version != "3.2.2" && ModelParameters.Version != "3.22" &&
