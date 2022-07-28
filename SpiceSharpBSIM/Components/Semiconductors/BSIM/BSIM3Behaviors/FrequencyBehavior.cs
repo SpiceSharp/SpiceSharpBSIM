@@ -22,6 +22,13 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
             _spgPtr, _spsPtr, _dpbPtr, _spbPtr, _spdpPtr, _qqPtr, _qdpPtr, _qspPtr, _qgPtr, _qbPtr,
             _dpqPtr, _spqPtr, _gqPtr; //, _bqPtr;
 
+        [ParameterName("vbs"), ParameterInfo("Vbs")]
+        public Complex ComplexVbs => _bulk.Value - _sourcePrime.Value;
+        [ParameterName("vgs"), ParameterInfo("Vgs")]
+        public Complex ComplexVgs => _gate.Value - _sourcePrime.Value;
+        [ParameterName("vds"), ParameterInfo("Vds")]
+        public Complex ComplexVds => _drainPrime.Value - _sourcePrime.Value;
+
         /// <summary>
         /// Constructor
         /// </summary>
