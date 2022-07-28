@@ -29,6 +29,67 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v1Behaviors
         public const double DELTA_3 = 0.02;
         public const double DELTA_4 = 0.02;
 
+        [ParameterName("gmbs"), ParameterInfo("Gmb")]
+        public double Gmbs => _gmbs * Parameters.M;
+        [ParameterName("gm"), ParameterInfo("Gm")]
+        public double Gm => _gm * Parameters.M;
+        [ParameterName("gds"), ParameterInfo("Gds")]
+        public double Gds => _gds * Parameters.M;
+        [ParameterName("vdsat"), ParameterInfo("Vdsat")]
+        public double Vdsat => _vdsat;
+        [ParameterName("vth"), ParameterInfo("Vth")]
+        public double Von => _von;
+        [ParameterName("id"), ParameterInfo("Ids")]
+        public double Id => _cd * Parameters.M;
+        [ParameterName("vbs"), ParameterInfo("Vbs")]
+        public double Vbs => _vbs;
+        [ParameterName("vgs"), ParameterInfo("Vgs")]
+        public double Vgs => _vgs;
+        [ParameterName("vds"), ParameterInfo("Vds")]
+        public double Vds => _vds;
+        [ParameterName("ibd"), ParameterInfo("Ibd")]
+        public double Ibd => _cbd * Parameters.M;
+        [ParameterName("ibs"), ParameterInfo("Ibs")]
+        public double Ibs => _cbs * Parameters.M;
+        [ParameterName("gbd"), ParameterInfo("gbd")]
+        public double Gbd => _gbd * Parameters.M;
+        [ParameterName("gbs"), ParameterInfo("gbs")]
+        public double Gbs => _gbs * Parameters.M;
+        [ParameterName("qb"), ParameterInfo("Qbulk")]
+        public double Qb => _qb.Value * Parameters.M;
+        [ParameterName("cqb"), ParameterInfo("CQbulk")]
+        public double CQb => _qb.Derivative * Parameters.M;
+        [ParameterName("qg"), ParameterInfo("Qgate")]
+        public double Qg => _qg.Value * Parameters.M;
+        [ParameterName("cqg"), ParameterInfo("CQgate")]
+        public double CQg => _qg.Derivative * Parameters.M;
+        [ParameterName("qd"), ParameterInfo("Qdrain")]
+        public double Qd => _qd.Value * Parameters.M;
+        [ParameterName("cqd"), ParameterInfo("CQdrain")]
+        public double CQd => _qd.Derivative * Parameters.M;
+        [ParameterName("cgg"), ParameterInfo("Cggb")]
+        public double Cgg => _cggb * Parameters.M;
+        [ParameterName("cgd"), ParameterInfo("Cgdb")]
+        public double Cgd => _cgdb * Parameters.M;
+        [ParameterName("cgs"), ParameterInfo("Cgsb")]
+        public double Cgs => _cgsb * Parameters.M;
+        [ParameterName("cdg"), ParameterInfo("Cdgb")]
+        public double Cdg => _cdgb * Parameters.M;
+        [ParameterName("cdd"), ParameterInfo("Cddb")]
+        public double Cdd => _cddb * Parameters.M;
+        [ParameterName("cds"), ParameterInfo("Cdsb")]
+        public double Cds => _cdsb * Parameters.M;
+        [ParameterName("cbg"), ParameterInfo("Cbgb")]
+        public double Cbg => _cbgb * Parameters.M;
+        [ParameterName("cbd"), ParameterInfo("Cbdb")]
+        public double Cbdb => _cbdb * Parameters.M;
+        [ParameterName("cbs"), ParameterInfo("Cbsb")]
+        public double Cbs => _cbsb * Parameters.M;
+        [ParameterName("capbd"), ParameterInfo("Capbd")]
+        public double Capbd => _capbd * Parameters.M;
+        [ParameterName("capbs"), ParameterInfo("Capbs")]
+        public double Capbs => _capbs * Parameters.M;
+
         protected bool InitializeSmallSignal { get; set; }
         protected bool InitializeTransient { get; set; }
 
