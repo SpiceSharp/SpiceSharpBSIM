@@ -2,6 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>Spice#.BSIM</Title>
+    <Authors>Sven Boulanger</Authors>
+    <PackageProjectUrl>https://github.com/SpiceSharp/SpiceSharpBSIM</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/SpiceSharp/SpiceSharpBSIM</RepositoryUrl>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <Description>BSIM models for Spice#.</Description>
+    <Version>1.0.1</Version>
+    <PackageIcon>logo_full.png</PackageIcon>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>circuit electronics netlist spice simulator simulation ode solver design</PackageTags>
+    <PackageReleaseNotes>Refer to the GitHub release for release notes.</PackageReleaseNotes>
+    <NeutralLanguage>en</NeutralLanguage>
+    <FileVersion>1.0.1</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,11 +35,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="SpiceSharp" Version="3.1.6" />
     <PackageReference Include="SpiceSharpGenerator" Version="1.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logo_full.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
