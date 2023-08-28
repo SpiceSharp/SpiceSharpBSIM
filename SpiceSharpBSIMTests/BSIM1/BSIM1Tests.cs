@@ -245,34 +245,5 @@ namespace SpiceSharpTest.Models
             // Run test
             AnalyzeAC(ac, ckt, exports, references);
         }
-        /*
-        [Test]
-        public void When_BSIM1Netlist_Expect_Parameters()
-        {
-            // Create the parser
-            var parser = new ParserFacade();
-            var settings = new ParserSettings();
-            settings.SpiceNetlistModelReaderSettings.EvaluatorMode = SpiceEvaluatorMode.Spice3f5;
-            settings.SpiceNetlistParserSettings.HasTitle = false;
-            settings.SpiceNetlistModelReaderSettings.Context.Models.Add(new MosfetModelGenerator(), true);
-            settings.SpiceNetlistModelReaderSettings.Context.Components.Add(new MosfetGenerator(), true);
-
-            var netlist = "M1 d g 0 0 nmodel w=10u l=40u\r\n"
-                          + ".model nmodel nmos(level=4 VFB=-7.744e-1 K1=1.112 K2=2.051e-1 ETA=1.185e-2 MUZ=8.052e2 U0=6.757e-2 U1=6.443e-1 X2MZ=3.213e1 X2E=2.670e-3 X3E=1.046e-3 X2U0=1.055e-2 X2U1=-3.186e-2 MUS=1.293e3 X2MS=3.737e1 X3MS=1.374e2 X3U1=1.489e-1 PHI=7.5 TOX=4e-2 VDD=5 DL=0 DW=0 CGDO=3.41e-10 CGSO=3.41e-10 CGBO=5.51e-10)\r\n";
-            var result = parser.ParseNetlist(netlist, settings);
-
-            // Find back the model
-            var entity = (BSIM1) result.ReaderResult.Circuit.Objects["M1"];
-            var model = (BSIM1Model) entity.Model;
-
-            // Check a few component parameters
-            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("w"), 10e-6, 1e-12);
-            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("l"), 40e-6, 1e-12);
-
-            // Check a few model parameters
-            Assert.AreEqual(model.ParameterSets.GetParameter<double>("vfb"), -7.744e-1, 1e-12);
-            Assert.AreEqual(model.ParameterSets.GetParameter<double>("muz"), 8.052e2, 1e-12);
-        }
-        */
     }
 }

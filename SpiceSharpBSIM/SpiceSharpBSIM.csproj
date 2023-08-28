@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SpiceSharp" Version="3.1.5" />
+    <PackageReference Include="SpiceSharp" Version="3.1.6" />
     <PackageReference Include="SpiceSharpGenerator" Version="1.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

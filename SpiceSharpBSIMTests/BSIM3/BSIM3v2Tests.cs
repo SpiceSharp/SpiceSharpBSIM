@@ -94,5 +94,26 @@ namespace SpiceSharpTest.Models
             // run simulation
             AnalyzeAC(ac, ckt, exports, references);
         }
+
+        [Test]
+        public void When_BSIM3Transient_Expect_NoErrors()
+        {
+            var ckt = new Circuit(
+                new VoltageSource("V1", "g", "0", new Pulse(0, 5, 0.1e-7, 1e-9, 1e-9, 0.6e-6, 1e-6)),
+                new VoltageSource("V2", "vdd", "0", 3.3),
+                new Resistor("R1", "vdd", "d", 1e6),
+                CreateMosfet("M1", "d", "g", "0", "0", 10e-6, 1e-6, "mod"),
+                CreateModel("mod", "tnom=27.0 nch=1.024685e+17 tox=1.00000e-08 xj=1.00000e-07 lint=3.75860e-08 wint=-2.02101528644562e-07 vth0=0.6094574 k1=0.5341038 k2=1.703463e-03 k3=-17.24589 dvt0=0.1767506 dvt1=0.5109418 dvt2=-0.05 nlx=9.979638e-08 w0=1e-6 k3b=4.139039 vsat=97662.05 ua=-1.748481e-09 ub=3.178541e-18 uc=1.3623e-10 rdsw=298.873 u0=307.2991 prwb=-2.24e-4 a0=0.4976366 keta=-2.195445e-02 a1=0.0332883 a2=0.9 voff=-9.623903e-02 nfactor=0.8408191 cit=3.994609e-04 cdsc=1.130797e-04 cdscb=2.4e-5 eta0=0.0145072 etab=-3.870303e-03 dsub=0.4116711 pclm=1.813153 pdiblc1=2.003703e-02 pdiblc2=0.00129051 pdiblcb=-1.034e-3 drout=0.4380235 pscbe1=5.752058e+08 pscbe2=7.510319e-05 pvag=0.6370527 prt=68.7 ngate=1.e20 alpha0=1.e-7 beta0=28.4 prwg=-0.001 ags=1.2 dvt0w=0.58 dvt1w=5.3e6 dvt2w=-0.0032 kt1=-.3 kt2=-.03 at=33000 ute=-1.5 ua1=4.31e-09 ub1=7.61e-18 uc1=-2.378e-10 kt1l=1e-8 wr=1 b0=1e-7 b1=1e-7 dwg=5e-8 dwb=2e-8 delta=0.015 cgdl=1e-10 cgsl=1e-10 cgbo=1e-10 xpart=0.0 cgdo=0.4e-9 cgso=0.4e-9 clc=0.1e-6 cle=0.6 ckappa=0.6"));
+            ckt["M1"].SetParameter("m", 4.0);
+
+            var tran = new Transient("Transient 1", 1e-8, 10e-6);
+            var export = new RealVoltageExport(tran, "d");
+            tran.ExportSimulationData += (sender, args) =>
+            {
+                Assert.Less(export.Value, 4.0);
+                Assert.Greater(export.Value, -1.0);
+            };
+            tran.Run(ckt);
+        }
     }
 }

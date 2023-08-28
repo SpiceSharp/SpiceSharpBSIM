@@ -95,34 +95,29 @@ namespace SpiceSharpTest.Models
             // Run test
             AnalyzeAC(ac, ckt, exports, references);
         }
-        /*
+
         [Test]
-        public void When_BSIM2Netlist_Expect_Parameters()
+        public void When_BSIM2Transient_Expect_NoErrors()
         {
-            // Create the parser
-            var parser = new ParserFacade();
-            var settings = new ParserSettings();
-            settings.SpiceNetlistModelReaderSettings.EvaluatorMode = SpiceEvaluatorMode.Spice3f5;
-            settings.SpiceNetlistParserSettings.HasTitle = false;
-            settings.SpiceNetlistModelReaderSettings.Context.Models.Add(new MosfetModelGenerator(), true);
-            settings.SpiceNetlistModelReaderSettings.Context.Components.Add(new MosfetGenerator(), true);
+            // Build the circuit
+            var ckt = new Circuit(
+                new VoltageSource("Vsupply", "vdd", "0", 5.0),
+                new VoltageSource("V1", "in", "0", new Pulse(0, 5, 0.1e-7, 1e-9, 1e-9, 0.6e-6, 1e-6)),
+                new Resistor("R1", "vdd", "out", 10),
+                new Resistor("R2", "out", "g", 1.0e6),
+                new Capacitor("C1", "in", "g", 1e-9),
+                CreateMosfet("M1", "out", "g", "0", "0", 10e-6, 1e-6, "Nch4"),
+                CreateModel("Nch4", "vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0")
+            );
 
-            var netlist = "M1 d g 0 0 nmodel w=10u l=40u\r\n"
-                          + ".model nmodel nmos(level=5 vfb=-0.3 phi=0.8 k1=0.6 mu0=250 n0=1.3 tox=1e-7 mj=0.5 mjsw=0.33 pb=0.8 pbsw=1.0 xpart=1.0)\r\n";
-            var result = parser.ParseNetlist(netlist, settings);
-
-            // Find back the model
-            var entity = (BSIM2) result.ReaderResult.Circuit.Objects["M1"];
-            var model = (BSIM2Model) entity.Model;
-
-            // Check a few component parameters
-            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("w"), 10e-6, 1e-12);
-            Assert.AreEqual(entity.ParameterSets.GetParameter<double>("l"), 40e-6, 1e-12);
-
-            // Check a few model parameters
-            Assert.AreEqual(model.ParameterSets.GetParameter<double>("vfb"), -0.3, 1e-12);
-            Assert.AreEqual(model.ParameterSets.GetParameter<double>("mu0"), 250.0, 1e-12);
+            var tran = new Transient("Transient 1", 1e-8, 10e-6);
+            var export = new RealVoltageExport(tran, "out");
+            tran.ExportSimulationData += (sender, args) =>
+            {
+                Assert.Less(export.Value, 10.0);
+                Assert.Greater(export.Value, -5.0);
+            };
+            tran.Run(ckt);
         }
-        */
     }
 }
