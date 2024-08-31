@@ -1,8 +1,5 @@
 ﻿using SpiceSharp.Attributes;
 using SpiceSharp.ParameterSets;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using SpiceSharp.Components;
 using SpiceSharp;
 

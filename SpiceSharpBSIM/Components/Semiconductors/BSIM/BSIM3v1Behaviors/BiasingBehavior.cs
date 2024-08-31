@@ -7,8 +7,6 @@ using SpiceSharp.Components.Mosfets;
 using SpiceSharp.Components.Semiconductors;
 using SpiceSharp.Simulations;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v1Behaviors
 {

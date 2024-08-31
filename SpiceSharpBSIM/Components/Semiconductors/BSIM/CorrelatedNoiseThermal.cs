@@ -1,9 +1,7 @@
 ﻿using SpiceSharp;
 using SpiceSharp.Simulations;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM
 {

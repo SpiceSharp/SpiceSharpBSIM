@@ -1,7 +1,4 @@
 ﻿using SpiceSharp.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM4Behaviors;
 using SpiceSharp.Attributes;
 

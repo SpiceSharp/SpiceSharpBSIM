@@ -112,12 +112,12 @@ namespace SpiceSharpTest.Models
 
             var tran = new Transient("Transient 1", 1e-8, 10e-6);
             var export = new RealVoltageExport(tran, "out");
-            tran.ExportSimulationData += (sender, args) =>
+
+            foreach (int _ in tran.Run(ckt, Transient.ExportTransient))
             {
-                Assert.Less(export.Value, 10.0);
-                Assert.Greater(export.Value, -5.0);
-            };
-            tran.Run(ckt);
+                Assert.That(export.Value, Is.LessThan(10.0));
+                Assert.That(export.Value, Is.GreaterThan(-5.0));
+            }
         }
     }
 }

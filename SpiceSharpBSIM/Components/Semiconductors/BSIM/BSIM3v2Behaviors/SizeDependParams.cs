@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SpiceSharp.Components;
+﻿using SpiceSharp.Components;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v2Behaviors
 {

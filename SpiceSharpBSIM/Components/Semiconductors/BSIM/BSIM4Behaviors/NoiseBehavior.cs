@@ -218,6 +218,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM4Behaviors
         }
 
         /// <inheritdoc />
+        void INoiseBehavior.Load() { }
+
+        /// <inheritdoc />
         void INoiseBehavior.Compute()
         {
             double T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11;

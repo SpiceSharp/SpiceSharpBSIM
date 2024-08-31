@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v0Behaviors
+﻿namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v0Behaviors
 {
     public class SizeDependentProperties
     {

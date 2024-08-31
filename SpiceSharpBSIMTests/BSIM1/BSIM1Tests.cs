@@ -120,23 +120,6 @@ namespace SpiceSharpTest.Models
 
             // Create the simulation and exports
             var tran = new Transient("Transient", 1e-9, 9e-6);
-            tran.BeforeTemperature += (sender, data) =>
-            {
-                // Swap columns and rows in the matrix
-                var state = tran.GetState<IBiasingSimulationState>();
-
-                // Move "out" to the first spot
-                var index = state.Map[state.GetSharedVariable("out")];
-                var node = state.Solver.GetElement(new MatrixLocation(index, index));
-
-                // Move "in" to the second spot
-                index = state.Map[state.GetSharedVariable("in")];
-                node = state.Solver.GetElement(new MatrixLocation(index, index));
-
-                // Move "vdd" node to the third spot
-                index = state.Map[state.GetSharedVariable("vdd")];
-                node = state.Solver.GetElement(new MatrixLocation(index, index));
-            };
 
             // Create exports
             var exports = new IExport<double>[] { new GenericExport<double>(tran, () => tran.GetState<IIntegrationMethod>().Time), new RealVoltageExport(tran, "out") };
@@ -207,7 +190,26 @@ namespace SpiceSharpTest.Models
             };
 
             // Run
-            AnalyzeTransient(tran, ckt, exports, references);
+            AnalyzeTransient(tran, ckt, exports, references, additional: code =>
+            {
+                if (code != Simulation.AfterValidation)
+                    return;
+
+                // Swap columns and rows in the matrix
+                var state = tran.GetState<IBiasingSimulationState>();
+
+                // Move "out" to the first spot
+                var index = state.Map[state.GetSharedVariable("out")];
+                var node = state.Solver.GetElement(new MatrixLocation(index, index));
+
+                // Move "in" to the second spot
+                index = state.Map[state.GetSharedVariable("in")];
+                node = state.Solver.GetElement(new MatrixLocation(index, index));
+
+                // Move "vdd" node to the third spot
+                index = state.Map[state.GetSharedVariable("vdd")];
+                node = state.Solver.GetElement(new MatrixLocation(index, index));
+            });
         }
 
         [Test]

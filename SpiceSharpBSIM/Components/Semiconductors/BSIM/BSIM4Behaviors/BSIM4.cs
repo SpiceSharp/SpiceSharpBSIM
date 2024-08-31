@@ -1,9 +1,5 @@
 ﻿using SpiceSharp.Attributes;
-using SpiceSharp.Components;
 using SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM4Behaviors;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SpiceSharp.Components
 {

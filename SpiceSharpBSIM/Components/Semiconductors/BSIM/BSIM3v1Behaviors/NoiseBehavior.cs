@@ -81,6 +81,9 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v1Behaviors
         }
 
         /// <inheritdoc />
+        void INoiseBehavior.Load() { }
+
+        /// <inheritdoc />
         void INoiseBehavior.Compute()
         {
             double vgs, vds, Slimit;

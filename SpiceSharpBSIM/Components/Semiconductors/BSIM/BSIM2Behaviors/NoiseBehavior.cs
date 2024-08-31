@@ -1,12 +1,9 @@
-﻿using SpiceSharp;
-using SpiceSharp.Attributes;
+﻿using SpiceSharp.Attributes;
 using SpiceSharp.Behaviors;
 using SpiceSharp.Components;
 using SpiceSharp.Components.NoiseSources;
 using SpiceSharp.Simulations;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM2Behaviors
 {

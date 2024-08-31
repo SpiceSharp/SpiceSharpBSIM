@@ -1,4 +1,3 @@
-using System;
 using SpiceSharp;
 using SpiceSharp.Attributes;
 using SpiceSharp.ParameterSets;

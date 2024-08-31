@@ -67,7 +67,6 @@ using SpiceSharp.Simulations;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM4Behaviors
 {

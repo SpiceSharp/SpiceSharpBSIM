@@ -7,7 +7,6 @@ using SpiceSharp.ParameterSets;
 using SpiceSharp.Simulations;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v0Behaviors
 {
