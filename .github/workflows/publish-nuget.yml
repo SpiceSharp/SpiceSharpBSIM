@@ -20,7 +20,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Compile Spice#
+    - name: Compile Spice#.BSIM
       run: dotnet build SpiceSharpBSIM\SpiceSharpBSIM.csproj --configuration Release --no-restore
 
     - name: Publish to NuGet
