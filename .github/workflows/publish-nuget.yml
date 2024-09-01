@@ -1,0 +1,30 @@
+name: Publish to NuGet
+
+on:
+  release:
+    branches: [ master ]
+    types: [ published ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@master
+    
+    - name: Setup dotnet tooling
+      uses: actions/setup-dotnet@master
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Compile Spice#
+      run: dotnet build SpiceSharpBSIM\SpiceSharpBSIM.csproj --configuration Release --no-restore
+
+    - name: Publish to NuGet
+      env:
+        APIKEY: ${{ secrets.NUGET_APIKEY }}
+      run: dotnet nuget push ".\build\bin\SpiceSharpBSIM\SpiceSharpBSIM.*.nupkg" -k $env:APIKEY -s "https://api.nuget.org/v3/index.json"
+      

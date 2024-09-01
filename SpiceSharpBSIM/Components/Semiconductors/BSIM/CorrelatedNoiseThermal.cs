@@ -5,6 +5,9 @@ using System.Numerics;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM
 {
+    /// <summary>
+    /// A class that describes correlated thermal noise between multiple ports.
+    /// </summary>
     public class CorrelatedNoiseThermal : NoiseSource
     {
         private IVariable<Complex> _n1, _n2, _n3, _n4;

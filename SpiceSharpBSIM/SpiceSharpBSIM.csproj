@@ -1,23 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <UseGitInfo>true</UseGitInfo>
+    <GitTagRegex>v*</GitTagRegex>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>Spice#.BSIM</Title>
     <Authors>Sven Boulanger</Authors>
     <PackageProjectUrl>https://github.com/SpiceSharp/SpiceSharpBSIM</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/SpiceSharp/SpiceSharpBSIM</RepositoryUrl>
-    <AssemblyVersion>1.0.1</AssemblyVersion>
     <Description>BSIM models for Spice#.</Description>
-    <Version>1.0.1</Version>
     <PackageIcon>logo_full.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
     <PackageTags>circuit electronics netlist spice simulator simulation ode solver design</PackageTags>
     <PackageReleaseNotes>Refer to the GitHub release for release notes.</PackageReleaseNotes>
     <NeutralLanguage>en</NeutralLanguage>
-    <FileVersion>1.0.1</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(UseGitInfo)' == 'true'">
+    <GitSkipCache>true</GitSkipCache>
+    <GitBaseVersionRegex>^(?:\w+-)?v?(?&lt;MAJOR&gt;\d+)\.(?&lt;MINOR&gt;\d+)\.(?&lt;PATCH&gt;\d+)$</GitBaseVersionRegex>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UseGitInfo)' == 'true'">
+    <PackageReference Include="GitInfo" Version="3.3.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Components\Semiconductors\BSIM\BSIM3v24\**" />
