@@ -8,4 +8,40 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)SpiceSharpBSIM/SpiceSharpBSIM.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="MSTest.TestAdapter" Version="4.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="MSTest.TestFramework" Version="4.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit" Version="4.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit.Analyzers" Version="4.11.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit.Console" Version="3.21.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="NUnit3TestAdapter" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="SpiceSharp" Version="3.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="SpiceSharpGenerator" Version="1.0.9" />
+  </ItemGroup>
 </Project>

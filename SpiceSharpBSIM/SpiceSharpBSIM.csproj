@@ -5,4 +5,16 @@
     <UseGitInfo>true</UseGitInfo>
     <GitTagRegex>v*</GitTagRegex>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Update="GitInfo" Version="3.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="SpiceSharp" Version="3.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="SpiceSharpGenerator" Version="1.0.9" />
+  </ItemGroup>
 </Project>
