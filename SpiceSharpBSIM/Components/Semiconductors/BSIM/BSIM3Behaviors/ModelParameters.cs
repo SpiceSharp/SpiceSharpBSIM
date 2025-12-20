@@ -1,5 +1,6 @@
 using SpiceSharp;
 using SpiceSharp.Attributes;
+using SpiceSharp.Components;
 using SpiceSharp.ParameterSets;
 
 namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors

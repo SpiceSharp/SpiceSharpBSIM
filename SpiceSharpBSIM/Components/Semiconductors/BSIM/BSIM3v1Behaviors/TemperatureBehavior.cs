@@ -39,6 +39,12 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v1Behaviors
         protected double _drainConductance, _sourceConductance, _cgso, _cgdo;
 
         /// <summary>
+        /// Gets the name of the model
+        /// </summary>
+        [ParameterName("model"), ParameterInfo("The name of the model.")]
+        public string ModelName => ModelTemperature.Name;
+
+        /// <summary>
         /// Creates a new <see cref="TemperatureBehavior"/>.
         /// </summary>
         /// <param name="context">The context.</param>
@@ -47,8 +53,16 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3v1Behaviors
         {
             _temperature = context.GetState<ITemperatureSimulationState>();
             Parameters = context.GetParameterSet<BaseParameters>();
-            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
-            ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
+            if (context.ModelBehaviors.TryGetValue<AggregateModelTemperatureBehavior>(out var aggregateBehavior))
+            {
+                ModelTemperature = aggregateBehavior.GetModel(Parameters.W, Parameters.L);
+                ModelParameters = ModelTemperature.Parameters;
+            }
+            else
+            {
+                ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
+                ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
+            }
             Setup();
         }
 

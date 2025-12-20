@@ -53,14 +53,28 @@ namespace SpiceSharpBSIM.Components.Semiconductors.BSIM.BSIM3Behaviors
         public double IsEvjdm { get; private set; }
 
         /// <summary>
+        /// Gets the name of the model
+        /// </summary>
+        [ParameterName("model"), ParameterInfo("The name of the model.")]
+        public string ModelName => ModelTemperature.Name;
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public TemperatureBehavior(ComponentBindingContext context)
             : base(context)
         {
             Parameters = context.GetParameterSet<BaseParameters>();
-            ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
-            ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
+            if (context.ModelBehaviors.TryGetValue<AggregateModelTemperatureBehavior>(out var aggregateBehavior))
+            {
+                ModelTemperature = aggregateBehavior.GetModel(Parameters.Width, Parameters.Length);
+                ModelParameters = ModelTemperature.Parameters;
+            }
+            else
+            {
+                ModelParameters = context.ModelBehaviors.GetParameterSet<ModelParameters>();
+                ModelTemperature = context.ModelBehaviors.GetValue<ModelTemperatureBehavior>();
+            }
             Setup();
         }
 
