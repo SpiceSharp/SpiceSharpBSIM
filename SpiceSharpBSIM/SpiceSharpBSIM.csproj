@@ -1,13 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+	  <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Spice#.BSIM is a library for Spice# that contains the BSIM models.</Description>
     <UseGitInfo>true</UseGitInfo>
     <GitTagRegex>v*</GitTagRegex>
+	  <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Update="GitInfo" Version="3.6.0" />
+    <PackageReference Include="SpiceSharp" />
+    <PackageReference Include="SpiceSharpGenerator" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="GitInfo" Version="3.3.5">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -15,6 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="SpiceSharpGenerator" Version="1.0.9" />
+    <PackageReference Update="SpiceSharpGenerator" Version="1.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

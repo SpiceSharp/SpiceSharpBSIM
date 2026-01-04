@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2005
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36811.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpiceSharpBSIM", "SpiceSharpBSIM\SpiceSharpBSIM.csproj", "{C0C54353-8BB5-40CE-9B50-C103451CFD95}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpiceSharpBSIMTests", "SpiceSharpBSIMTests\SpiceSharpBSIMTests.csproj", "{973E74D9-9D52-432D-9400-8BAA78D99B5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpiceSharpBSIM.Parser", "SpiceSharpBSIM.Parser\SpiceSharpBSIM.Parser.csproj", "{F177A875-BEB2-4EEF-86AC-768374681011}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{973E74D9-9D52-432D-9400-8BAA78D99B5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{973E74D9-9D52-432D-9400-8BAA78D99B5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{973E74D9-9D52-432D-9400-8BAA78D99B5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F177A875-BEB2-4EEF-86AC-768374681011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F177A875-BEB2-4EEF-86AC-768374681011}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F177A875-BEB2-4EEF-86AC-768374681011}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F177A875-BEB2-4EEF-86AC-768374681011}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,7 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)SpiceSharpBSIM/SpiceSharpBSIM.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit.Analyzers" />
+    <PackageReference Include="NUnit3TestAdapter" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SpiceSharpBSIM.Parser\SpiceSharpBSIM.Parser.csproj" />
+    <ProjectReference Include="..\SpiceSharpBSIM\SpiceSharpBSIM.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,15 +34,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="NUnit.Analyzers" Version="4.11.2" />
+    <PackageReference Update="NUnit.Analyzers" Version="4.11.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="NUnit.Console" Version="3.21.0" />
+    <PackageReference Update="NUnit.Console" Version="3.22.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="NUnit3TestAdapter" Version="6.0.0" />
+    <PackageReference Update="NUnit3TestAdapter" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>
